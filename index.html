@@ -159,6 +159,19 @@ dialog[open]{animation:up .22s ease-out}
 .toast button{border:0;background:none;color:var(--attn-fill);font-weight:600;padding:4px 0;white-space:nowrap}
 
 @media (prefers-reduced-motion:reduce){dialog[open]{animation:none}}
+.iconbtn{position:relative}
+.syncdot{position:absolute;top:5px;right:5px;width:10px;height:10px;border-radius:50%;border:2px solid var(--surface);display:none}
+.syncdot.busy{display:block;background:var(--attn-fill)}
+.syncdot.offline,.syncdot.error{display:block;background:var(--late)}
+.gate .group{padding:16px}
+.gate .group > p{margin:0 0 12px}
+.gate .fields{margin-bottom:14px}
+.gate textarea{font:12px/1.4 ui-monospace,Menlo,monospace}
+.msg{margin:12px 0 0;font-size:15px}
+.msg.bad{color:var(--late)}
+.msg.good{color:var(--accent)}
+.linkbtn{border:0;background:none;color:var(--accent);font-weight:500;padding:10px 0;font-size:15px;text-align:left}
+.status{display:flex;align-items:center;gap:8px;margin:0 0 8px}
 </style>
 </head>
 <body>
@@ -166,7 +179,7 @@ dialog[open]{animation:up .22s ease-out}
   <div><h1 id="title">Overzicht</h1><p class="today-line" id="todayLine"></p></div>
   <div class="actions">
     <button class="iconbtn" id="addBtn" data-action="headerAdd" aria-label="Toevoegen" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
-    <button class="iconbtn" data-action="settings" aria-label="Back-up en instellingen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
+    <button class="iconbtn" data-action="settings" aria-label="Back-up en instellingen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span class="syncdot" id="syncDot"></span></button>
   </div>
 </div></header>
 
@@ -176,6 +189,7 @@ dialog[open]{animation:up .22s ease-out}
 <dialog id="sheet"></dialog>
 <div class="toast" id="toast" role="status" hidden></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
 /* ---------- opslag ---------- */
 const KEY = 'huishouden.v1';
@@ -185,7 +199,8 @@ function load(){
   try { const raw = localStorage.getItem(KEY); if (raw) return Object.assign(empty(), JSON.parse(raw)); } catch(e){}
   return memory ? JSON.parse(memory) : empty();
 }
-function save(){
+function save(){ saveLocal(); diffToPending(); }
+function saveLocal(){
   try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){ memory = JSON.stringify(S); }
 }
 let S = load();
@@ -250,6 +265,15 @@ let tab = TABS[S.ui.tab] ? S.ui.tab : 'home';
 let ym = iso(today()).slice(0,7);
 
 function render(){
+  const gated = !!gate;
+  document.querySelector('.tabs').hidden = gated;
+  document.querySelector('[data-action="settings"]').hidden = gated;
+  if (gated){
+    $('#title').textContent = gate === 'setup' ? 'Koppelen' : 'Inloggen';
+    $('#todayLine').hidden = true; $('#addBtn').hidden = true;
+    $('#view').innerHTML = renderGate(); return;
+  }
+  setStatus(syncStatus, syncError);
   $('#title').textContent = TABS[tab][0];
   $('#todayLine').textContent = tab === 'home' ? today().toLocaleDateString('nl-NL', {weekday:'long', day:'numeric', month:'long'}) : '';
   $('#todayLine').hidden = tab !== 'home';
@@ -485,14 +509,20 @@ $('#sheet').addEventListener('click', e => { if (e.target === e.currentTarget) e
 
 /* ---------- back-up ---------- */
 function openSettings(){
-  const dlg = $('#sheet');
+  const dlg = $('#sheet'), synced = cfg && cfg.mode === 'sync';
   const count = `${S.tasks.length} taken, ${S.fixed.length} vaste lasten, ${S.spend.length} uitgaven, ${S.events.length} agenda-items`;
-  dlg.innerHTML = `<div class="sheet"><div class="sheet-head"><span style="min-width:84px"></span><h3>Back-up</h3><button type="button" class="link strong" data-close>Klaar</button></div>
-    <p>Je gegevens staan alleen op deze telefoon, niet op een server. Maak af en toe een back-up, zodat je niets kwijtraakt als je Safari-gegevens wist of een nieuwe telefoon krijgt.</p>
+  const pend = Object.keys(sync.pending).length;
+  const statusText = !synced ? '' : syncStatus === 'ok' ? 'Alles is gesynchroniseerd.' : syncStatus === 'busy' ? 'Bezig met synchroniseren…'
+    : syncStatus === 'offline' ? `Geen verbinding. ${pend} wijziging${pend === 1 ? '' : 'en'} worden verstuurd zodra je weer online bent.` : `Synchroniseren lukt niet: ${syncError}`;
+  dlg.innerHTML = `<div class="sheet"><div class="sheet-head"><span style="min-width:84px"></span><h3>${synced ? 'Synchronisatie' : 'Back-up'}</h3><button type="button" class="link strong" data-close>Klaar</button></div>
+    ${synced ? `<p>Ingelogd als ${esc(sync.email)}. Jullie gegevens staan in je eigen Supabase-database en worden op beide telefoons bijgewerkt.</p><p class="sub">${esc(statusText)}</p>`
+      : `<p>Je gegevens staan alleen op deze telefoon, niet op een server. Maak af en toe een back-up, zodat je niets kwijtraakt als je Safari-gegevens wist of een nieuwe telefoon krijgt.</p>`}
     <p class="sub">${count}</p>
-    <div class="stack"><button class="btn" data-action="export">Back-up maken</button>
+    <div class="stack">${synced ? '<button class="btn" data-action="syncNow">Nu synchroniseren</button>' : ''}
+    <button class="btn ${synced ? 'ghost' : ''}" data-action="export">Back-up maken</button>
     <label class="btn ghost filebtn" style="text-align:center">Back-up terugzetten<input type="file" accept="application/json,.json" id="importFile"></label>
-    <button class="btn danger" data-action="wipe">Alle gegevens wissen</button></div></div>`;
+    ${synced ? '<button class="btn danger" data-action="logout">Uitloggen</button>'
+      : '<button class="btn ghost" data-action="reconfig">Synchronisatie instellen</button><button class="btn danger" data-action="wipe">Alle gegevens wissen</button>'}</div></div>`;
   dlg.querySelector('[data-close]').onclick = () => dlg.close();
   dlg.querySelector('#importFile').onchange = ev => importData(ev.target.files[0]);
   dlg.showModal();
@@ -513,7 +543,7 @@ function importData(file){
     let data; try { data = JSON.parse(r.result); } catch(e){ toast('Dit bestand kan niet gelezen worden. Kies een back-up die met deze app is gemaakt.'); return; }
     const keys = ['tasks','income','fixed','spend','groceries','events'];
     if (!data || typeof data !== 'object' || !keys.some(k => Array.isArray(data[k]))){ toast('Dit bestand is geen back-up van deze app.'); return; }
-    if (!confirm('Dit vervangt alle gegevens op deze telefoon door de back-up. Doorgaan?')) return;
+    if (!confirm(cfg && cfg.mode === 'sync' ? 'Dit vervangt de gedeelde gegevens, voor jullie allebei, door de back-up. Doorgaan?' : 'Dit vervangt alle gegevens op deze telefoon door de back-up. Doorgaan?')) return;
     const undo = snapshot(); S = Object.assign(empty(), data); save(); $('#sheet').close(); render(); toast('Back-up teruggezet', undo);
   };
   r.readAsText(file);
@@ -545,6 +575,10 @@ document.addEventListener('click', e => {
     case 'toggleEv': { const ev = find('events', id); ev.done = !ev.done; save(); render(); break; }
     case 'hideInstall': S.ui.hideInstall = true; save(); render(); break;
     case 'settings': openSettings(); break;
+    case 'gateLocal': case 'gateCopySql': case 'gateSaveCfg': case 'login': case 'signup': gateAction(action); break;
+    case 'reconfig': $('#sheet').open && $('#sheet').close(); gateAction('reconfig'); break;
+    case 'syncNow': refresh().then(() => { $('#sheet').close(); toast(syncStatus === 'ok' ? 'Alles is gesynchroniseerd' : 'Synchroniseren lukt nu niet'); }); break;
+    case 'logout': logout(); break;
     case 'export': exportData(); break;
     case 'wipe': if (confirm('Weet je zeker dat je alle gegevens op deze telefoon wilt wissen?')){ const undo = snapshot(); const ui = S.ui; S = empty(); S.ui = ui; save(); $('#sheet').close(); render(); toast('Alles gewist', undo); } break;
   }
@@ -556,8 +590,251 @@ document.addEventListener('submit', e => {
   input.value.split(',').forEach(addGrocery); save(); render();
   $('#view input[name=item]').focus();
 });
-document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('#sheet').open) render(); });
-render();
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('#sheet').open && !gate) render(); });
+
+/* ---------- synchronisatie (Supabase) ---------- */
+const CFG_KEY = 'huishouden.cfg', SYNC_KEY = 'huishouden.sync';
+const COLL = ['tasks','income','fixed','spend','groceries','events'];
+const readJSON = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch(e){ return d; } };
+const writeJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
+let cfg = readJSON(CFG_KEY, null);            // {mode:'local'} of {mode:'sync', url, key}
+let sync = readJSON(SYNC_KEY, {known:null, pending:{}, member:false, email:''});
+let sb = null, session = null, channel = null, gate = null, gateMsg = '', gateMsgBad = false;
+let syncStatus = 'ok', syncError = '', flushTimer, flushing = false, deferredRender = false;
+const syncing = () => !!(cfg && cfg.mode === 'sync' && sb && session && sync.member);
+const persistSync = () => writeJSON(SYNC_KEY, sync);
+
+function setStatus(s, err=''){
+  syncStatus = s; syncError = err;
+  const dot = $('#syncDot'); if (dot) dot.className = 'syncdot ' + (syncing() ? s : '');
+}
+function itemsOf(state){
+  const m = {};
+  for (const k of COLL) for (const x of state[k] || []) m[x.id] = {kind:k, data:x};
+  for (const [key,h] of Object.entries(state.history || {})) m['h:' + key] = {kind:'history', data:h};
+  return m;
+}
+function diffToPending(){
+  if (!syncing()) return;
+  const now = itemsOf(S), known = sync.known || {};
+  for (const [id, {kind, data}] of Object.entries(now)){
+    const j = JSON.stringify(data);
+    if (!known[id] || known[id].j !== j){ sync.pending[id] = {id, kind, data, deleted:false}; known[id] = {k:kind, j}; }
+  }
+  for (const id of Object.keys(known)) if (!now[id]){ sync.pending[id] = {id, kind: known[id].k, data:{}, deleted:true}; delete known[id]; }
+  sync.known = known; persistSync(); scheduleFlush();
+}
+function scheduleFlush(ms = 400){ clearTimeout(flushTimer); flushTimer = setTimeout(flush, ms); }
+async function flush(){
+  if (!syncing() || flushing) return;
+  const items = Object.values(sync.pending);
+  if (!items.length){ setStatus('ok'); return; }
+  flushing = true; setStatus('busy');
+  const batch = items.slice(0, 500);
+  let error;
+  try { ({error} = await sb.from('items').upsert(batch.map(p => ({id:p.id, kind:p.kind, data:p.data, deleted:p.deleted, updated_at:new Date().toISOString()})))); }
+  catch(e){ error = e; }
+  flushing = false;
+  if (error){ setStatus(navigator.onLine ? 'error' : 'offline', error.message || String(error)); scheduleFlush(20000); return; }
+  for (const p of batch) if (sync.pending[p.id] === p) delete sync.pending[p.id];
+  persistSync();
+  if (Object.keys(sync.pending).length) flush(); else setStatus('ok');
+}
+function upsertLocal(kind, data, id){
+  if (kind === 'history'){ const k = id.slice(2); if (S.history[k]) Object.assign(S.history[k], data); else S.history[k] = data; return; }
+  if (!COLL.includes(kind)) return;
+  const cur = S[kind].find(x => x.id === id);
+  if (cur){ for (const key of Object.keys(cur)) if (!(key in data)) delete cur[key]; Object.assign(cur, data); }
+  else S[kind].push(data);
+}
+function removeLocal(id, kind){
+  if (kind === 'history') delete S.history[id.slice(2)];
+  else if (COLL.includes(kind)) S[kind] = S[kind].filter(x => x.id !== id);
+}
+function applyRows(rows, full){
+  const known = sync.known || {};
+  let changed = false;
+  if (full){
+    const ids = new Set(rows.map(r => r.id));
+    for (const id of Object.keys(known)) if (!ids.has(id) && !sync.pending[id]){ removeLocal(id, known[id].k); delete known[id]; changed = true; }
+  }
+  for (const r of rows){
+    if (sync.pending[r.id]) continue;
+    if (r.deleted){ if (known[r.id]){ removeLocal(r.id, r.kind); delete known[r.id]; changed = true; } continue; }
+    const j = JSON.stringify(r.data);
+    if (known[r.id] && known[r.id].j === j) continue;
+    upsertLocal(r.kind, r.data, r.id); known[r.id] = {k:r.kind, j: JSON.stringify(r.data)}; changed = true;
+  }
+  sync.known = known; persistSync();
+  if (changed){ saveLocal(); softRender(); }
+}
+function softRender(){
+  const a = document.activeElement;
+  if ($('#sheet').open || (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) deferredRender = true; else render();
+}
+document.addEventListener('focusout', () => setTimeout(() => { if (deferredRender && !$('#sheet').open){ deferredRender = false; render(); } }, 50));
+$('#sheet').addEventListener('close', () => { if (deferredRender){ deferredRender = false; render(); } });
+
+async function pull(){
+  if (!syncing()) return;
+  let rows = [], from = 0;
+  try {
+    for (;;){
+      const {data, error} = await sb.from('items').select('id,kind,data,deleted').range(from, from + 999);
+      if (error) throw error;
+      rows = rows.concat(data); if (data.length < 1000) break; from += 1000;
+    }
+  } catch(e){ setStatus(navigator.onLine ? 'error' : 'offline', e.message || String(e)); return; }
+  applyRows(rows, true);
+  if (!Object.keys(sync.pending).length) setStatus('ok');
+}
+function subscribe(){
+  if (channel) sb.removeChannel(channel);
+  channel = sb.channel('items-live')
+    .on('postgres_changes', {event:'*', schema:'public', table:'items'}, p => { if (p.new && p.new.id) applyRows([p.new], false); })
+    .subscribe();
+}
+async function refresh(){ if (!syncing()) return; await flush(); await pull(); }
+window.addEventListener('online', refresh);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+
+async function startSync(){
+  if (!cfg){ gate = 'setup'; render(); return; }
+  if (cfg.mode !== 'sync'){ gate = null; render(); return; }
+  if (!window.supabase){
+    if (sync.member){ gate = null; render(); setStatus('offline', 'Geen verbinding met de database.'); }
+    else { gate = 'login'; gateMsg = 'Geen verbinding. Controleer je internet en open de app opnieuw.'; gateMsgBad = true; render(); }
+    return;
+  }
+  sb = window.supabase.createClient(cfg.url, cfg.key, {auth:{persistSession:true, autoRefreshToken:true, storageKey:'huishouden.auth'}});
+  try { session = (await sb.auth.getSession()).data.session; } catch(e){ session = null; }
+  if (session) await afterLogin(); else { gate = 'login'; render(); }
+}
+async function afterLogin(){
+  let ok = sync.member && sync.email === session.user.email;
+  try { const {data, error} = await sb.rpc('is_member'); if (!error) ok = data === true; } catch(e){}
+  if (!ok){
+    await sb.auth.signOut().catch(() => {}); session = null;
+    gate = 'login'; gateMsg = 'Dit account heeft geen toegang. Staat dit e-mailadres in het installatiescript dat je in Supabase hebt uitgevoerd?'; gateMsgBad = true; render(); return;
+  }
+  if (sync.email !== session.user.email){ sync.known = null; sync.pending = {}; }
+  sync.member = true; sync.email = session.user.email; persistSync();
+  gate = null; render();
+  diffToPending();       // eerste keer: lokale gegevens gaan mee naar de database
+  await flush(); await pull(); subscribe();
+}
+function sqlScript(emails){
+  const list = emails.map(e => `  ('${e.trim().toLowerCase().replace(/'/g, "''")}')`).join(',\n');
+  return `-- Huishouden: tabel, toegang en beveiliging
+create table if not exists public.items (
+  id text primary key,
+  kind text not null,
+  data jsonb not null default '{}'::jsonb,
+  deleted boolean not null default false,
+  updated_at timestamptz not null default now()
+);
+create table if not exists public.leden (email text primary key);
+insert into public.leden (email) values
+${list}
+on conflict do nothing;
+
+alter table public.items enable row level security;
+alter table public.leden enable row level security;
+grant select, insert, update, delete on public.items to authenticated;
+
+create or replace function public.is_member() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.leden where email = lower(auth.jwt() ->> 'email'));
+$$;
+revoke execute on function public.is_member() from public, anon;
+grant execute on function public.is_member() to authenticated;
+
+drop policy if exists "alleen leden" on public.items;
+create policy "alleen leden" on public.items for all to authenticated
+  using (public.is_member()) with check (public.is_member());
+
+do $$ begin
+  alter publication supabase_realtime add table public.items;
+exception when duplicate_object then null;
+end $$;`;
+}
+function renderGate(){
+  if (gate === 'setup') return `<div class="gate">
+    <section style="margin-top:12px"><div class="group"><p>Koppel de app aan jullie eigen Supabase-database, dan zien jullie allebei dezelfde taken, boodschappen, agenda en financiën. Dit doe je één keer per telefoon.</p>
+      <button class="linkbtn" data-action="gateLocal">Liever zonder synchronisatie, alleen op deze telefoon</button></div></section>
+    <section><h2>Installatiescript</h2><div class="group"><p class="sub">Alleen nodig voor wie de database aanmaakt. Vul jullie twee e-mailadressen in en plak het script in de SQL Editor van Supabase.</p>
+      <div class="fields"><div class="field"><label for="g_e1">Jouw e-mailadres</label><input id="g_e1" type="email" autocomplete="email"></div>
+      <div class="field"><label for="g_e2">E-mailadres van je partner</label><input id="g_e2" type="email" autocomplete="off"></div></div>
+      <button class="btn ghost wide" data-action="gateCopySql">Script kopiëren</button><textarea id="g_sql" rows="6" hidden readonly style="margin-top:10px"></textarea></div></section>
+    <section><h2>Gegevens van je project</h2><div class="group">
+      <div class="fields"><div class="field"><label for="g_url">Project URL</label><input id="g_url" type="url" placeholder="https://xxxx.supabase.co" autocapitalize="off" autocomplete="off" value="${esc(cfg && cfg.url || '')}"></div>
+      <div class="field"><label for="g_key">Publishable key</label><input id="g_key" type="text" placeholder="sb_publishable_…" autocapitalize="off" autocomplete="off" spellcheck="false" value="${esc(cfg && cfg.key || '')}"></div></div>
+      <button class="btn wide" data-action="gateSaveCfg">Koppelen</button><p class="msg${gateMsgBad ? ' bad' : ' good'}" ${gateMsg ? '' : 'hidden'}>${esc(gateMsg)}</p></div></section></div>`;
+  return `<div class="gate"><section style="margin-top:12px"><div class="group">
+    <p>Log in met het e-mailadres dat in het installatiescript staat. Heb je nog geen account, maak er dan een aan.</p>
+    <div class="fields"><div class="field"><label for="l_email">E-mailadres</label><input id="l_email" type="email" autocomplete="username" value="${esc(sync.email || '')}"></div>
+    <div class="field"><label for="l_pw">Wachtwoord</label><input id="l_pw" type="password" autocomplete="current-password"></div></div>
+    <div class="stack" style="display:grid;gap:10px"><button class="btn wide" data-action="login">Inloggen</button><button class="btn ghost wide" data-action="signup">Account aanmaken</button></div>
+    <p class="msg${gateMsgBad ? ' bad' : ' good'}" ${gateMsg ? '' : 'hidden'}>${esc(gateMsg)}</p></div></section>
+    <button class="linkbtn" data-action="reconfig" style="margin-left:4px">Koppeling wijzigen</button></div>`;
+}
+function authMessage(err){
+  const m = (err && err.message || '').toLowerCase();
+  if (m.includes('invalid login')) return 'E-mailadres of wachtwoord klopt niet.';
+  if (m.includes('not confirmed')) return 'Bevestig eerst je e-mailadres via de link in je mail en log daarna hier in.';
+  if (m.includes('signups not allowed') || m.includes('signup is disabled')) return 'Nieuwe accounts zijn uitgeschakeld in Supabase.';
+  if (m.includes('already registered')) return 'Er bestaat al een account met dit e-mailadres. Log in.';
+  if (m.includes('password')) return 'Kies een wachtwoord van minimaal 6 tekens.';
+  if (m.includes('fetch') || m.includes('network')) return 'Geen verbinding met de database. Controleer je internet en de Project URL.';
+  return 'Dat lukte niet: ' + (err && err.message || 'onbekende fout');
+}
+async function gateAction(action){
+  const show = (msg, bad) => { gateMsg = msg; gateMsgBad = bad; const el = $('#view .msg'); if (el){ el.textContent = msg; el.className = 'msg ' + (bad ? 'bad' : 'good'); el.hidden = false; } else render(); };
+  if (action === 'gateLocal'){ cfg = {mode:'local'}; writeJSON(CFG_KEY, cfg); gate = null; gateMsg = ''; render(); return; }
+  if (action === 'reconfig'){ if (sb) await sb.auth.signOut().catch(() => {}); session = null; gate = 'setup'; gateMsg = ''; render(); return; }
+  if (action === 'gateCopySql'){
+    const e1 = $('#g_e1').value.trim(), e2 = $('#g_e2').value.trim();
+    if (!/@/.test(e1)){ $('#g_e1').focus(); toast('Vul eerst je e-mailadres in.'); return; }
+    const sql = sqlScript([e1, e2].filter(e => /@/.test(e)));
+    const ta = $('#g_sql'); ta.value = sql; ta.hidden = false;
+    try { await navigator.clipboard.writeText(sql); toast('Script gekopieerd. Plak het in de SQL Editor van Supabase.'); }
+    catch(e){ ta.focus(); ta.select(); toast('Kopiëren lukte niet automatisch. Selecteer de tekst en kopieer hem zelf.'); }
+    return;
+  }
+  if (action === 'gateSaveCfg'){
+    const url = $('#g_url').value.trim().replace(/\/+$/, ''), key = $('#g_key').value.trim();
+    if (!/^https:\/\/[^\s]+$/.test(url)) return show('Vul de Project URL in, die begint met https://', true);
+    if (key.length < 20) return show('Vul de publishable key in. Die vind je in Supabase bij Project Settings → API Keys.', true);
+    if (/secret|service_role/i.test(key)) return show('Dit lijkt een geheime sleutel. Gebruik de publishable key; de geheime sleutel hoort niet in de app.', true);
+    cfg = {mode:'sync', url, key}; writeJSON(CFG_KEY, cfg); gateMsg = ''; sb = null; startSync(); return;
+  }
+  const email = $('#l_email').value.trim(), password = $('#l_pw').value;
+  if (!email || !password) return show('Vul je e-mailadres en wachtwoord in.', true);
+  if (!sb) return show('Geen verbinding met de database. Controleer je internet en open de app opnieuw.', true);
+  if (action === 'login'){
+    const {data, error} = await sb.auth.signInWithPassword({email, password});
+    if (error) return show(authMessage(error), true);
+    session = data.session; gateMsg = ''; afterLogin();
+  }
+  if (action === 'signup'){
+    const {data, error} = await sb.auth.signUp({email, password, options:{emailRedirectTo: location.origin + location.pathname}});
+    if (error) return show(authMessage(error), true);
+    if (data.session){ session = data.session; gateMsg = ''; afterLogin(); }
+    else show('Account aangemaakt. Open de bevestigingsmail, tik op de link en log daarna hier in.', false);
+  }
+}
+async function logout(){
+  if (!confirm('Uitloggen? De gegevens blijven bewaard in de database, maar worden van deze telefoon verwijderd.')) return;
+  await flush();
+  if (Object.keys(sync.pending).length && !confirm('Niet alle wijzigingen zijn al opgeslagen in de database. Toch uitloggen?')) return;
+  if (channel) sb.removeChannel(channel);
+  await sb.auth.signOut().catch(() => {}); session = null;
+  const ui = S.ui; S = empty(); S.ui = ui; saveLocal();
+  sync = {known:null, pending:{}, member:false, email:sync.email}; persistSync();
+  $('#sheet').close(); gate = 'login'; gateMsg = ''; render();
+}
+
+startSync();
 </script>
 </body>
 </html>
