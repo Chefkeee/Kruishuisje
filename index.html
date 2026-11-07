@@ -43,7 +43,7 @@ h1{font:700 32px/1.1 var(--round);letter-spacing:-.015em;margin:0}
 .iconbtn{width:40px;height:40px;border-radius:50%;border:0;background:var(--surface);display:grid;place-items:center}
 .iconbtn[hidden]{display:none}
 
-main .wrap{padding:0 16px calc(100px + env(safe-area-inset-bottom,0px))}
+main .wrap{padding:0 16px calc(150px + env(safe-area-inset-bottom,0px))}
 section{margin-top:24px}
 h2{font:600 19px/1.25 var(--round);margin:0 0 8px 4px}
 .group{background:var(--surface);border-radius:14px;overflow:hidden}
@@ -130,11 +130,11 @@ input[type=date],input[type=time]{min-height:48px}
 /* tab bar */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
 .tabs .wrap{display:flex}
-.tab{flex:1;border:0;background:none;color:var(--muted);padding:8px 0 6px;font:500 11px var(--ui);display:flex;flex-direction:column;align-items:center;gap:3px}
+.tab{flex:1;min-width:0;border:0;background:none;color:var(--muted);padding:8px 0 6px;font:500 10.5px var(--ui);display:flex;flex-direction:column;align-items:center;gap:3px}
 .tab[aria-current="page"]{color:var(--accent)}
 
 /* sheet */
-dialog{border:0;padding:0;margin:auto auto 0;width:100%;max-width:640px;border-radius:18px 18px 0 0;background:var(--bg);color:var(--ink);max-height:92dvh}
+dialog{border:0;padding:0;margin:auto auto 0;width:100%;max-width:640px;border-radius:18px 18px 0 0;background:var(--bg);color:var(--ink);max-height:92dvh;overflow-y:auto;overscroll-behavior:contain}
 dialog::backdrop{background:rgba(8,20,22,.45)}
 dialog[open]{animation:up .22s ease-out}
 @keyframes up{from{transform:translateY(40px);opacity:0}}
@@ -154,7 +154,7 @@ dialog[open]{animation:up .22s ease-out}
 .filebtn{position:relative;overflow:hidden}
 .filebtn input{position:absolute;inset:0;opacity:0}
 
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:20;background:var(--ink);color:var(--bg);border-radius:12px;padding:10px 14px;display:flex;gap:14px;align-items:center;width:max-content;max-width:calc(100% - 32px);font-size:15px;box-shadow:0 6px 24px rgba(0,0,0,.2)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(140px + env(safe-area-inset-bottom,0px));z-index:20;background:var(--ink);color:var(--bg);border-radius:12px;padding:10px 14px;display:flex;gap:14px;align-items:center;width:max-content;max-width:calc(100% - 32px);font-size:15px;box-shadow:0 6px 24px rgba(0,0,0,.2)}
 .toast[hidden]{display:none}
 .toast button{border:0;background:none;color:var(--attn-fill);font-weight:600;padding:4px 0;white-space:nowrap}
 
@@ -192,6 +192,111 @@ dialog[open]{animation:up .22s ease-out}
 .filt{flex-wrap:nowrap;overflow-x:auto;margin-top:12px;padding-bottom:2px;-webkit-overflow-scrolling:touch}
 .chip{white-space:nowrap}
 .chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.field[hidden]{display:none}
+/* klussen */
+.house{border-radius:18px;padding:18px;color:#fff;background:linear-gradient(135deg,#1F6F68 0%,#2A5A7A 100%);position:relative;overflow:hidden}
+.house::after{content:"🏡";position:absolute;right:-6px;bottom:-14px;font-size:92px;opacity:.16;transform:rotate(-8deg)}
+.house h3{margin:0 0 12px;font:700 20px var(--round)}
+.house-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.house-stats div{background:rgba(255,255,255,.14);border-radius:12px;padding:10px 12px}
+.house-stats b{display:block;font:700 24px/1.1 var(--round)}
+.house-stats span{font-size:13px;opacity:.85}
+.house-money{margin-top:12px;font-size:15px;opacity:.95}
+.house-money b{font-variant-numeric:tabular-nums}
+.house-next{margin-top:6px;font-size:14px;opacity:.85}
+.jobs{display:grid;gap:10px}
+.job{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;border:0;background:var(--surface);border-radius:16px;padding:14px 14px 14px 16px;position:relative;overflow:hidden}
+.job::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--p)}
+.job-icon{width:46px;height:46px;border-radius:13px;background:var(--sunk);display:grid;place-items:center;font-size:23px;flex:none}
+.job-icon.big{width:58px;height:58px;font-size:30px;border-radius:16px}
+.job-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.job-top{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.tag{font-size:11.5px;letter-spacing:.01em;text-transform:none;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--t,#7A8F8C) 18%,var(--surface));color:var(--t,var(--muted));font-weight:700}
+.job-title{font:600 17px/1.3 var(--round);overflow-wrap:anywhere}
+.job-meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;font-size:14px;color:var(--muted)}
+.job-meta > span{display:inline-flex;align-items:center;gap:6px}
+.mat{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-top:4px}
+.matbar{flex:1;height:6px;border-radius:3px;background:var(--sunk);overflow:hidden;max-width:170px}
+.matbar i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.who-pro{background:#B07A3B;color:#fff;font-size:13px}
+.jhero{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
+.jhero h2{margin:4px 0 0;font:700 22px/1.2 var(--round)}
+.seg4{grid-template-columns:repeat(4,1fr);margin:0 0 14px}
+.sheet h4{font:600 16px var(--round);margin:18px 2px 8px;display:flex;justify-content:space-between}
+.sheet h4 span{font:500 14px var(--ui);color:var(--muted)}
+.inforow{display:flex;gap:12px;align-items:center;padding:11px 14px;border-top:1px solid var(--line)}
+.inforow:first-child{border-top:0}
+.inforow dt{color:var(--muted);width:92px;flex:none;font-size:15px}
+.inforow dd{margin:0;flex:1;display:flex;align-items:center;gap:8px;min-width:0;overflow-wrap:anywhere}
+.inforow a{color:var(--accent);font-weight:600}
+.notebox{background:var(--surface);border-radius:14px;padding:12px 14px;margin:0;white-space:pre-wrap}
+.quick.inrow{padding:10px 12px;border-top:1px solid var(--line)}
+.quick.inrow input{padding:10px}
+.quick.inrow .btn{padding:10px 16px}
+/* weekoverzicht */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{background:var(--surface);border-radius:14px;padding:10px 12px}
+.tile b{display:block;font:700 22px/1.1 var(--round)}
+.tile span{font-size:13px;color:var(--muted)}
+.wk-day{padding:10px 14px;border-top:1px solid var(--line)}
+.wk-day:first-child{border-top:0}
+.wk-day h5{margin:0 0 4px;font:600 15px var(--round);display:flex;gap:8px;align-items:baseline}
+.wk-day h5 small{font:500 13px var(--ui);color:var(--accent)}
+.wk-row{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:15px}
+.wk-dot{width:8px;height:8px;border-radius:50%;flex:none}
+.wk-time{color:var(--muted);font-variant-numeric:tabular-nums;min-width:40px;font-size:14px}
+.wk-title{flex:1;min-width:0;overflow-wrap:anywhere}
+.wk-title small{color:var(--muted)}
+.wk-row .who{width:22px;height:22px;font-size:11px}
+.legend .linkbtn{margin-left:auto;padding:0;font-size:13px;font-weight:600}
+/* snelle plusknop */
+.fab{position:fixed;right:16px;bottom:calc(70px + env(safe-area-inset-bottom,0px));z-index:7;width:58px;height:58px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);box-shadow:0 8px 24px rgba(0,0,0,.25);display:grid;place-items:center}
+.fab[hidden]{display:none}
+@media (min-width:672px){.fab{right:calc(50% - 320px + 16px)}}
+.qa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.qa{border:0;background:var(--surface);border-radius:16px;padding:14px 6px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;font:600 14px var(--ui);color:var(--ink)}
+.qa i{font-style:normal;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:23px;background:color-mix(in srgb,var(--c) 20%,var(--surface))}
+/* winkelmodus */
+.shop{position:fixed;inset:0;z-index:15;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px calc(env(safe-area-inset-bottom,0px) + 96px)}
+.shop[hidden]{display:none}
+.shop-in{max-width:640px;margin:0 auto}
+.shop-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+.shop-head h2{font:700 30px/1.1 var(--round);margin:0}
+.shop-head p{margin:2px 0 0;color:var(--muted)}
+.shop-aisle{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:20px 4px 8px}
+.shop-item{width:100%;display:flex;align-items:center;gap:16px;border:0;background:var(--surface);border-radius:16px;padding:14px 16px;margin-bottom:8px;min-height:68px;font:500 21px/1.25 var(--ui);color:var(--ink);text-align:left;transition:opacity .25s ease, transform .25s ease}
+.shop-check{width:34px;height:34px;border-radius:50%;border:3px solid var(--accent);flex:none;display:grid;place-items:center;color:var(--accent-ink)}
+.shop-name{flex:1;min-width:0;overflow-wrap:anywhere}
+.shop-item.ticking{opacity:.35;transform:translateX(14px)}
+.shop-item.ticking .shop-check,.shop-item.isdone .shop-check{background:var(--accent)}
+.shop-item.isdone{opacity:.55;min-height:56px;font-size:18px}
+.shop-item.isdone .shop-name{text-decoration:line-through}
+.shop-empty{text-align:center;padding:48px 10px 24px;font:700 24px var(--round)}
+.shop-empty span{display:block;font-size:56px;margin-bottom:8px}
+.shop-add{position:fixed;left:0;right:0;bottom:0;z-index:16;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line)}
+.shop-add .quick{max-width:640px;margin:0 auto}
+/* wat is er veranderd */
+.news{padding:14px 16px}
+.news-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.news-head b{font:600 17px var(--round)}
+.news-head .linkbtn{padding:4px 0}
+.news-row{display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:15px}
+.news-row .who{width:24px;height:24px;font-size:11px;margin-top:1px}
+.news-row span.txt{flex:1;min-width:0}
+.news-row time{color:var(--muted);font-size:13px;white-space:nowrap;margin-top:2px}
+.tab{position:relative}
+.tdot{position:absolute;top:5px;left:calc(50% + 7px);width:9px;height:9px;border-radius:50%;background:var(--late);border:2px solid var(--surface)}
+.home > :first-child{margin-top:12px}
+.switch{width:48px;height:28px;border-radius:14px;background:var(--sunk);position:relative;border:0;flex:none;padding:0;transition:background .2s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
+.switch[aria-pressed="true"]{background:var(--accent)}
+.switch[aria-pressed="true"]::after{transform:translateX(20px)}
+.row.off .title{color:var(--muted)}
+#q{font-size:17px;padding:13px 14px;border-radius:12px}
+.sres-head{font:600 15px var(--round);margin:18px 4px 8px;display:flex;gap:8px;align-items:center}
+.sres-head span{color:var(--muted);font:500 13px var(--ui)}
+.sres .ic{width:34px;height:34px;border-radius:10px;background:var(--sunk);display:grid;place-items:center;font-size:17px;flex:none}
+mark{background:color-mix(in srgb,var(--attn-fill) 45%,transparent);color:inherit;border-radius:3px;padding:0 1px}
 @media (prefers-reduced-motion:reduce){dialog[open]{animation:none}}
 .iconbtn{position:relative}
 .syncdot{position:absolute;top:5px;right:5px;width:10px;height:10px;border-radius:50%;border:2px solid var(--surface);display:none}
@@ -213,6 +318,7 @@ dialog[open]{animation:up .22s ease-out}
   <div><h1 id="title">Overzicht</h1><p class="today-line" id="todayLine"></p></div>
   <div class="actions">
     <button class="iconbtn" id="addBtn" data-action="headerAdd" aria-label="Toevoegen" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button class="iconbtn" data-action="search" aria-label="Zoeken"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></button>
     <button class="iconbtn" data-action="settings" aria-label="Back-up en instellingen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span class="syncdot" id="syncDot"></span></button>
   </div>
 </div></header>
@@ -221,17 +327,19 @@ dialog[open]{animation:up .22s ease-out}
 
 <nav class="tabs" aria-label="Onderdelen"><div class="wrap" id="tabs"></div></nav>
 <dialog id="sheet"></dialog>
+<button class="fab" id="fab" data-action="quickAdd" aria-label="Snel toevoegen" hidden><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+<div class="shop" id="shop" hidden role="dialog" aria-modal="true" aria-label="Winkelmodus"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-const APP_VERSION = '5';
+const APP_VERSION = '9';
 if (/[?&](v|check)=/.test(location.search)) try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){}
 /* ---------- opslag ---------- */
 const KEY = 'huishouden.v1';
-const AISLES = [['groente','Groente & fruit'],['brood','Brood & bakkerij'],['vlees','Vlees, vis & vega'],['vleeswaren','Kaas & vleeswaren'],['zuivel','Zuivel & eieren'],['ontbijt','Ontbijt & beleg'],['houdbaar','Pasta, rijst & houdbaar'],['diepvries','Diepvries'],['snacks','Snacks & snoep'],['dranken','Dranken'],['drogist','Drogisterij'],['huishouden','Huishouden'],['overig','Overig']];
+const AISLES = [['groente','Groente & fruit'],['brood','Brood & bakkerij'],['vlees','Vlees, vis & vega'],['vleeswaren','Kaas & vleeswaren'],['zuivel','Zuivel & eieren'],['ontbijt','Ontbijt & beleg'],['houdbaar','Pasta, rijst & houdbaar'],['diepvries','Diepvries'],['snacks','Snacks & snoep'],['dranken','Dranken'],['drogist','Drogisterij'],['huishouden','Huishouden'],['bouwmarkt','Bouwmarkt'],['overig','Overig']];
 const defaultSettings = () => ({v:0, people:[{id:'p1', name:'', email:''},{id:'p2', name:'', email:''}], aisles: AISLES.map(([id,name]) => ({id, name}))});
-const empty = () => ({tasks:[], income:[], fixed:[], spend:[], groceries:[], history:{}, events:[], ui:{}, settings: defaultSettings()});
+const empty = () => ({tasks:[], income:[], fixed:[], spend:[], groceries:[], history:{}, events:[], jobs:[], ui:{}, settings: defaultSettings()});
 let memory = null;
 function load(){
   try { const raw = localStorage.getItem(KEY); if (raw) return Object.assign(empty(), JSON.parse(raw)); } catch(e){}
@@ -295,6 +403,7 @@ const snapshot = () => { const snap = JSON.stringify(S); return () => { S = JSON
 const TABS = {
   home:  ['Overzicht', '<path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>'],
   taken: ['Taken', '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>'],
+  klussen:['Klussen', '<path d="M14.7 6.3a4 4 0 0 0-5.3 5.3L3.5 17.5a1.8 1.8 0 0 0 2.5 2.5l5.9-5.9a4 4 0 0 0 5.3-5.3l-2.6 2.6-2.3-.5-.5-2.3z"/>'],
   geld:  ['Geld', '<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10.5h18"/><circle cx="16.5" cy="14.8" r="1.3"/>'],
   lijst: ['Boodschappen', '<path d="M4 9h16l-1.6 10.2a1 1 0 0 1-1 .8H6.6a1 1 0 0 1-1-.8z"/><path d="M8.5 9L12 3.5 15.5 9"/>'],
   agenda:['Agenda', '<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>']
@@ -306,71 +415,184 @@ function render(){
   const gated = !!gate;
   document.querySelector('.tabs').hidden = gated;
   document.querySelector('[data-action="settings"]').hidden = gated;
+  document.querySelector('[data-action="search"]').hidden = gated;
   if (gated){
     $('#title').textContent = gate === 'setup' ? 'Koppelen' : 'Inloggen';
-    $('#todayLine').hidden = true; $('#addBtn').hidden = true;
+    $('#todayLine').hidden = true; $('#addBtn').hidden = true; $('#fab').hidden = true; $('#shop').hidden = true;
     $('#view').innerHTML = renderGate(); return;
   }
   setStatus(syncStatus, syncError);
   $('#title').textContent = TABS[tab][0];
   $('#todayLine').textContent = tab === 'home' ? today().toLocaleDateString('nl-NL', {weekday:'long', day:'numeric', month:'long'}) : '';
   $('#todayLine').hidden = tab !== 'home';
-  $('#addBtn').hidden = !['taken','geld','agenda'].includes(tab);
-  $('#addBtn').setAttribute('aria-label', {taken:'Taak toevoegen', geld:'Uitgave toevoegen', agenda:'Toevoegen aan de agenda'}[tab] || 'Toevoegen');
-  $('#tabs').innerHTML = Object.entries(TABS).map(([k,[label,icon]]) =>
-    `<button class="tab" data-action="tab" data-tab="${k}"${k === tab ? ' aria-current="page"' : ''}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icon}</svg>${label}</button>`).join('');
+  $('#addBtn').hidden = true; $('#fab').hidden = false;
+  $('#addBtn').setAttribute('aria-label', {taken:'Taak toevoegen', klussen:'Klus toevoegen', geld:'Uitgave toevoegen', agenda:'Toevoegen aan de agenda'}[tab] || 'Toevoegen');
+  $('#tabs').innerHTML = Object.entries(TABS).map(([k,[full,icon]]) => [k, [k === 'lijst' ? 'Lijst' : full, icon]]).map(([k,[label,icon]]) =>
+    `<button class="tab" data-action="tab" data-tab="${k}"${k === tab ? ' aria-current="page"' : ''}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icon}</svg>${label}${k === 'home' && tab !== 'home' && unseen().length ? '<i class="tdot" aria-label="Nieuwe wijzigingen"></i>' : ''}</button>`).join('');
   $('#view').innerHTML = (updateAvailable ? `<div class="hint" style="margin-top:12px;align-items:center"><p><b>Er is een nieuwe versie.</b> Je gegevens blijven gewoon staan.</p><button class="btn" data-action="applyUpdate">Vernieuwen</button></div>` : '')
-    + ({home:renderHome, taken:renderTasks, geld:renderMoney, lijst:renderList, agenda:renderAgenda})[tab]();
+    + ({home:renderHome, taken:renderTasks, geld:renderMoney, lijst:renderList, agenda:renderAgenda, klussen:renderJobs})[tab]();
+  const shop = $('#shop');
+  if (shopMode){ shop.innerHTML = renderShop(); shop.hidden = false; document.body.style.overflow = 'hidden'; }
+  else if (!shop.hidden){ shop.hidden = true; shop.innerHTML = ''; document.body.style.overflow = ''; }
 }
 
 /* ---------- overzicht ---------- */
+const HOME_SECTIONS = [['news','Sinds je laatst keek'],['week','Weekstrip'],['eten','Vandaag ergens eten'],['today','Te doen vandaag'],['soon','Binnenkort in de agenda'],['jobs','Klussen'],['money','Geld deze maand'],['groceries','Boodschappen']];
+function homeLayout(){
+  const cfgH = S.ui.home || {};
+  const ids = HOME_SECTIONS.map(x => x[0]);
+  const order = (cfgH.order || []).filter(id => ids.includes(id));
+  ids.forEach(id => { if (!order.includes(id)) order.push(id); });
+  return {order, off: (cfgH.off || []).filter(id => ids.includes(id))};
+}
+const HOME = {
+  news: () => newsCard(),
+  week: () => {
+    const t0 = today(), tasks = S.tasks.map(t => ({t, due: nextDue(t)}));
+    let week = '';
+    for (let i = 0; i < 7; i++){
+      const d = addDays(t0, i), k = iso(d);
+      const nt = tasks.filter(x => i === 0 ? x.due <= d : iso(x.due) === k).length;
+      const evs = agendaItems(d, d, false).filter(it => !it.done), ne = evs.length;
+      const dots = '<i class="dot"></i>'.repeat(Math.min(nt,3)) + evs.slice(0,2).map(it => `<i class="dot" style="background:${KINDS[it.kind].c}"></i>`).join('');
+      week += `<button class="day${i === 0 ? ' is-today' : ''}" data-action="tab" data-tab="${ne && !nt ? 'agenda' : 'taken'}" aria-label="${esc(longDate(d))}: ${nt} taken, ${ne} in de agenda"><span class="wd">${d.toLocaleDateString('nl-NL',{weekday:'short'}).replace('.','')}</span><span class="n">${d.getDate()}</span><span class="dots">${dots}</span></button>`;
+    }
+    return `<section><div class="week">${week}</div><div class="legend"><span><i class="dot"></i>Taken</span><span><i class="dot ev"></i>Agenda</span><button class="linkbtn" data-action="week">Weekoverzicht ›</button></div></section>`;
+  },
+  eten: () => {
+    const e = (agendaItems(today(), today(), false).find(it => it.kind === 'eten' && !it.done) || {}).e;
+    if (!e) return '';
+    const solo = named() && (e.for === 'p1' || e.for === 'p2') ? person(e.for).name : '';
+    return `<div class="hint"><p><b>Vandaag</b> ${solo ? `eet ${esc(solo)}` : 'eten jullie'} ${e.where ? 'bij ' + esc(e.where) : 'ergens anders'}${e.time ? ' om ' + esc(e.time) : ''}.${solo ? '' : ' Niet koken dus.'}</p></div>`;
+  },
+  today: () => {
+    const t0 = today(), tasks = S.tasks.map(t => ({t, due: nextDue(t)})).sort((a,b) => a.due - b.due);
+    let dueNow = tasks.filter(x => x.due <= t0), othersDue = 0;
+    const mine = named() ? me() : null;
+    if (mine){ const all = dueNow.length; dueNow = dueNow.filter(x => { const a = assignee(x.t); return !a || a === mine.id; }); othersDue = all - dueNow.length; }
+    let html = `<section>${h2('Te doen vandaag', sumMins(dueNow))}`;
+    if (dueNow.length) html += `<div class="group">${dueNow.map(taskRow).join('')}</div>`;
+    else if (othersDue) html += `<div class="empty"><p>Niets voor jou vandaag.</p></div>`;
+    else if (tasks.length) html += `<div class="empty"><p>Alles is bij. Volgende: ${esc(tasks[0].t.name)}, ${relDay(daysBetween(t0, tasks[0].due), tasks[0].due).toLowerCase()}.</p></div>`;
+    else html += `<div class="empty"><p>Nog geen taken. Zet je terugkerende klussen erin, dan zie je hier elke dag wat aan de beurt is.</p><button class="btn" data-action="tab" data-tab="taken">Naar taken</button></div>`;
+    if (othersDue) html += `<p class="sub" style="margin:8px 4px 0">${othersDue === 1 ? 'Er staat ook 1 taak' : `Er staan ook ${othersDue} taken`} voor ${esc(other(mine.id).name)}.</p>`;
+    return html + `</section>`;
+  },
+  soon: () => {
+    const t0 = today(), ev = lateDeadlines().concat(agendaItems(t0, addDays(t0, 60), false).filter(it => !it.done)).slice(0,3);
+    return `<section><h2>Binnenkort</h2>` + (ev.length ? `<div class="group">${ev.map(itemRow).join('')}</div>`
+      : `<div class="empty"><p>Niets gepland in de agenda.</p><button class="btn ghost" data-action="add" data-what="event">Iets toevoegen</button></div>`) + `</section>`;
+  },
+  jobs: () => {
+    const open = (S.jobs || []).filter(j => j.status === 'bezig' || j.status === 'gepland')
+      .sort((a, b) => (a.status === 'bezig' ? 0 : 1) - (b.status === 'bezig' ? 0 : 1) || (a.date || '9999').localeCompare(b.date || '9999')).slice(0, 3);
+    if (!open.length) return `<section><h2>Klussen</h2><div class="empty"><p>Geen klussen bezig of gepland.</p><button class="btn ghost" data-action="tab" data-tab="klussen">Naar klussen</button></div></section>`;
+    return `<section><h2>Klussen</h2><div class="jobs">${open.map(jobCard).join('')}</div><button class="linkbtn" data-action="tab" data-tab="klussen" style="margin-left:4px">Alle klussen ›</button></section>`;
+  },
+  money: () => {
+    const m = iso(today()).slice(0,7), c = monthCalc(m);
+    return `<section><h2>Geld deze maand</h2>` + (c.inc || c.fix || c.spent
+      ? `<button class="group plain purse" style="width:100%;display:block" data-action="tab" data-tab="geld"><div class="label">Nog te besteden in ${monthName(m).split(' ')[0]}</div><div class="big${c.left < 0 ? ' neg' : ''}">${euro(c.left)}</div>${moneyBar(c)}</button>`
+      : `<div class="empty"><p>Vul je inkomsten en vaste lasten in om te zien wat je elke maand overhoudt.</p><button class="btn" data-action="tab" data-tab="geld">Naar geld</button></div>`) + `</section>`;
+  },
+  groceries: () => {
+    const open = S.groceries.filter(g => !g.done);
+    return `<section><h2>Boodschappen</h2><div class="group"><button class="row plain" style="width:100%" data-action="tab" data-tab="lijst"><div class="main"><div class="title">${open.length ? `${open.length} ${open.length === 1 ? 'ding' : 'dingen'} op de lijst` : 'Je lijst is leeg'}</div><div class="sub">${open.length ? esc(open.slice(0,4).map(g => g.name).join(', ')) : 'Tik om iets toe te voegen'}</div></div></button></div></section>`;
+  }
+};
 function renderHome(){
-  const t0 = today();
-  const tasks = S.tasks.map(t => ({t, due: nextDue(t)})).sort((a,b) => a.due - b.due);
-  let week = '';
-  for (let i = 0; i < 7; i++){
-    const d = new Date(t0); d.setDate(d.getDate() + i); const k = iso(d);
-    const nt = tasks.filter(x => i === 0 ? x.due <= d : iso(x.due) === k).length;
-    const evs = S.events.filter(e => e.date === k && !e.done).sort(evSort), ne = evs.length;
-    const dots = '<i class="dot"></i>'.repeat(Math.min(nt,3)) + evs.slice(0,2).map(e => `<i class="dot" style="background:${KINDS[kindOf(e)].c}"></i>`).join('');
-    week += `<button class="day${i === 0 ? ' is-today' : ''}" data-action="tab" data-tab="${ne && !nt ? 'agenda' : 'taken'}" aria-label="${esc(d.toLocaleDateString('nl-NL',{weekday:'long', day:'numeric', month:'long'}))}: ${nt} taken, ${ne} afspraken"><span class="wd">${d.toLocaleDateString('nl-NL',{weekday:'short'}).replace('.','')}</span><span class="n">${d.getDate()}</span><span class="dots">${dots}</span></button>`;
-  }
-  let html = `<section style="margin-top:12px"><div class="week">${week}</div>
-    <div class="legend"><span><i class="dot"></i>Taken</span><span><i class="dot ev"></i>Agenda</span></div></section>`;
-
-  const etenNu = S.events.filter(e => e.date === iso(t0) && kindOf(e) === 'eten' && !e.done).sort(evSort)[0];
-  if (etenNu){
-    const solo = named() && (etenNu.for === 'p1' || etenNu.for === 'p2') ? person(etenNu.for).name : '';
-    html += `<div class="hint" style="margin-top:12px"><p><b>Vandaag</b> ${solo ? `eet ${esc(solo)}` : 'eten jullie'} ${etenNu.where ? 'bij ' + esc(etenNu.where) : 'ergens anders'}${etenNu.time ? ' om ' + esc(etenNu.time) : ''}.${solo ? '' : ' Niet koken dus.'}</p></div>`;
-  }
+  const t0 = today(), L = homeLayout();
+  let top = '';
+  if (t0.getDay() === 0 && S.ui.weekSeen !== iso(t0)) top += `<div class="hint" style="align-items:center"><p><b>Nieuwe week op komst.</b> Bekijk wat er volgende week gepland staat.</p><button class="btn" data-action="week">Bekijk</button></div>`;
   const standalone = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
-  if (!standalone && !S.ui.hideInstall) html += `<div class="hint"><p>Zet de app op je beginscherm: tik in Safari op Deel en kies Zet op beginscherm. Dan opent hij schermvullend en blijven je gegevens goed bewaard.</p><button class="x" data-action="hideInstall" aria-label="Melding sluiten">×</button></div>`;
+  if (!standalone && !S.ui.hideInstall) top += `<div class="hint"><p>Zet de app op je beginscherm: tik in Safari op Deel en kies Zet op beginscherm. Dan opent hij schermvullend en blijven je gegevens goed bewaard.</p><button class="x" data-action="hideInstall" aria-label="Melding sluiten">×</button></div>`;
+  const body = L.order.filter(id => !L.off.includes(id)).map(id => HOME[id]()).join('');
+  return `<div class="home">${top}${body || '<div class="empty"><p>Je hebt alle onderdelen van de startpagina uitgezet.</p></div>'}</div>
+    <button class="linkbtn" data-action="homeEdit" style="display:block;margin:24px auto 0">Startpagina aanpassen</button>`;
+}
+function homeEditSheet(){
+  const dlg = $('#sheet');
+  const draw = () => {
+    const L = homeLayout(), name = id => HOME_SECTIONS.find(x => x[0] === id)[1];
+    dlg.innerHTML = `<div class="sheet"><div class="sheet-head"><button type="button" class="link" data-reset>Standaard</button><h3>Startpagina</h3><button type="button" class="link strong" data-close>Klaar</button></div>
+      <p class="sub" style="margin:0 2px 12px">Kies wat je op de startpagina ziet en in welke volgorde. Dit geldt alleen voor deze telefoon.</p>
+      <div class="group">${L.order.map((id, i) => { const on = !L.off.includes(id); return `<div class="row${on ? '' : ' off'}"><button type="button" class="switch" data-tog="${id}" aria-pressed="${on}" aria-label="${esc(name(id))} ${on ? 'verbergen' : 'tonen'}"></button><div class="main title">${esc(name(id))}</div>
+        <button type="button" class="x" data-up="${i}" ${i ? '' : 'disabled'} aria-label="${esc(name(id))} omhoog">↑</button><button type="button" class="x" data-down="${i}" ${i < L.order.length - 1 ? '' : 'disabled'} aria-label="${esc(name(id))} omlaag">↓</button></div>`; }).join('')}</div></div>`;
+  };
+  dlg.oninput = null; dlg.onsubmit = null;
+  dlg.onclick = e => {
+    const b = e.target.closest('button'); if (!b) return; const d = b.dataset;
+    if ('close' in d){ dlg.close(); return; }
+    const L = homeLayout();
+    if ('reset' in d) delete S.ui.home;
+    else if (d.tog){ L.off = L.off.includes(d.tog) ? L.off.filter(x => x !== d.tog) : L.off.concat(d.tog); S.ui.home = L; }
+    else if (d.up !== undefined){ const i = +d.up; [L.order[i-1], L.order[i]] = [L.order[i], L.order[i-1]]; S.ui.home = L; }
+    else if (d.down !== undefined){ const i = +d.down; [L.order[i+1], L.order[i]] = [L.order[i], L.order[i+1]]; S.ui.home = L; }
+    else return;
+    saveLocal(); render(); draw();
+  };
+  draw();
+  if (!dlg.open) dlg.showModal();
+}
 
-  let dueNow = tasks.filter(x => x.due <= t0), othersDue = 0;
-  const mine = named() ? me() : null;
-  if (mine){ const all = dueNow.length; dueNow = dueNow.filter(x => { const a = assignee(x.t); return !a || a === mine.id; }); othersDue = all - dueNow.length; }
-  html += `<section>${h2('Te doen vandaag', sumMins(dueNow))}`;
-  if (dueNow.length) html += `<div class="group">${dueNow.map(taskRow).join('')}</div>`;
-  else if (othersDue) html += `<div class="empty"><p>Niets voor jou vandaag.</p></div>`;
-  else if (tasks.length) html += `<div class="empty"><p>Alles is bij. Volgende: ${esc(tasks[0].t.name)}, ${relDay(daysBetween(t0, tasks[0].due), tasks[0].due).toLowerCase()}.</p></div>`;
-  else html += `<div class="empty"><p>Nog geen taken. Zet je terugkerende klussen erin, dan zie je hier elke dag wat aan de beurt is.</p><button class="btn" data-action="tab" data-tab="taken">Naar taken</button></div>`;
-  if (othersDue) html += `<p class="sub" style="margin:8px 4px 0">${othersDue === 1 ? 'Er staat ook 1 taak' : `Er staan ook ${othersDue} taken`} voor ${esc(other(mine.id).name)}.</p>`;
-  html += `</section>`;
-
-  const todayIso = iso(t0);
-  const ev = S.events.filter(e => !e.done && (e.date >= todayIso || e.kind === 'deadline'))
-    .sort((a,b) => (a.date + (a.time||'')).localeCompare(b.date + (b.time||''))).slice(0,3);
-  html += `<section><h2>Binnenkort</h2>` + (ev.length ? `<div class="group">${ev.map(eventRow).join('')}</div>`
-    : `<div class="empty"><p>Geen afspraken of deadlines gepland.</p><button class="btn ghost" data-action="add" data-what="event">Afspraak toevoegen</button></div>`) + `</section>`;
-
-  const c = monthCalc(iso(t0).slice(0,7));
-  html += `<section><h2>Geld deze maand</h2>` + (c.inc || c.fix || c.spent
-    ? `<button class="group plain purse" style="width:100%;display:block" data-action="tab" data-tab="geld"><div class="label">Nog te besteden in ${monthName(iso(t0).slice(0,7)).split(' ')[0]}</div><div class="big${c.left < 0 ? ' neg' : ''}">${euro(c.left)}</div>${moneyBar(c)}</button>`
-    : `<div class="empty"><p>Vul je inkomsten en vaste lasten in om te zien wat je elke maand overhoudt.</p><button class="btn" data-action="tab" data-tab="geld">Naar geld</button></div>`) + `</section>`;
-
-  const open = S.groceries.filter(g => !g.done).length;
-  html += `<section><h2>Boodschappen</h2><div class="group"><button class="row plain" style="width:100%" data-action="tab" data-tab="lijst"><div class="main"><div class="title">${open ? `${open} ${open === 1 ? 'ding' : 'dingen'} op de lijst` : 'Je lijst is leeg'}</div><div class="sub">${open ? esc(S.groceries.filter(g => !g.done).slice(0,4).map(g => g.name).join(', ')) : 'Tik om iets toe te voegen'}</div></div></button></div></section>`;
-  return html;
+/* ---------- zoeken ---------- */
+let lastQuery = '';
+function markText(text, terms){
+  const raw = String(text || ''), low = raw.toLowerCase(), ranges = [];
+  for (const t of terms){ let i = low.indexOf(t); while (t && i >= 0){ ranges.push([i, i + t.length]); i = low.indexOf(t, i + t.length); } }
+  if (!ranges.length) return esc(raw);
+  ranges.sort((a, b) => a[0] - b[0]);
+  let out = '', pos = 0;
+  for (const [a, b] of ranges){ if (a < pos) continue; out += esc(raw.slice(pos, a)) + '<mark>' + esc(raw.slice(a, b)) + '</mark>'; pos = b; }
+  return out + esc(raw.slice(pos));
+}
+function searchAll(q){
+  const terms = norm(q).trim().split(' ').filter(Boolean);
+  if (!terms.length || terms.join('').length < 2) return null;
+  const hit = (...f) => { const hay = norm(f.filter(Boolean).join(' ')); return terms.every(t => hay.includes(t)); };
+  const pn = pid => (pid && person(pid) && person(pid).name) || '';
+  const t0 = today();
+  return [
+    ['Taken', '✅', S.tasks.filter(t => hit(t.name, pn(assignee(t)))).map(t => { const d = nextDue(t); return {r:`task:${t.id}`, title:t.name, sub:`${relDay(daysBetween(t0, d), d)}, ${intervalLabel(t).toLowerCase()}`}; })],
+    ['Agenda', '📅', S.events.filter(e => hit(e.title, e.where, e.with, e.note, KINDS[kindOf(e)].label)).sort((a, b) => b.date.localeCompare(a.date))
+      .map(e => ({r:`event:${e.id}`, title:e.title, sub:`${fmtDate(parse(e.date))}${e.repeat ? ', ' + repeatLabel(e.repeat).toLowerCase() : ''}, ${KINDS[kindOf(e)].label.toLowerCase()}${e.where ? ', ' + e.where : ''}`}))],
+    ['Klussen', '🔧', (S.jobs || []).filter(j => hit(j.title, j.pro, j.note, areaOf(j)[1], (j.mats || []).map(m => m.name).join(' ')))
+      .map(j => { const mats = (j.mats || []).filter(m => hit(m.name)).map(m => m.name); return {r:`job:${j.id}`, title:j.title, sub:`${areaOf(j)[1]}, ${statusLabel(j).toLowerCase()}${mats.length && !hit(j.title) ? `, nodig: ${mats.join(', ')}` : ''}`}; })],
+    ['Boodschappen', '🛒', S.groceries.filter(g => hit(g.name)).map(g => ({r:`grocery:${g.id}`, title:`${(g.qty || 1) > 1 ? g.qty + '× ' : ''}${g.name}`, sub: g.done ? 'In het mandje' : 'Nog halen'}))],
+    ['Uitgaven', '💶', S.spend.filter(x => hit(x.name, x.cat, euro(num(x.amount)))).sort((a, b) => b.date.localeCompare(a.date)).map(x => ({r:`spend:${x.id}`, title:x.name, sub:`${fmtDate(parse(x.date))}, ${x.cat}, ${euro(num(x.amount))}`}))],
+    ['Vaste lasten en inkomen', '🏦', S.fixed.filter(x => hit(x.name)).map(x => ({r:`fixed:${x.id}`, title:x.name, sub:`${euro(num(x.amount))} ${FREQ[x.freq] || 'per maand'}`}))
+      .concat(S.income.filter(x => hit(x.name)).map(x => ({r:`income:${x.id}`, title:x.name, sub:`Inkomen, ${euro(num(x.amount))} per maand`})))]
+  ].filter(g => g[2].length).map(g => [...g, terms]);
+}
+function drawResults(q){
+  const box = $('#sres'); if (!box) return;
+  const res = searchAll(q);
+  if (!res){ box.innerHTML = `<p class="sub" style="margin:14px 2px">Typ minstens twee letters. Je zoekt in taken, agenda, klussen (ook in wat je nodig hebt), boodschappen en geld.</p>`; return; }
+  if (!res.length){ box.innerHTML = `<div class="empty" style="margin-top:14px"><p>Niets gevonden voor “${esc(q.trim())}”.</p></div>`; return; }
+  box.innerHTML = res.map(([label, ic, list, terms]) => `<div class="sres-head">${label}<span>${list.length}</span></div><div class="group">${list.slice(0, 15).map(x => `<button class="row plain sres" style="width:100%" data-r="${x.r}"><span class="ic" aria-hidden="true">${ic}</span><div class="main"><div class="title">${markText(x.title, terms)}</div><div class="sub">${esc(x.sub)}</div></div></button>`).join('')}</div>${list.length > 15 ? `<p class="sub" style="margin:6px 4px 0">En nog ${list.length - 15}. Maak je zoekopdracht specifieker.</p>` : ''}`).join('');
+}
+function searchSheet(){
+  const dlg = $('#sheet');
+  dlg.onsubmit = e => e.preventDefault();
+  dlg.innerHTML = `<div class="sheet" style="min-height:82dvh"><div class="sheet-head"><span style="min-width:84px"></span><h3>Zoeken</h3><button type="button" class="link strong" data-close>Klaar</button></div>
+    <form role="search"><input id="q" type="search" value="${esc(lastQuery)}" placeholder="Zoek in alles" autocomplete="off" autocapitalize="off" enterkeyhint="search" aria-label="Zoeken in de hele app"></form><div id="sres"></div></div>`;
+  dlg.oninput = e => { if (e.target.id === 'q'){ lastQuery = e.target.value; drawResults(lastQuery); } };
+  dlg.onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if ('close' in b.dataset){ dlg.close(); return; }
+    const r = b.dataset.r; if (!r) return;
+    const [type, id] = r.split(':');
+    if (type === 'task') taskForm(find('tasks', id));
+    else if (type === 'event') eventForm(find('events', id));
+    else if (type === 'job') jobSheet(id);
+    else if (type === 'grocery') groceryForm(find('groceries', id));
+    else if (type === 'spend'){ const x = find('spend', id); ym = x.date.slice(0,7); spendForm(x); }
+    else if (type === 'fixed') fixedForm(find('fixed', id));
+    else if (type === 'income') incomeForm(find('income', id));
+  };
+  drawResults(lastQuery);
+  if (!dlg.open) dlg.showModal();
+  const q = $('#q'); q.focus(); q.select();
 }
 
 /* ---------- personen ---------- */
@@ -594,6 +816,7 @@ function renderList(){
   const byAisle = ST().aisles.map(a => { const items = open.filter(g => aisleOf(g) === a.id); return items.length ? `<div class="aisle">${esc(a.name)}</div>${items.map(row).join('')}` : ''; }).join('');
   return `<section style="margin-top:12px"><form class="quick" data-form="grocery"><input name="item" placeholder="Bijv. 2 melk, brood" autocomplete="off" enterkeyhint="done" aria-label="Boodschap toevoegen"><button class="btn">Toevoegen</button></form>
     <p class="sub" style="margin:6px 4px 0">Zet een aantal ervoor voor meer stuks. Meerdere tegelijk? Scheid ze met een komma.</p></section>`
+    + (open.length ? `<section><button class="btn wide" data-action="shopMode" style="margin-top:4px">🛒 Winkelmodus starten</button></section>` : '')
     + (open.length ? `<section><h2>Nog halen</h2><div class="group">${byAisle}</div><button class="linkbtn" data-action="aisles" style="margin-left:4px">Winkelvolgorde aanpassen</button></section>` : `<section><div class="empty"><p>Je lijst is leeg.</p></div></section>`)
     + (sugg.length ? `<section><h2>Vaak gekocht</h2><div class="chips">${sugg.map(h => `<button class="chip" data-action="sugg" data-name="${esc(h.name)}">+ ${esc(h.name)}</button>`).join('')}</div></section>` : '')
     + (done.length ? `<section><h2>In het mandje</h2><div class="group">${done.map(row).join('')}</div><button class="btn ghost wide" style="margin-top:10px" data-action="clearG">Afgevinkte weghalen</button></section>` : '');
@@ -629,6 +852,7 @@ function aisleSheet(){
         ${a.id === 'overig' ? '<span style="width:32px;flex:none"></span>' : `<button type="button" class="x" data-rm="${i}" aria-label="${esc(a.name)} verwijderen">×</button>`}</div>`).join('')}
         <button type="button" class="row addrow" data-add>${PLUS}Afdeling toevoegen</button></div></div>`;
   };
+  dlg.onsubmit = null;
   dlg.oninput = e => { const i = e.target.dataset.i; if (i !== undefined) list[+i].name = e.target.value; };
   dlg.onclick = e => {
     const t = e.target.closest('button'); if (!t) return;
@@ -652,94 +876,167 @@ function aisleSheet(){
 
 /* ---------- agenda ---------- */
 const KINDS = {
-  afspraak: {label:'Afspraak', c:'#2F8F86'},
+  afspraak: {label:'Afspraak', c:'#D0566C'},
   eten:     {label:'Ergens eten', c:'#E07A3F'},
   samen:    {label:'Samen iets doen', c:'#9B6BD6'},
   anderen:  {label:'Met anderen', c:'#4A7FE0'},
-  deadline: {label:'Deadline', c:'#E2B33F'}
+  deadline: {label:'Deadline', c:'#E2B33F'},
+  taak:     {label:'Taken', c:'#2E9C7E'},
+  klus:     {label:'Klussen', c:'#B07A3B'}
 };
-const kindOf = e => KINDS[e.kind] ? e.kind : 'afspraak';
+const REPEAT = [['', 'Niet herhalen'], ['d1', 'Elke dag'], ['w1', 'Elke week'], ['w2', 'Elke 2 weken'], ['m1', 'Elke maand'], ['y1', 'Elk jaar']];
+const repeatLabel = r => (REPEAT.find(x => x[0] === r) || ['', ''])[1];
+const kindOf = e => KINDS[e.kind] && !['taak','klus'].includes(e.kind) ? e.kind : 'afspraak';
 let agMonth = iso(today()).slice(0,7), agDay = null, agFilter = 'all';
 const evSort = (a,b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || ''));
-const evMatch = e => agFilter === 'all' || kindOf(e) === agFilter;
+const evMatch = it => agFilter === 'all' || it.kind === agFilter;
 const longDate = d => d.toLocaleDateString('nl-NL', {weekday:'long', day:'numeric', month:'long'});
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+
+function nthDate(base, rep, n){
+  const k = +rep.slice(1) || 1, u = rep[0];
+  return u === 'y' ? addInterval(base, 12 * k * n || 0, 'm') : n ? addInterval(base, k * n, u) : new Date(base);
+}
+function eventDates(e, from, to){
+  const base = parse(e.date);
+  if (!e.repeat) return base >= from && base <= to ? [e.date] : [];
+  const until = e.until ? parse(e.until) : null, skip = e.skip || [], out = [];
+  for (let n = 0; n < 4000; n++){
+    const d = n ? nthDate(base, e.repeat, n) : base;
+    if (d > to || (until && d > until)) break;
+    if (d >= from){ const k = iso(d); if (!skip.includes(k)) out.push(k); }
+  }
+  return out;
+}
+function taskDates(t, from, to){
+  const t0 = today(), out = []; let base = nextDue(t), n0 = 0;
+  if (base < t0){ if (t0 >= from && t0 <= to) out.push({date: iso(t0), first: true, late: true}); base = addInterval(t0, t.every, t.unit); n0 = -1; }
+  for (let n = 0; n < 1000; n++){
+    const d = n ? addInterval(base, (+t.every || 1) * n, t.unit) : base;
+    if (d > to) break;
+    if (d >= from) out.push({date: iso(d), first: n === 0 && n0 === 0, late: false});
+  }
+  return out;
+}
+const evDone = (e, date) => e.repeat ? (e.doneDates || []).includes(date) : !!e.done;
+function agendaItems(from, to, withTasks = true){
+  const items = [];
+  for (const e of S.events) for (const date of eventDates(e, from, to)) items.push({type:'ev', e, date, kind: kindOf(e), time: e.time || '', done: evDone(e, date)});
+  if (withTasks) for (const t of S.tasks) for (const o of taskDates(t, from, to)) items.push({type:'task', t, kind:'taak', time:'', done:false, ...o});
+  for (const j of S.jobs || []) if (j.date && j.status !== 'klaar'){ const d = parse(j.date); if (d >= from && d <= to) items.push({type:'job', j, date: j.date, kind:'klus', time:'', done:false}); }
+  return items.sort((a, b) => (a.date + (a.time || '~')).localeCompare(b.date + (b.time || '~')));
+}
+function lateDeadlines(){
+  const t0 = today();
+  return agendaItems(addDays(t0, -60), addDays(t0, -1), false).filter(it => it.kind === 'deadline' && !it.done);
+}
 function forBadges(e){
   if (!named()) return '';
   if (e.for === 'p1' || e.for === 'p2') return badge(e.for);
   return ['eten','samen','anderen'].includes(kindOf(e)) ? `<span class="pair" aria-label="Samen">${badge('p1')}${badge('p2')}</span>` : '';
 }
-function eventRow(e){
-  const k = kindOf(e), K = KINDS[k], d = parse(e.date), diff = daysBetween(today(), d);
-  const late = k === 'deadline' && !e.done && diff < 0;
-  const when = e.done ? 'Afgerond' : diff < 0 && k !== 'deadline' ? fmtDate(d) : relDay(diff, d);
+const dateBox = (d, c) => `<div class="datebox" style="--k:${c}"><b>${d.getDate()}</b><span>${d.toLocaleDateString('nl-NL',{month:'short'}).replace('.','')}</span></div>`;
+function eventRow(e, date = e.date, done = evDone(e, date)){
+  const k = kindOf(e), K = KINDS[k], d = parse(date), diff = daysBetween(today(), d);
+  const late = k === 'deadline' && !done && diff < 0;
+  const when = done ? 'Afgerond' : diff < 0 && k !== 'deadline' ? fmtDate(d) : relDay(diff, d);
   const time = e.time ? ', ' + esc(e.time) + (e.end ? '–' + esc(e.end) : '') : '';
   const where = e.where ? (k === 'eten' ? ' bij ' : ', ') + esc(e.where) : '';
   const withw = e.with ? ', met ' + esc(e.with) : '';
-  return `<div class="row${e.done ? ' isdone' : ''}"><div class="datebox" style="--k:${K.c}"><b>${d.getDate()}</b><span>${d.toLocaleDateString('nl-NL',{month:'short'}).replace('.','')}</span></div>
-    <button class="main plain" data-action="editEvent" data-id="${e.id}"><div class="title">${esc(e.title)}</div>
-    <div class="sub"><span class="${late ? 'late' : diff === 0 && !e.done ? 'due' : ''}">${when}</span>${time}</div>
+  const rep = e.repeat ? `, ${repeatLabel(e.repeat).toLowerCase()}` : '';
+  return `<div class="row${done ? ' isdone' : ''}">${dateBox(d, K.c)}
+    <button class="main plain" data-action="editEvent" data-id="${e.id}" data-date="${date}"><div class="title">${esc(e.title)}</div>
+    <div class="sub"><span class="${late ? 'late' : diff === 0 && !done ? 'due' : ''}">${when}</span>${time}${rep}</div>
     <div class="sub"><span class="kind" style="--k:${K.c}">${K.label}${where}${withw}</span></div></button>
-    ${forBadges(e)}${k === 'deadline' ? `<button class="check${e.done ? ' on' : ''}" data-action="toggleEv" data-id="${e.id}" aria-label="${esc(e.title)} ${e.done ? 'heropenen' : 'afronden'}">${e.done ? CHECK : ''}</button>` : ''}</div>`;
+    ${forBadges(e)}${k === 'deadline' ? `<button class="check${done ? ' on' : ''}" data-action="toggleEv" data-id="${e.id}" data-date="${date}" aria-label="${esc(e.title)} ${done ? 'heropenen' : 'afronden'}">${done ? CHECK : ''}</button>` : ''}</div>`;
 }
+function taskItemRow(it){
+  const t = it.t, d = parse(it.date), diff = daysBetween(today(), d), due = nextDue(t);
+  const when = it.late ? relDay(daysBetween(today(), due), due) : relDay(diff, d);
+  const a = assignee(t);
+  return `<div class="row">${dateBox(d, KINDS.taak.c)}
+    <button class="main plain" data-action="editTask" data-id="${t.id}"><div class="title">${esc(t.name)}</div>
+    <div class="sub"><span class="${it.late ? 'late' : diff === 0 ? 'due' : ''}">${when}</span>${t.mins ? ', ' + fmtMins(t.mins) : ''}</div>
+    <div class="sub"><span class="kind" style="--k:${KINDS.taak.c}">Taak, ${intervalLabel(t).toLowerCase()}</span></div></button>
+    ${a ? badge(a) : ''}${it.first ? `<button class="check" data-action="done" data-id="${t.id}" aria-label="${esc(t.name)} afvinken"></button>` : ''}</div>`;
+}
+function jobItemRow(it){
+  const j = it.j, a = areaOf(j), d = parse(it.date), diff = daysBetween(today(), d);
+  return `<div class="row">${dateBox(d, KINDS.klus.c)}<button class="main plain" data-action="openJob" data-id="${j.id}"><div class="title">${esc(j.title)}</div>
+    <div class="sub"><span class="${diff < 0 ? 'late' : diff === 0 ? 'due' : ''}">${relDay(diff, d)}</span>, ${statusLabel(j).toLowerCase()}</div>
+    <div class="sub"><span class="kind" style="--k:${KINDS.klus.c}">${a[1]}, ${doerText(j).toLowerCase()}</span></div></button>${doerBadge(j)}</div>`;
+}
+const itemRow = it => it.type === 'task' ? taskItemRow(it) : it.type === 'job' ? jobItemRow(it) : eventRow(it.e, it.date, it.done);
 function dayList(list){
   let out = '', cur = null;
-  for (const e of list){
-    if (e.date !== cur){ cur = e.date; const d = parse(cur), diff = daysBetween(today(), d);
+  for (const it of list){
+    if (it.date !== cur){ cur = it.date; const d = parse(cur), diff = daysBetween(today(), d);
       out += `<div class="aisle">${diff === 0 ? 'Vandaag' : diff === 1 ? 'Morgen' : esc(longDate(d))}</div>`; }
-    out += eventRow(e);
+    out += itemRow(it);
   }
   return out;
 }
 function monthGrid(){
-  const [y, m] = agMonth.split('-').map(Number), first = new Date(y, m - 1, 1);
-  const lead = (first.getDay() + 6) % 7, days = new Date(y, m, 0).getDate(), t = iso(today());
+  const [y, m] = agMonth.split('-').map(Number), first = new Date(y, m - 1, 1), last = new Date(y, m, 0);
+  const lead = (first.getDay() + 6) % 7, t = iso(today());
+  const byDay = {};
+  agendaItems(first, last).filter(evMatch).forEach(it => (byDay[it.date] = byDay[it.date] || []).push(it));
   let cells = ['ma','di','wo','do','vr','za','zo'].map(w => `<span class="cal-wd">${w}</span>`).join('') + '<span></span>'.repeat(lead);
-  for (let dn = 1; dn <= days; dn++){
-    const k = `${agMonth}-${pad(dn)}`, evs = S.events.filter(e => e.date === k && evMatch(e)).sort(evSort);
-    const dots = evs.slice(0,3).map(e => `<i style="background:${KINDS[kindOf(e)].c}"></i>`).join('');
-    cells += `<button class="cal-day${k === t ? ' is-today' : ''}${k === agDay ? ' is-sel' : ''}" data-action="pickDay" data-d="${k}" aria-label="${esc(longDate(parse(k)))}, ${evs.length} ${evs.length === 1 ? 'item' : 'items'}"><span>${dn}</span><span class="cal-dots">${dots}</span></button>`;
+  for (let dn = 1; dn <= last.getDate(); dn++){
+    const k = `${agMonth}-${pad(dn)}`, its = byDay[k] || [];
+    const ordered = its.filter(i => i.type === 'ev').concat(its.filter(i => i.type === 'task'));
+    const dots = ordered.slice(0,3).map(it => `<i style="background:${KINDS[it.kind].c}"></i>`).join('');
+    cells += `<button class="cal-day${k === t ? ' is-today' : ''}${k === agDay ? ' is-sel' : ''}" data-action="pickDay" data-d="${k}" aria-label="${esc(longDate(parse(k)))}, ${its.length} ${its.length === 1 ? 'item' : 'items'}"><span>${dn}</span><span class="cal-dots">${dots}</span></button>`;
   }
   return `<div class="group purse" style="padding:12px 10px"><div class="monthnav"><button data-action="agMonth" data-d="-1" aria-label="Vorige maand">‹</button><b>${monthName(agMonth)}</b><button data-action="agMonth" data-d="1" aria-label="Volgende maand">›</button></div><div class="cal">${cells}</div></div>`;
 }
 function renderAgenda(){
-  const t = iso(today());
-  const all = S.events.filter(evMatch).sort(evSort);
+  const t0 = today(), t = iso(t0);
   const chips = [['all','Alles'], ...Object.entries(KINDS).map(([k, v]) => [k, v.label])];
   let html = `<section style="margin-top:12px">${monthGrid()}<div class="chips filt">${chips.map(([k, l]) => `<button class="chip${agFilter === k ? ' on' : ''}" data-action="agFilter" data-k="${k}" aria-pressed="${agFilter === k}">${esc(l)}</button>`).join('')}</div></section>`;
   if (agDay){
-    const list = all.filter(e => e.date === agDay);
-    return html + `<section><h2>${esc(longDate(parse(agDay)))}</h2><div class="group">${list.map(eventRow).join('')}<button class="row addrow" data-action="add" data-what="event">${PLUS}Iets toevoegen op deze dag</button></div>
+    const d = parse(agDay), list = agendaItems(d, d).filter(evMatch);
+    return html + `<section><h2>${esc(longDate(d))}</h2><div class="group">${list.map(itemRow).join('')}<button class="row addrow" data-action="add" data-what="event">${PLUS}Iets toevoegen op deze dag</button></div>
       <button class="linkbtn" data-action="pickDay" data-d="" style="margin-left:4px">Alles tonen</button></section>`;
   }
-  if (!S.events.length) return html + `<section><div class="empty"><p>Zet hier alles neer wat jullie plannen: afspraken, ergens eten en bij wie, dingen die jullie samen gaan doen of met anderen, en deadlines. Tik op een dag in de kalender om meteen iets op die dag te zetten.</p><button class="btn" data-action="add" data-what="event">Iets toevoegen</button></div></section>`;
-  const late = all.filter(e => e.kind === 'deadline' && !e.done && e.date < t);
-  const up = all.filter(e => !e.done && e.date >= t);
-  const past = all.filter(e => (e.done || e.date < t) && !late.includes(e)).reverse();
+  if (!S.events.length && !S.tasks.length) return html + `<section><div class="empty"><p>Zet hier alles neer wat jullie plannen: afspraken, ergens eten en bij wie, dingen die jullie samen gaan doen of met anderen, en deadlines. Ook je taken verschijnen hier. Tik op een dag in de kalender om meteen iets op die dag te zetten.</p><button class="btn" data-action="add" data-what="event">Iets toevoegen</button></div></section>`;
+  const taskDays = agFilter === 'taak' ? 31 : 7;
+  const late = lateDeadlines().filter(evMatch);
+  const up = agendaItems(t0, addDays(t0, 90)).filter(evMatch).filter(it => { const days = daysBetween(t0, parse(it.date)); return !it.done && (it.type === 'ev' ? !it.e.repeat || days < 31 : it.type === 'task' ? days < taskDays : true); });
+  const past = S.events.filter(e => !e.repeat && (e.done || e.date < t)).map(e => ({type:'ev', e, date: e.date, kind: kindOf(e), done: !!e.done}))
+    .filter(evMatch).filter(it => !late.some(l => l.e === it.e)).sort((a, b) => b.date.localeCompare(a.date));
   return html
-    + (late.length ? `<section><h2 class="late">Over de deadline</h2><div class="group">${late.map(eventRow).join('')}</div></section>` : '')
-    + `<section><h2>Komend</h2><div class="group">${dayList(up)}<button class="row addrow" data-action="add" data-what="event">${PLUS}Iets toevoegen</button></div></section>`
-    + (past.length ? `<section><details><summary>Geweest en afgerond (${past.length})</summary><div class="group">${past.map(eventRow).join('')}</div></details></section>` : '');
+    + (late.length ? `<section><h2 class="late">Over de deadline</h2><div class="group">${late.map(itemRow).join('')}</div></section>` : '')
+    + `<section><h2>Komend</h2><div class="group">${dayList(up)}<button class="row addrow" data-action="add" data-what="event">${PLUS}Iets toevoegen</button></div>${agFilter === 'all' && S.tasks.length ? `<p class="sub" style="margin:8px 4px 0">Taken zie je hier voor de komende week en herhalende afspraken voor de komende maand. In de kalender zie je alles.</p>` : ''}</section>`
+    + (past.length ? `<section><details><summary>Geweest en afgerond (${past.length})</summary><div class="group">${past.map(itemRow).join('')}</div></details></section>` : '');
 }
-function eventForm(e){
+function eventForm(e, occDate, preset = {}){
   const fields = [{key:'title', label:'Wat', type:'text', placeholder:'Bijv. tandarts, verjaardag Tim, bioscoop'},
-    {key:'kind', label:'Soort', type:'select', options: Object.entries(KINDS).map(([k, v]) => [k, v.label])}];
+    {key:'kind', label:'Soort', type:'select', options: Object.entries(KINDS).filter(([k]) => k !== 'taak' && k !== 'klus').map(([k, v]) => [k, v.label])}];
   if (named()){ const [a, b] = people(); fields.push({key:'for', label:'Voor wie', type:'select', options:[['', 'Samen'], ['p1', a.name], ['p2', b.name]]}); }
-  fields.push({key:'date', label:'Datum', type:'date', required:true},
+  fields.push({key:'date', label: e && e.repeat ? 'Datum (eerste keer)' : 'Datum', type:'date', required:true},
     {key:'time', label:'Van (optioneel)', type:'time', half:true},
     {key:'end', label:'Tot (optioneel)', type:'time', half:true},
+    {key:'repeat', label:'Herhalen', type:'select', half:true, options: REPEAT},
+    {key:'until', label:'Tot en met (optioneel)', type:'date', half:true},
     {key:'where', label:'Waar of bij wie (optioneel)', type:'text', placeholder:'Bijv. bij oma, restaurant De Haven'},
     {key:'with', label:'Met wie (optioneel)', type:'text', placeholder:'Bijv. Tim en Eva'},
     {key:'note', label:'Notitie (optioneel)', type:'textarea'});
-  openForm({title: e ? KINDS[kindOf(e)].label : 'Nieuw in de agenda', fields, values: e || {kind:'afspraak', for:'', date: agDay || iso(today())},
+  const one = e && e.repeat && occDate;
+  openForm({title: e ? KINDS[kindOf(e)].label : 'Nieuw in de agenda', fields, values: e || {kind:'afspraak', for:'', repeat:'', date: agDay || iso(today()), ...preset},
+    note: one ? `Dit is een herhalende afspraak. Wijzigingen gelden voor alle keren.` : '',
     onSave: v => {
       if (!v.title) v.title = v.kind === 'eten' ? (v.where ? `Eten bij ${v.where}` : 'Uit eten') : KINDS[v.kind].label + (v.where ? `, ${v.where}` : '');
+      if (!v.repeat) v.until = '';
       e ? Object.assign(e, v) : S.events.push({id: uid(), done:false, ...v});
     },
-    onDelete: e && (() => S.events = S.events.filter(x => x !== e))});
+    extra: one ? {label: `Alleen ${fmtDate(parse(occDate))} verwijderen`, run: () => { e.skip = (e.skip || []).concat(occDate); }} : null,
+    onDelete: e && (() => S.events = S.events.filter(x => x !== e)),
+    deleteLabel: e && e.repeat ? 'Alle keren verwijderen' : 'Verwijderen'});
 }
 
 /* ---------- formulier-sheet ---------- */
-function openForm({title, fields, values = {}, onSave, onDelete}){
+function openForm({title, fields, values = {}, onSave, onDelete, extra, note, after, deleteLabel = 'Verwijderen'}){
   const dlg = $('#sheet');
   const inputs = fields.map(fl => {
     let v = values[fl.key] ?? fl.def ?? ''; const id = 'f_' + fl.key; let input;
@@ -751,10 +1048,14 @@ function openForm({title, fields, values = {}, onSave, onDelete}){
       input = `<input id="${id}" name="${fl.key}" type="${type}"${mode} value="${esc(v)}"${fl.placeholder ? ` placeholder="${esc(fl.placeholder)}"` : ''} autocomplete="off">`; }
     return `<div class="field${fl.half ? ' half' : ''}"><label for="${id}">${esc(fl.label)}</label>${input}</div>`;
   }).join('');
-  dlg.onclick = null; dlg.oninput = null;
+  dlg.onclick = null; dlg.oninput = null; dlg.onsubmit = null;
   dlg.innerHTML = `<form class="sheet" novalidate><div class="sheet-head"><button type="button" class="link" data-close>Annuleren</button><h3>${esc(title)}</h3><button type="submit" class="link strong">Bewaren</button></div>
-    <div class="fields">${inputs}</div><p class="err" hidden></p>${onDelete ? '<button type="button" class="btn danger wide" data-del>Verwijderen</button>' : ''}</form>`;
+    ${note ? `<p class="sub" style="margin:0 2px 12px">${esc(note)}</p>` : ''}<div class="fields">${inputs}</div><p class="err" hidden></p>
+    ${extra ? `<button type="button" class="btn ghost wide" data-extra style="margin-top:18px">${esc(extra.label)}</button>` : ''}${onDelete ? `<button type="button" class="btn danger wide" data-del>${esc(deleteLabel)}</button>` : ''}</form>`;
   const form = dlg.querySelector('form'), err = form.querySelector('.err');
+  const cond = fields.filter(f => f.showIf);
+  const refresh = () => { const vals = {}; fields.forEach(f => vals[f.key] = form.elements[f.key].value); cond.forEach(f => form.querySelector('#f_' + f.key).closest('.field').hidden = !f.showIf(vals)); };
+  if (cond.length){ form.addEventListener('change', refresh); form.addEventListener('input', refresh); refresh(); }
   form.onsubmit = ev => {
     ev.preventDefault(); const out = {};
     for (const fl of fields){
@@ -764,11 +1065,13 @@ function openForm({title, fields, values = {}, onSave, onDelete}){
       if (fl.type === 'int') v = v === '' ? '' : Math.min(fl.max ?? 9999, Math.max(fl.min ?? 1, parseInt(v) || 1));
       out[fl.key] = v;
     }
-    onSave(out); dlg.close(); save(); render(); toast('Bewaard');
+    onSave(out); dlg.close(); save(); render(); toast('Bewaard'); if (after) after();
   };
   form.querySelector('[data-close]').onclick = () => dlg.close();
   const del = form.querySelector('[data-del]');
   if (del) del.onclick = () => { const undo = snapshot(); onDelete(); dlg.close(); save(); render(); toast('Verwijderd', undo); };
+  const ex = form.querySelector('[data-extra]');
+  if (ex) ex.onclick = () => { const undo = snapshot(); extra.run(); dlg.close(); save(); render(); toast('Verwijderd', undo); };
   if (!dlg.open) dlg.showModal();
 }
 $('#sheet').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
@@ -776,7 +1079,7 @@ $('#sheet').addEventListener('click', e => { if (e.target === e.currentTarget) e
 /* ---------- back-up ---------- */
 function openSettings(){
   const dlg = $('#sheet'), synced = cfg && cfg.mode === 'sync';
-  dlg.onclick = null; dlg.oninput = null;
+  dlg.onclick = null; dlg.oninput = null; dlg.onsubmit = null;
   const count = `${S.tasks.length} taken, ${S.fixed.length} vaste lasten, ${S.spend.length} uitgaven, ${S.events.length} agenda-items`;
   const pend = Object.keys(sync.pending).length;
   const statusText = !synced ? '' : syncStatus === 'ok' ? 'Alles is gesynchroniseerd.' : syncStatus === 'busy' ? 'Bezig met synchroniseren…'
@@ -788,6 +1091,7 @@ function openSettings(){
     <div class="stack">${synced ? '<button class="btn" data-action="syncNow">Nu synchroniseren</button>' : ''}
     <button class="btn ghost" data-action="names">Namen${me() ? ` (jij bent ${esc(me().name)})` : ''}</button>
     <button class="btn ghost" data-action="aisles">Winkelvolgorde</button>
+    <button class="btn ghost" data-action="homeEdit">Startpagina aanpassen</button>
     <button class="btn ghost" data-action="toggleConfetti">Confetti bij afvinken: ${S.ui.noConfetti ? 'uit' : 'aan'}</button>
     <button class="btn ghost" data-action="checkUpdate">Op updates controleren</button>
     <button class="btn ${synced ? 'ghost' : ''}" data-action="export">Back-up maken</button>
@@ -818,6 +1122,362 @@ function importData(file){
     const undo = snapshot(); S = Object.assign(empty(), data); save(); $('#sheet').close(); render(); toast('Back-up teruggezet', undo);
   };
   r.readAsText(file);
+}
+
+/* ---------- klussen ---------- */
+const AREAS = [['keuken','Keuken','🍳'],['badkamer','Badkamer & toilet','🛁'],['woonkamer','Woonkamer','🛋️'],['slaapkamer','Slaapkamers','🛏️'],['installaties','CV, water & elektra','⚡'],['buiten','Gevel, dak & kozijnen','🏠'],['tuin','Tuin & balkon','🌿'],['berging','Zolder & berging','📦'],['overig','Overig','🔧']];
+const PRIO = {laag:['Laag','#7A8F8C'], normaal:['Normaal','#4A7FE0'], hoog:['Hoog','#E07A3F'], urgent:['Urgent','#D0475C']};
+const STATUS = [['idee','Idee'],['gepland','Gepland'],['bezig','Bezig'],['klaar','Klaar']];
+const JREPEAT = [['','Eenmalig'],['3','Elk kwartaal'],['6','Elk half jaar'],['12','Elk jaar'],['24','Elke 2 jaar'],['60','Elke 5 jaar']];
+const HOURS = [['','Weet ik niet'],['1','± 1 uur'],['2','± 2 uur'],['4','Een halve dag'],['8','Een hele dag'],['16','Een weekend']];
+const MAINT = [['CV-ketel laten onderhouden','installaties','12','uit'],['Rookmelders testen','installaties','3',''],['Radiatoren ontluchten','installaties','12',''],['Afvoeren reinigen','badkamer','3',''],['Kitranden badkamer controleren','badkamer','12',''],['Filters afzuigkap schoonmaken','keuken','3',''],['Ventilatieroosters schoonmaken','woonkamer','6',''],['Dakgoten schoonmaken','buiten','12',''],['Buitenschilderwerk controleren','buiten','12','']];
+let jobFilter = 'all';
+const areaOf = j => AREAS.find(a => a[0] === j.area) || AREAS[AREAS.length - 1];
+const statusLabel = j => (STATUS.find(x => x[0] === (j.status || 'idee')) || STATUS[0])[1];
+const prioOf = j => PRIO[j.prio] || PRIO.normaal;
+function doerText(j){
+  if (j.who === 'uit') return j.pro ? `Uitbesteed aan ${j.pro}` : 'Uitbesteden';
+  const p = (j.who === 'p1' || j.who === 'p2') && named() ? person(j.who).name : '';
+  return p ? `Zelf, ${p}` : 'Zelf, samen';
+}
+const doerTextEsc = j => esc(doerText(j));
+function doerBadge(j){
+  if (j.who === 'uit') return `<span class="who who-pro" aria-label="Uitbesteed">🧰</span>`;
+  if (!named()) return '';
+  if (j.who === 'p1' || j.who === 'p2') return badge(j.who);
+  return `<span class="pair" aria-label="Samen">${badge('p1')}${badge('p2')}</span>`;
+}
+function jobCard(j){
+  const a = areaOf(j), P = prioOf(j), mats = j.mats || [], have = mats.filter(m => m.done).length;
+  const d = j.date ? parse(j.date) : null, diff = d ? daysBetween(today(), d) : 0, late = d && diff < 0 && j.status !== 'klaar';
+  const hours = j.who !== 'uit' && j.hours ? (HOURS.find(h => h[0] === String(j.hours)) || [,''])[1] : '';
+  return `<button class="job${j.status === 'klaar' ? ' isdone' : ''}" data-action="openJob" data-id="${j.id}" style="--p:${P[1]}">
+    <span class="job-icon" aria-hidden="true">${a[2]}</span>
+    <span class="job-body">
+      <span class="job-top">${esc(a[1])}${j.type === 'onderhoud' ? `<span class="tag" style="--t:#2E9C7E">Onderhoud</span>` : ''}${j.prio && j.prio !== 'normaal' ? `<span class="tag" style="--t:${P[1]}">${P[0]}</span>` : ''}</span>
+      <span class="job-title">${esc(j.title)}</span>
+      <span class="job-meta"><span>${doerBadge(j)}${doerTextEsc(j)}</span>${d && j.status !== 'klaar' ? `<span class="${late ? 'late' : diff === 0 ? 'due' : ''}">${relDay(diff, d)}</span>` : ''}${j.status === 'klaar' && j.doneAt ? `<span>Klaar op ${fmtDate(parse(j.doneAt))}</span>` : ''}${hours ? `<span>${hours}</span>` : ''}${num(j.cost) ? `<span>${euro(num(j.cost))}</span>` : ''}</span>
+      ${mats.length && j.status !== 'klaar' ? `<span class="mat"><span class="matbar"><i style="width:${have / mats.length * 100}%"></i></span><span>${have} van ${mats.length} spullen in huis</span></span>` : ''}
+    </span></button>`;
+}
+function renderJobs(){
+  const jobs = S.jobs || [];
+  if (!jobs.length) return `<section style="margin-top:12px"><div class="house"><h3>Ons huis</h3><p style="margin:0 0 14px;max-width:30ch">Houd hier bij welke klussen en welk onderhoud er in huis moet gebeuren, wat je ervoor nodig hebt en wie het doet.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" style="background:#fff;color:#1F6F68" data-action="add" data-what="job">Klus toevoegen</button><button class="btn" style="background:rgba(255,255,255,.18);color:#fff" data-action="sampleJobs">Standaard onderhoud toevoegen</button></div></div></section>`;
+  const open = jobs.filter(j => j.status !== 'klaar');
+  const cnt = k => open.filter(j => (j.status || 'idee') === k).length;
+  const costSelf = open.filter(j => j.who !== 'uit').reduce((a, j) => a + num(j.cost), 0), costPro = open.filter(j => j.who === 'uit').reduce((a, j) => a + num(j.cost), 0);
+  const nextM = open.filter(j => j.type === 'onderhoud' && j.date).sort((a, b) => a.date.localeCompare(b.date))[0];
+  let html = `<section style="margin-top:12px"><div class="house"><h3>Ons huis</h3>
+    <div class="house-stats"><div><b>${cnt('bezig')}</b><span>Bezig</span></div><div><b>${cnt('gepland')}</b><span>Gepland</span></div><div><b>${cnt('idee')}</b><span>Ideeën</span></div></div>
+    ${costSelf + costPro ? `<div class="house-money">Begroot voor open klussen: <b>${euro(costSelf + costPro)}</b><br><span style="opacity:.85;font-size:14px">Zelf ${euro(costSelf)}, uitbesteed ${euro(costPro)}</span></div>` : ''}
+    ${nextM ? `<div class="house-next">Volgend onderhoud: ${esc(nextM.title)}, ${relDay(daysBetween(today(), parse(nextM.date)), parse(nextM.date)).toLowerCase()}</div>` : ''}</div>
+    <div class="chips filt">${[['all','Alles'],['zelf','Zelf doen'],['uit','Uitbesteden'],['onderhoud','Onderhoud']].map(([k, l]) => `<button class="chip${jobFilter === k ? ' on' : ''}" data-action="jobFilter" data-k="${k}" aria-pressed="${jobFilter === k}">${l}</button>`).join('')}</div></section>`;
+  const match = j => jobFilter === 'all' || (jobFilter === 'zelf' && j.who !== 'uit') || (jobFilter === 'uit' && j.who === 'uit') || (jobFilter === 'onderhoud' && j.type === 'onderhoud');
+  const pr = {urgent:0, hoog:1, normaal:2, laag:3};
+  const byPrio = (a, b) => (pr[a.prio] ?? 2) - (pr[b.prio] ?? 2);
+  const byDate = (a, b) => (a.date || '9999').localeCompare(b.date || '9999') || byPrio(a, b);
+  const sections = [['Bezig', j => j.status === 'bezig', byDate], ['Gepland', j => j.status === 'gepland', byDate], ['Ideeën', j => !j.status || j.status === 'idee', byPrio]];
+  let any = false;
+  for (const [label, f, sort] of sections){
+    const list = jobs.filter(j => f(j) && match(j)).sort(sort);
+    if (list.length){ any = true; html += `<section><h2>${label}<span class="h2sub">${list.length}</span></h2><div class="jobs">${list.map(jobCard).join('')}</div></section>`; }
+  }
+  if (!any) html += `<section><div class="empty"><p>Geen open klussen in deze selectie.</p></div></section>`;
+  const done = jobs.filter(j => j.status === 'klaar' && match(j)).sort((a, b) => (b.doneAt || '').localeCompare(a.doneAt || ''));
+  html += `<section><div class="group"><button class="row addrow" data-action="add" data-what="job">${PLUS}Klus of onderhoud toevoegen</button></div></section>`;
+  if (done.length) html += `<section><details><summary>Klaar (${done.length})</summary><div class="jobs">${done.map(jobCard).join('')}</div></details></section>`;
+  return html;
+}
+function jobForm(j){
+  const doers = named() ? [['', 'Zelf, samen'], ['p1', `Zelf, ${person('p1').name}`], ['p2', `Zelf, ${person('p2').name}`], ['uit', 'Uitbesteden']] : [['', 'Zelf'], ['uit', 'Uitbesteden']];
+  const fields = [
+    {key:'title', label:'Wat moet er gebeuren', type:'text', required:true, placeholder:'Bijv. kitrand douche vervangen'},
+    {key:'area', label:'Waar in huis', type:'select', options: AREAS.map(a => [a[0], `${a[2]} ${a[1]}`])},
+    {key:'type', label:'Soort', type:'select', half:true, options:[['klus','Klus'], ['onderhoud','Onderhoud']]},
+    {key:'prio', label:'Prioriteit', type:'select', half:true, options: Object.entries(PRIO).map(([k, v]) => [k, v[0]])},
+    {key:'repeat', label:'Hoe vaak', type:'select', options: JREPEAT, showIf: v => v.type === 'onderhoud'},
+    {key:'status', label:'Status', type:'select', half:true, options: STATUS},
+    {key:'date', label:'Gepland op', type:'date', half:true},
+    {key:'who', label:'Wie doet het', type:'select', options: doers},
+    {key:'hours', label:'Hoeveel tijd kost het', type:'select', options: HOURS, showIf: v => v.who !== 'uit'},
+    {key:'pro', label:'Vakman of bedrijf', type:'text', placeholder:'Bijv. Installatiebedrijf Jansen', showIf: v => v.who === 'uit'},
+    {key:'contact', label:'Telefoon of e-mail', type:'text', placeholder:'Bijv. 06 12345678', showIf: v => v.who === 'uit'},
+    {key:'cost', label:'Kosten (materiaal of offerte, optioneel)', type:'money', placeholder:'0,00'},
+    {key:'note', label:'Notitie (optioneel)', type:'textarea'}];
+  let created = null;
+  openForm({title: j ? 'Klus bewerken' : 'Nieuwe klus', fields,
+    values: j || {area:'overig', type:'klus', prio:'normaal', status:'idee', who:'', repeat:''},
+    onSave: v => {
+      if (v.type !== 'onderhoud') v.repeat = '';
+      if (j) Object.assign(j, v); else { created = {id: uid(), mats: [], log: [], ...v}; (S.jobs = S.jobs || []).push(created); }
+    },
+    after: () => { const target = j || created; if (target) jobSheet(target.id); }});
+}
+function setJobStatus(j, k, at){
+  if (k !== 'klaar'){ j.status = k; save(); return; }
+  const undo = snapshot();
+  j.log = (j.log || []).concat(iso(today())).slice(-20);
+  if (j.repeat){
+    j.date = iso(addInterval(today(), +j.repeat, 'm')); j.status = 'gepland'; (j.mats || []).forEach(m => m.done = false);
+    toast(`Klaar! Volgende keer: ${fmtDate(parse(j.date))}`, () => { $('#sheet').close(); undo(); });
+  } else {
+    j.status = 'klaar'; j.doneAt = iso(today());
+    toast('Klus klaar!', () => { $('#sheet').close(); undo(); });
+  }
+  save(); confetti(...at);
+}
+function materialsToList(j){
+  const st = ST();
+  if (!st.aisles.some(a => a.id === 'bouwmarkt')){ st.aisles.splice(Math.max(0, st.aisles.findIndex(a => a.id === 'overig')), 0, {id:'bouwmarkt', name:'Bouwmarkt'}); st.v = Date.now(); }
+  let n = 0;
+  for (const m of (j.mats || []).filter(m => !m.done)){
+    const key = m.name.toLowerCase();
+    if (!S.history[key]) S.history[key] = {name: m.name, count: 0, aisle: 'bouwmarkt'};
+    else if (!S.history[key].aisle || S.history[key].aisle === 'overig') S.history[key].aisle = 'bouwmarkt';
+    addGrocery(`${m.qty > 1 ? m.qty + ' ' : ''}${m.name}`); n++;
+  }
+  save(); toast(n ? `${n} ${n === 1 ? 'ding' : 'dingen'} op de boodschappenlijst gezet` : 'Je hebt alles al in huis');
+}
+function jobSheet(id){
+  const dlg = $('#sheet');
+  const J = () => (S.jobs || []).find(x => x.id === id);
+  const draw = () => {
+    const j = J(); if (!j){ dlg.close(); return; }
+    const a = areaOf(j), P = prioOf(j), mats = j.mats || [], have = mats.filter(m => m.done).length;
+    const d = j.date ? parse(j.date) : null;
+    const hours = (HOURS.find(h => h[0] === String(j.hours || '')) || [,''])[1];
+    const contact = j.contact ? (/@/.test(j.contact) ? `<a href="mailto:${esc(j.contact)}">${esc(j.contact)}</a>` : `<a href="tel:${esc(j.contact.replace(/[^\d+]/g, ''))}">${esc(j.contact)}</a>`) : '';
+    dlg.innerHTML = `<div class="sheet"><div class="sheet-head"><button type="button" class="link" data-close>Sluiten</button><h3>Klus</h3><button type="button" class="link strong" data-edit>Bewerken</button></div>
+      <div class="jhero"><span class="job-icon big" aria-hidden="true">${a[2]}</span><div><div class="job-top">${esc(a[1])}${j.type === 'onderhoud' ? `<span class="tag" style="--t:#2E9C7E">Onderhoud${j.repeat ? ', ' + JREPEAT.find(r => r[0] === String(j.repeat))[1].toLowerCase() : ''}</span>` : ''}<span class="tag" style="--t:${P[1]}">${P[0]}</span></div><h2>${esc(j.title)}</h2></div></div>
+      <div class="seg seg4" role="group" aria-label="Status">${STATUS.map(([k, l]) => `<button type="button" data-status="${k}" aria-pressed="${(j.status || 'idee') === k}">${l}</button>`).join('')}</div>
+      <dl class="group" style="margin:0">
+        <div class="inforow"><dt>Wie</dt><dd>${doerBadge(j)}${doerTextEsc(j)}</dd></div>
+        ${contact ? `<div class="inforow"><dt>Contact</dt><dd>${contact}</dd></div>` : ''}
+        <div class="inforow"><dt>Wanneer</dt><dd>${d ? `${esc(longDate(d))}` : '<span class="sub">Nog niet gepland</span>'}</dd></div>
+        ${hours && j.who !== 'uit' ? `<div class="inforow"><dt>Tijd</dt><dd>${hours}</dd></div>` : ''}
+        ${num(j.cost) ? `<div class="inforow"><dt>Kosten</dt><dd>${euro(num(j.cost))}</dd></div>` : ''}
+      </dl>
+      <h4>Wat hebben we nodig${mats.length ? `<span>${have} van ${mats.length} in huis</span>` : ''}</h4>
+      <div class="group">${mats.map(m => `<div class="row${m.done ? ' isdone' : ''}"><button type="button" class="check${m.done ? ' on' : ''}" data-mat="${m.id}" aria-label="${esc(m.name)} ${m.done ? 'niet in huis' : 'in huis'}">${m.done ? CHECK : ''}</button><div class="main title">${m.qty > 1 ? `<b class="qty">${m.qty}×</b> ` : ''}${esc(m.name)}</div><button type="button" class="x" data-rmmat="${m.id}" aria-label="${esc(m.name)} verwijderen">×</button></div>`).join('')}
+        <form class="quick inrow" data-addmat><input name="mat" placeholder="Bijv. 2 tubes sanitairkit, kitspuit" autocomplete="off" enterkeyhint="done" aria-label="Benodigdheid toevoegen"><button class="btn">Voeg toe</button></form></div>
+      ${mats.some(m => !m.done) ? `<button type="button" class="btn ghost wide" data-tolist style="margin-top:10px">Wat ontbreekt op de boodschappenlijst zetten</button>` : ''}
+      ${j.note ? `<h4>Notitie</h4><p class="notebox">${esc(j.note)}</p>` : ''}
+      ${(j.log || []).length ? `<h4>Eerder gedaan</h4><p class="sub" style="margin:0 2px">${j.log.slice(-6).reverse().map(x => fmtDate(parse(x))).join(', ')}</p>` : ''}
+      <button type="button" class="btn danger wide" data-deljob style="margin-top:18px">Klus verwijderen</button></div>`;
+  };
+  dlg.oninput = null;
+  dlg.onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const j = J(); if (!j) return; const d = b.dataset;
+    if ('close' in d){ dlg.close(); return; }
+    if ('edit' in d){ jobForm(j); return; }
+    if (d.status){ setJobStatus(j, d.status, centerOf(b)); render(); draw(); return; }
+    if (d.mat){ const m = j.mats.find(x => x.id === d.mat); m.done = !m.done; save(); render(); draw(); if (m.done && j.mats.every(x => x.done)) confetti(...centerOf(b)); return; }
+    if (d.rmmat){ j.mats = j.mats.filter(x => x.id !== d.rmmat); save(); render(); draw(); return; }
+    if ('tolist' in d){ materialsToList(j); render(); return; }
+    if ('deljob' in d){ const undo = snapshot(); S.jobs = S.jobs.filter(x => x !== j); dlg.close(); save(); render(); toast('Klus verwijderd', undo); }
+  };
+  dlg.onsubmit = e => {
+    if (!e.target.matches('[data-addmat]')) return;
+    e.preventDefault(); const j = J(); const inp = e.target.elements.mat;
+    inp.value.split(',').map(x => x.trim()).filter(Boolean).forEach(raw => { const {qty, name} = parseItem(raw); (j.mats = j.mats || []).push({id: uid(), name, qty, done:false}); });
+    save(); render(); draw(); dlg.querySelector('[data-addmat] input').focus();
+  };
+  draw();
+  if (!dlg.open) dlg.showModal();
+}
+
+/* ---------- weekoverzicht ---------- */
+const DAYS = [['MO','maandag'],['TU','dinsdag'],['WE','woensdag'],['TH','donderdag'],['FR','vrijdag'],['SA','zaterdag'],['SU','zondag']];
+function weekSheet(next){
+  const t0 = today();
+  if (next === undefined) next = t0.getDay() === 0;
+  S.ui.weekSeen = iso(t0); saveLocal();
+  const mon = addDays(t0, -((t0.getDay() + 6) % 7) + (next ? 7 : 0)), sun = addDays(mon, 6);
+  const items = agendaItems(mon, sun).filter(it => !it.done);
+  const mins = {p1:0, p2:0, '':0}, cnt = {p1:0, p2:0, '':0};
+  items.filter(i => i.type === 'task').forEach(i => { const a = assignee(i.t) || ''; mins[a] += +i.t.mins || 0; cnt[a]++; });
+  const nTask = items.filter(i => i.type === 'task').length, evs = items.filter(i => i.type === 'ev');
+  const nEat = evs.filter(i => i.kind === 'eten').length, nDl = evs.filter(i => i.kind === 'deadline').length, nJob = items.filter(i => i.type === 'job').length;
+  const title = it => it.type === 'task' ? `${esc(it.t.name)}${it.t.mins ? ` <small>${fmtMins(it.t.mins)}</small>` : ''}`
+    : it.type === 'job' ? `${esc(it.j.title)} <small>klus</small>`
+    : `${esc(it.e.title)}${it.e.where && it.kind !== 'eten' ? ` <small>${esc(it.e.where)}</small>` : ''}${it.e.with ? ` <small>met ${esc(it.e.with)}</small>` : ''}`;
+  const who = it => it.type === 'task' ? (assignee(it.t) ? badge(assignee(it.t)) : '') : it.type === 'job' ? doerBadge(it.j) : (it.e.for ? badge(it.e.for) : '');
+  let days = '';
+  for (let i = 0; i < 7; i++){
+    const d = addDays(mon, i), k = iso(d), list = items.filter(it => it.date === k);
+    const isT = k === iso(t0);
+    days += `<div class="wk-day"><h5>${esc(d.toLocaleDateString('nl-NL', {weekday:'long', day:'numeric', month:'short'}).replace('.', ''))}${isT ? '<small>vandaag</small>' : ''}</h5>
+      ${list.length ? list.map(it => `<div class="wk-row"><i class="wk-dot" style="background:${KINDS[it.kind].c}"></i><span class="wk-time">${esc(it.time || '')}</span><span class="wk-title">${title(it)}</span>${who(it)}</div>`).join('') : '<div class="sub">Niets gepland</div>'}</div>`;
+  }
+  const rem = S.ui.weekRem || {day:'SU', time:'19:00'};
+  const dlg = $('#sheet');
+  dlg.onclick = null; dlg.oninput = null; dlg.onsubmit = null;
+  dlg.innerHTML = `<div class="sheet"><div class="sheet-head"><span style="min-width:84px"></span><h3>Weekoverzicht</h3><button type="button" class="link strong" data-close>Klaar</button></div>
+    <div class="seg" style="margin:0 0 6px"><button type="button" data-wk="0" aria-pressed="${!next}">Deze week</button><button type="button" data-wk="1" aria-pressed="${next}">Volgende week</button></div>
+    <p class="sub" style="margin:6px 2px 12px">${esc(fmtDate(mon))} t/m ${esc(fmtDate(sun))}</p>
+    <div class="tiles"><div class="tile"><b>${nTask}</b><span>Taken</span></div><div class="tile"><b>${evs.length - nDl}</b><span>Agenda</span></div><div class="tile"><b>${nDl + nJob}</b><span>Deadlines en klussen</span></div></div>
+    ${named() && nTask ? `<div class="group purse" style="padding:12px 14px;margin-top:8px"><div class="label">Taken verdeeld</div>${people().map(p => `<div class="statrow">${badge(p.id)}<span class="statname">${esc(p.name)}</span><span class="sub" style="flex:1">${cnt[p.id]} ${cnt[p.id] === 1 ? 'taak' : 'taken'}${mins[p.id] ? `, ${fmtMins(mins[p.id])}` : ''}</span></div>`).join('')}${cnt[''] ? `<div class="statrow"><span class="pair">${badge('p1')}${badge('p2')}</span><span class="statname">Samen</span><span class="sub" style="flex:1">${cnt['']} ${cnt[''] === 1 ? 'taak' : 'taken'}${mins[''] ? `, ${fmtMins(mins[''])}` : ''}</span></div>` : ''}</div>` : ''}
+    ${nEat ? `<p style="margin:10px 2px 0">${nEat === 1 ? '1 keer' : nEat + ' keer'} ergens anders eten, dus minder koken.</p>` : ''}
+    <h4>Per dag</h4><div class="group">${days}</div>
+    <h4>Wekelijkse melding</h4>
+    <p class="sub" style="margin:0 2px 10px">Je iPhone kan je elke week via Agenda herinneren aan het weekoverzicht. Kies wanneer en voeg de melding één keer toe.</p>
+    <div class="fields"><div class="field half"><label for="w_day">Dag</label><select id="w_day">${DAYS.map(([k, l]) => `<option value="${k}"${rem.day === k ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+    <div class="field half"><label for="w_time">Tijd</label><input id="w_time" type="time" value="${esc(rem.time)}"></div></div>
+    <button type="button" class="btn wide" data-ics style="margin-top:12px">Melding toevoegen aan Agenda</button>
+    <details style="margin-top:12px"><summary>Werkt de knop niet?</summary><p class="sub" style="margin:0 2px">Open Agenda op je iPhone en maak een nieuwe afspraak “Weekoverzicht bekijken” op de dag en tijd die je wilt. Kies bij Herhaal “Elke week” en bij Melding “Op tijdstip van activiteit”.</p></details></div>`;
+  dlg.onclick = e => {
+    const b = e.target.closest('button'); if (!b) return; const d = b.dataset;
+    if ('close' in d) dlg.close();
+    else if (d.wk !== undefined) weekSheet(d.wk === '1');
+    else if ('ics' in d){
+      const day = $('#w_day').value, time = $('#w_time').value || '19:00';
+      S.ui.weekRem = {day, time}; saveLocal();
+      downloadFile('weekoverzicht.ics', weekIcs(day, time), 'text/calendar');
+    }
+  };
+  if (!dlg.open) dlg.showModal();
+  dlg.scrollTop = 0;
+}
+function weekIcs(day, time){
+  const map = {MO:1, TU:2, WE:3, TH:4, FR:5, SA:6, SU:0};
+  const [h, m] = time.split(':').map(Number);
+  let d = today(); while (d.getDay() !== map[day]) d = addDays(d, 1);
+  d.setHours(h || 0, m || 0, 0, 0); if (d < new Date()) d = addDays(d, 7);
+  const e = new Date(d.getTime() + 15 * 60000);
+  const f = x => `${x.getFullYear()}${pad(x.getMonth() + 1)}${pad(x.getDate())}T${pad(x.getHours())}${pad(x.getMinutes())}00`;
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Huishouden//NL','CALSCALE:GREGORIAN','METHOD:PUBLISH','BEGIN:VEVENT',
+    `UID:weekoverzicht-${uid()}@huishouden`, `DTSTAMP:${stamp}`, `DTSTART:${f(d)}`, `DTEND:${f(e)}`, `RRULE:FREQ=WEEKLY;BYDAY=${day}`,
+    'SUMMARY:Weekoverzicht bekijken', 'DESCRIPTION:Open de Huishouden-app en tik op Weekoverzicht.',
+    'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:Weekoverzicht bekijken','TRIGGER:PT0M','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n') + '\r\n';
+}
+function downloadFile(name, text, type){
+  const url = URL.createObjectURL(new Blob([text], {type}));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+/* ---------- snel toevoegen ---------- */
+function quickAdd(){
+  const dlg = $('#sheet');
+  const tiles = [['task','Taak','✅','#2E9C7E'],['event','Agenda','📅','#D0566C'],['eten','Ergens eten','🍽️','#E07A3F'],['job','Klus','🔧','#B07A3B'],['spend','Uitgave','💶','#4A7FE0'],['shop','Winkelmodus','🛒','#9B6BD6']];
+  dlg.onclick = null; dlg.oninput = null; dlg.onsubmit = null;
+  dlg.innerHTML = `<div class="sheet"><div class="sheet-head"><span style="min-width:84px"></span><h3>Toevoegen</h3><button type="button" class="link strong" data-close>Klaar</button></div>
+    <h4 style="margin-top:0">Op de boodschappenlijst</h4>
+    <form class="quick" data-quickg><input name="q" placeholder="Bijv. 2 melk, brood" autocomplete="off" enterkeyhint="done" aria-label="Boodschap toevoegen"><button class="btn">Voeg toe</button></form>
+    <h4>Iets anders</h4>
+    <div class="qa-grid">${tiles.map(([k, l, ic, c]) => `<button type="button" class="qa" data-qa="${k}" style="--c:${c}"><i aria-hidden="true">${ic}</i>${l}</button>`).join('')}</div></div>`;
+  dlg.onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if ('close' in b.dataset){ dlg.close(); return; }
+    const k = b.dataset.qa; if (!k) return;
+    if (k === 'task') taskForm(); else if (k === 'event') eventForm(); else if (k === 'eten') eventForm(null, null, {kind:'eten'});
+    else if (k === 'job') jobForm(); else if (k === 'spend') spendForm();
+    else if (k === 'shop'){ dlg.close(); shopMode = true; keepAwake(true); render(); }
+  };
+  dlg.onsubmit = e => {
+    if (!e.target.matches('[data-quickg]')) return;
+    e.preventDefault(); const inp = e.target.elements.q;
+    const items = inp.value.split(',').map(x => x.trim()).filter(Boolean); if (!items.length) return;
+    items.forEach(addGrocery); save(); render(); inp.value = ''; inp.focus();
+    toast(`Op de lijst: ${items.map(x => parseItem(x).name).join(', ')}`);
+  };
+  if (!dlg.open) dlg.showModal();
+}
+
+/* ---------- winkelmodus ---------- */
+function toggleGrocery(id){
+  const g = find('groceries', id); if (!g) return;
+  g.done = !g.done; save(); render();
+  if (g.done && !S.groceries.some(x => !x.done)){ confetti(innerWidth / 2, innerHeight * .6); toast('Alles is gehaald!'); }
+}
+let shopMode = false, wakeLock = null;
+async function keepAwake(on){
+  try {
+    if (on && 'wakeLock' in navigator){ if (!wakeLock || wakeLock.released) wakeLock = await navigator.wakeLock.request('screen'); }
+    else if (!on && wakeLock){ await wakeLock.release(); wakeLock = null; }
+  } catch(e){}
+}
+function renderShop(){
+  const open = S.groceries.filter(g => !g.done), done = S.groceries.filter(g => g.done);
+  const item = g => `<button class="shop-item${g.done ? ' isdone' : ''}" data-action="toggleG" data-id="${g.id}" aria-pressed="${!!g.done}"><span class="shop-check">${g.done ? CHECK : ''}</span><span class="shop-name">${(g.qty || 1) > 1 ? `<b class="qty">${g.qty}×</b> ` : ''}${esc(g.name)}</span>${g.by ? badge(g.by) : ''}</button>`;
+  const groups = ST().aisles.map(a => { const its = open.filter(g => aisleOf(g) === a.id); return its.length ? `<div class="shop-aisle">${esc(a.name)}</div>${its.map(item).join('')}` : ''; }).join('');
+  return `<div class="shop-in"><div class="shop-head"><div><h2>Winkelmodus</h2><p>${open.length ? `Nog ${open.length} ${open.length === 1 ? 'ding' : 'dingen'} te halen` : 'Alles is gehaald'}</p></div><button class="btn" data-action="shopExit">Klaar</button></div>
+    ${open.length ? groups : `<div class="shop-empty"><span>🎉</span>Alles zit in het mandje!</div>`}
+    ${done.length ? `<details style="margin-top:20px"><summary>In het mandje (${done.length})</summary>${done.map(item).join('')}</details>` : ''}</div>
+    <div class="shop-add"><form class="quick" data-form="grocery"><input name="item" placeholder="Nog iets vergeten?" autocomplete="off" enterkeyhint="done" aria-label="Boodschap toevoegen"><button class="btn">Voeg toe</button></form></div>`;
+}
+
+/* ---------- wat is er veranderd ---------- */
+let quietSync = false, newsShown = false, actBuf = [], actTimer;
+const canon = o => JSON.stringify(o, (k, v) => v && typeof v === 'object' && !Array.isArray(v) ? Object.keys(v).sort().reduce((r, x) => (r[x] = v[x], r), {}) : v);
+const unseen = () => (S.ui.changes || []).filter(c => c.t > (S.ui.seenAt || 0));
+const partnerId = () => { const m = me(); return m ? other(m.id).id : ''; };
+const nameOf = pid => (pid && person(pid) && person(pid).name) || (partnerId() && person(partnerId()).name) || 'Je partner';
+function noteChange(kind, b, a){
+  if (!['groceries','tasks','events','jobs','spend','fixed','income'].includes(kind)) return;
+  if (canon(b) === canon(a)) return;
+  actBuf.push({kind, b, a}); clearTimeout(actTimer); actTimer = setTimeout(flushActivity, 1200);
+}
+function joinNames(list){
+  const u = [...new Set(list)]; if (u.length > 4) return `${u.slice(0, 3).join(', ')} en ${u.length - 3} andere`;
+  return u.length > 1 ? `${u.slice(0, -1).join(', ')} en ${u[u.length - 1]}` : (u[0] || '');
+}
+function flushActivity(){
+  const buf = actBuf; actBuf = []; if (!buf.length) return;
+  const out = [], pid = partnerId(), now = Date.now();
+  const add = (by, text, icon) => out.push({t: now, by: by || pid, text, icon});
+  const gAdd = buf.filter(x => x.kind === 'groceries' && !x.b && x.a);
+  if (gAdd.length) add(gAdd[0].a.by, `zette ${joinNames(gAdd.map(x => x.a.name))} op de boodschappenlijst`, '🛒');
+  const gDone = buf.filter(x => x.kind === 'groceries' && x.b && x.a && !x.b.done && x.a.done);
+  if (gDone.length) add(pid, gDone.length > 4 ? `haalde ${gDone.length} boodschappen` : `haalde ${joinNames(gDone.map(x => x.a.name))}`, '🧺');
+  for (const x of buf){
+    const nm = (x.a || x.b || {}).name || (x.a || x.b || {}).title || '';
+    if (x.kind === 'tasks'){
+      if (!x.b) add(pid, `voegde de taak ${nm} toe`, '➕');
+      else if (!x.a) add(pid, `verwijderde de taak ${nm}`, '🗑️');
+      else if ((x.a.log || []).length > (x.b.log || []).length){ const l = x.a.log[x.a.log.length - 1]; add(l.by || pid, `vinkte ${nm} af`, '✅'); }
+      else add(pid, `paste de taak ${nm} aan`, '✏️');
+    } else if (x.kind === 'events'){
+      if (!x.b) add(x.a.for === 'p1' || x.a.for === 'p2' ? pid : pid, `zette ${nm} in de agenda (${fmtDate(parse(x.a.date))})`, '📅');
+      else if (!x.a) add(pid, `haalde ${nm} uit de agenda`, '🗑️');
+      else if (!x.b.done && x.a.done) add(pid, `rondde ${nm} af`, '✅');
+      else add(pid, `paste ${nm} in de agenda aan`, '✏️');
+    } else if (x.kind === 'jobs'){
+      if (!x.b) add(pid, `voegde de klus ${nm} toe`, '🔧');
+      else if (!x.a) add(pid, `verwijderde de klus ${nm}`, '🗑️');
+      else if ((x.a.log || []).length > (x.b.log || []).length) add(pid, `rondde de klus ${nm} af`, '🎉');
+      else if (x.a.status !== x.b.status) add(pid, `zette de klus ${nm} op ${statusLabel(x.a).toLowerCase()}`, '🔧');
+      else add(pid, `werkte de klus ${nm} bij`, '✏️');
+    } else if (x.kind === 'spend' && !x.b) add(pid, `voegde een uitgave toe: ${nm}, ${euro(num(x.a.amount))}`, '💶');
+    else if ((x.kind === 'fixed' || x.kind === 'income') && x.a) add(pid, `paste ${nm} aan bij geld`, '💶');
+  }
+  if (!out.length) return;
+  S.ui.changes = (S.ui.changes || []).concat(out).slice(-60);
+  saveLocal(); softRender();
+}
+function newsRow(c){
+  const d = new Date(c.t), sameDay = iso(d) === iso(today());
+  const when = sameDay ? `${pad(d.getHours())}:${pad(d.getMinutes())}` : fmtDate(d);
+  return `<div class="news-row">${badge(c.by) || `<span aria-hidden="true">${c.icon || '•'}</span>`}<span class="txt"><b>${esc(nameOf(c.by))}</b> ${esc(c.text)}</span><time>${when}</time></div>`;
+}
+function newsCard(){
+  const list = unseen(); if (!list.length) return '';
+  newsShown = true;
+  return `<section><div class="group news"><div class="news-head"><b>Sinds je laatst keek</b><button class="linkbtn" data-action="seen">Gezien</button></div>
+    ${list.slice(-6).reverse().map(newsRow).join('')}${list.length > 6 ? `<button class="linkbtn" data-action="activity">Nog ${list.length - 6} meer bekijken</button>` : `<button class="linkbtn" data-action="activity">Alle recente activiteit</button>`}</div></section>`;
+}
+function activitySheet(){
+  const dlg = $('#sheet'); const list = (S.ui.changes || []).slice().reverse();
+  S.ui.seenAt = Date.now(); saveLocal();
+  dlg.onclick = null; dlg.oninput = null; dlg.onsubmit = null;
+  dlg.innerHTML = `<div class="sheet"><div class="sheet-head"><span style="min-width:84px"></span><h3>Recente activiteit</h3><button type="button" class="link strong" data-close>Klaar</button></div>
+    ${list.length ? `<div class="group news">${list.map(newsRow).join('')}</div>` : `<div class="empty"><p>Nog niets veranderd door de ander. Zodra je partner iets toevoegt of afvinkt, zie je het hier.</p></div>`}
+    <p class="sub" style="margin:12px 2px 0">Hier zie je wat er op de andere telefoon is veranderd. Je eigen wijzigingen staan er niet bij.</p></div>`;
+  dlg.querySelector('[data-close]').onclick = () => { dlg.close(); render(); };
+  if (!dlg.open) dlg.showModal();
 }
 
 /* ---------- updates ---------- */
@@ -875,8 +1535,8 @@ document.addEventListener('click', e => {
   const {action, id} = b.dataset;
   switch (action){
     case 'tab': tab = b.dataset.tab; S.ui.tab = tab; save(); render(); scrollTo(0,0); break;
-    case 'headerAdd': ({taken:() => taskForm(), geld:() => spendForm(), agenda:() => eventForm()})[tab]?.(); break;
-    case 'add': ({task:() => taskForm(), spend:() => spendForm(), fixed:() => fixedForm(), income:() => incomeForm(), event:() => eventForm()})[b.dataset.what](); break;
+    case 'headerAdd': ({taken:() => taskForm(), klussen:() => jobForm(), geld:() => spendForm(), agenda:() => eventForm()})[tab]?.(); break;
+    case 'add': ({task:() => taskForm(), spend:() => spendForm(), fixed:() => fixedForm(), income:() => incomeForm(), event:() => eventForm(), job:() => jobForm()})[b.dataset.what](); break;
     case 'done': { const t = find('tasks', id), prev = JSON.stringify(t), at = centerOf(b);
       const by = (me() && me().id) || assignee(t) || null;
       t.last = iso(today()); t.next = iso(addInterval(today(), t.every, t.unit));
@@ -896,14 +1556,29 @@ document.addEventListener('click', e => {
     case 'editFixed': fixedForm(find('fixed', id)); break;
     case 'editIncome': incomeForm(find('income', id)); break;
     case 'month': { const d = parse(ym + '-01'); d.setMonth(d.getMonth() + (+b.dataset.d)); ym = iso(d).slice(0,7); render(); break; }
-    case 'toggleG': { const g = find('groceries', id); g.done = !g.done; save(); render();
-      if (g.done && !S.groceries.some(x => !x.done)){ confetti(innerWidth / 2, innerHeight * .6); toast('Alles is gehaald!'); } break; }
+    case 'toggleG': { const g = find('groceries', id); if (!g) break;
+      if (shopMode && !g.done){ if (b.classList.contains('ticking')) break; b.classList.add('ticking'); setTimeout(() => toggleGrocery(id), 260); break; }
+      toggleGrocery(id); break; }
     case 'delG': S.groceries = S.groceries.filter(g => g.id !== id); save(); render(); break;
     case 'clearG': { const undo = snapshot(); S.groceries = S.groceries.filter(g => !g.done); save(); render(); toast('Afgevinkte weggehaald', undo); break; }
     case 'sugg': addGrocery(b.dataset.name); save(); render(); break;
-    case 'editEvent': eventForm(find('events', id)); break;
-    case 'toggleEv': { const ev = find('events', id), at = centerOf(b); ev.done = !ev.done; save(); render(); if (ev.done) confetti(...at); break; }
+    case 'editEvent': eventForm(find('events', id), b.dataset.date); break;
+    case 'toggleEv': { const ev = find('events', id), at = centerOf(b), dt = b.dataset.date || ev.date; let nowDone;
+      if (ev.repeat){ const l = ev.doneDates || []; nowDone = !l.includes(dt); ev.doneDates = nowDone ? l.concat(dt) : l.filter(x => x !== dt); }
+      else { ev.done = !ev.done; nowDone = ev.done; }
+      save(); render(); if (nowDone) confetti(...at); break; }
     case 'applyUpdate': applyUpdate(); break;
+    case 'week': weekSheet(); break;
+    case 'search': searchSheet(); break;
+    case 'homeEdit': homeEditSheet(); break;
+    case 'quickAdd': quickAdd(); break;
+    case 'shopMode': shopMode = true; keepAwake(true); render(); break;
+    case 'shopExit': shopMode = false; keepAwake(false); render(); break;
+    case 'seen': S.ui.seenAt = Date.now(); saveLocal(); render(); break;
+    case 'activity': activitySheet(); break;
+    case 'openJob': jobSheet(id); break;
+    case 'jobFilter': jobFilter = b.dataset.k; render(); break;
+    case 'sampleJobs': { const t0 = today(); MAINT.forEach(([title, area, repeat, who], i) => (S.jobs = S.jobs || []).push({id: uid(), title, area, type:'onderhoud', repeat, who, prio:'normaal', status:'gepland', date: iso(addDays(t0, 7 * (i + 1))), mats:[], log:[]})); save(); render(); toast('Onderhoud toegevoegd. Pas de datums aan door erop te tikken.'); break; }
     case 'pickDay': agDay = b.dataset.d && b.dataset.d !== agDay ? b.dataset.d : null; render(); break;
     case 'agMonth': { const d = parse(agMonth + '-01'); d.setMonth(d.getMonth() + (+b.dataset.d)); agMonth = iso(d).slice(0,7); render(); break; }
     case 'agFilter': agFilter = b.dataset.k; render(); break;
@@ -924,13 +1599,16 @@ document.addEventListener('submit', e => {
   e.preventDefault();
   const input = e.target.querySelector('input[name=item]');
   input.value.split(',').forEach(addGrocery); save(); render();
-  $('#view input[name=item]').focus();
+  const again = (shopMode ? $('#shop') : $('#view')).querySelector('input[name=item]'); if (again) again.focus();
 });
-document.addEventListener('visibilitychange', () => { if (document.hidden) return; checkUpdate(); if (!$('#sheet').open && !gate) render(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden){ if (newsShown){ S.ui.seenAt = Date.now(); newsShown = false; saveLocal(); } return; }
+  checkUpdate(); if (shopMode) keepAwake(true); if (!$('#sheet').open && !gate) softRender();
+});
 
 /* ---------- synchronisatie (Supabase) ---------- */
 const CFG_KEY = 'huishouden.cfg', SYNC_KEY = 'huishouden.sync';
-const COLL = ['tasks','income','fixed','spend','groceries','events'];
+const COLL = ['tasks','income','fixed','spend','groceries','events','jobs'];
 const readJSON = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch(e){ return d; } };
 const writeJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
 let cfg = readJSON(CFG_KEY, null);            // {mode:'local'} of {mode:'sync', url, key}
@@ -956,7 +1634,7 @@ function diffToPending(){
   const now = itemsOf(S), known = sync.known || {};
   for (const [id, {kind, data}] of Object.entries(now)){
     if (id === 'settings' && !known[id] && !(data.v > 0)) continue;   // standaardinstellingen nooit over die van de ander heen zetten
-    const j = JSON.stringify(data);
+    const j = canon(data);
     if (!known[id] || known[id].j !== j){ sync.pending[id] = {id, kind, data, deleted:false}; known[id] = {k:kind, j}; }
   }
   for (const id of Object.keys(known)) if (!now[id]){ sync.pending[id] = {id, kind: known[id].k, data:{}, deleted:true}; delete known[id]; }
@@ -992,17 +1670,21 @@ function removeLocal(id, kind){
 }
 function applyRows(rows, full){
   const known = sync.known || {};
+  const track = !quietSync;
+  const before = (kind, id) => { if (!COLL.includes(kind)) return null; const x = S[kind].find(y => y.id === id); return x ? JSON.parse(JSON.stringify(x)) : null; };
   let changed = false;
   if (full){
     const ids = new Set(rows.map(r => r.id));
-    for (const id of Object.keys(known)) if (!ids.has(id) && !sync.pending[id]){ removeLocal(id, known[id].k); delete known[id]; changed = true; }
+    for (const id of Object.keys(known)) if (!ids.has(id) && !sync.pending[id]){ const b = track && before(known[id].k, id); removeLocal(id, known[id].k); if (b) noteChange(known[id].k, b, null); delete known[id]; changed = true; }
   }
   for (const r of rows){
     if (sync.pending[r.id]) continue;
-    if (r.deleted){ if (known[r.id]){ removeLocal(r.id, r.kind); delete known[r.id]; changed = true; } continue; }
-    const j = JSON.stringify(r.data);
+    if (r.deleted){ if (known[r.id]){ const b = track && before(r.kind, r.id); removeLocal(r.id, r.kind); if (b) noteChange(r.kind, b, null); delete known[r.id]; changed = true; } continue; }
+    const j = canon(r.data);
     if (known[r.id] && known[r.id].j === j) continue;
-    upsertLocal(r.kind, r.data, r.id); known[r.id] = {k:r.kind, j: JSON.stringify(r.data)}; changed = true;
+    const b = track ? before(r.kind, r.id) : null;
+    upsertLocal(r.kind, r.data, r.id); known[r.id] = {k:r.kind, j}; changed = true;
+    if (track) noteChange(r.kind, b, r.data);
   }
   sync.known = known; persistSync();
   if (changed){ saveLocal(); softRender(); }
@@ -1059,8 +1741,9 @@ async function afterLogin(){
   if (sync.email !== session.user.email){ sync.known = null; sync.pending = {}; }
   sync.member = true; sync.email = session.user.email; persistSync();
   gate = null; render();
+  const first = !sync.known;
   diffToPending();       // eerste keer: lokale gegevens gaan mee naar de database
-  await flush(); await pull(); subscribe();
+  await flush(); quietSync = first; await pull(); quietSync = false; subscribe();
 }
 function sqlScript(emails){
   const list = emails.map(e => `  ('${e.trim().toLowerCase().replace(/'/g, "''")}')`).join(',\n');
