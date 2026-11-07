@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Huishouden">
+<meta name="theme-color" content="#E7EEEA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1E22" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAEbUlEQVR4nO3dy23bUBBG4VGQNgynA/fiKpyVU0p26cK9uIMAbiQLIoYg6afJS4rzOt/KiF/ineNLUgKU0+PriwG3fPN+AIiLOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARB6Tv3g8gkL+//0wf/Pj10/eRBHHijfHtLItzJMJp5XYZM//eR/c45gto3kfrOJbMvnMfTa85Bkbe8BKk484xthk03ELaxbFlxt366BXH9um26qNRHHvNtU8fXeLYd6JN+mgRxz1m2aGP+reyy6f4ebM68C0lVY5j1R/3xZi3fG8ZZU8rG6e7at5VTzE149jl754+Csax4xmheR/V4tj9WqFzH6XiuNNVZNs+6tytHHD/2e0Wt0IcR952trrFTX9aOXharU4xueNw+Tvu00fiOBx3+CZ9ZI3D/dzfoY+UcbiXMfCTM/aRL44gZQz8/HR9ZLqVDZXFhciPbVianSP46pfcQnLEEbyMgd+boo8EcaQoY+C3x+8jehyJyhh4DMH7CB1HujImZfqIG0fSMiY1+gh6K1vmxfHUBxIujtQbxk15jyjWaSXvOs7Ie4oJFEfJMiZJ+4gSR+EyJhn7CBFHkLUIJcKa+McRYRVicl8Z5zjcjz843/VxewdjslhoWiiXyyyfnYMy1nJZMYc4KGPM8et2dByUscXBq3d0HBmfoojj4NVzOK3Qx5jj183ngnTHd8UoI+CaxPrPeHpm8Wk6/DiXZW5Pgm18G67C4qyM5zOk58ectIz35497/NggK+P89Pl05KnLuGsfvivj/8Jb6jKuP96R+8r4x5HRdQ136sMXcaymOnh//iiWCHGs8+X4K/VBHCssHHyZPohjf09vD94PYR/EsdTC/aBMGUYcCzUsw4hjiZ5lGHF8qW0Z1iSO4duHzmVYhziGXwEpc0c6rHgcw6+ALP/iqtuG1Y5j+BUQypiUjWPmFZCxb7xWuwyrGsf8gGc+SxnnCsaxZMA3v4YyLlSLY/mAL76SMq5Vi2PV5AZuVvuUYfXisKE+mj/ZpRSMw+6zf3Qrw6rGYXvPsmEZVjgO22+iPcuw2nHYHnNtW4aVj8N6T3ej+nHYhj6ah9UiDhsac/MyrE8ctnLYlGGt4rDFI6eMSa84bMHgKeNTuzhsdvyUca5jHPY/gvMUnt4eKONCrPcEO9J1H7jQdOfAEsQBiTggEQeklBekcd7GtTZ2DkjEAYk4IBEHJOKAFDQO93d2PljM4w0aByI4Pb6+eD+GOeWf0oi5Z0yi7xyR12674EcXfeeAo+g7BxwRByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigPQPw0ahLZ0ppdYAAAAASUVORK5CYII=">
+<link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAEbUlEQVR4nO3dy23bUBBG4VGQNgynA/fiKpyVU0p26cK9uIMAbiQLIoYg6afJS4rzOt/KiF/ineNLUgKU0+PriwG3fPN+AIiLOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARB6Tv3g8gkL+//0wf/Pj10/eRBHHijfHtLItzJMJp5XYZM//eR/c45gto3kfrOJbMvnMfTa85Bkbe8BKk484xthk03ELaxbFlxt366BXH9um26qNRHHvNtU8fXeLYd6JN+mgRxz1m2aGP+reyy6f4ebM68C0lVY5j1R/3xZi3fG8ZZU8rG6e7at5VTzE149jl754+Csax4xmheR/V4tj9WqFzH6XiuNNVZNs+6tytHHD/2e0Wt0IcR952trrFTX9aOXharU4xueNw+Tvu00fiOBx3+CZ9ZI3D/dzfoY+UcbiXMfCTM/aRL44gZQz8/HR9ZLqVDZXFhciPbVianSP46pfcQnLEEbyMgd+boo8EcaQoY+C3x+8jehyJyhh4DMH7CB1HujImZfqIG0fSMiY1+gh6K1vmxfHUBxIujtQbxk15jyjWaSXvOs7Ie4oJFEfJMiZJ+4gSR+EyJhn7CBFHkLUIJcKa+McRYRVicl8Z5zjcjz843/VxewdjslhoWiiXyyyfnYMy1nJZMYc4KGPM8et2dByUscXBq3d0HBmfoojj4NVzOK3Qx5jj183ngnTHd8UoI+CaxPrPeHpm8Wk6/DiXZW5Pgm18G67C4qyM5zOk58ectIz35497/NggK+P89Pl05KnLuGsfvivj/8Jb6jKuP96R+8r4x5HRdQ136sMXcaymOnh//iiWCHGs8+X4K/VBHCssHHyZPohjf09vD94PYR/EsdTC/aBMGUYcCzUsw4hjiZ5lGHF8qW0Z1iSO4duHzmVYhziGXwEpc0c6rHgcw6+ALP/iqtuG1Y5j+BUQypiUjWPmFZCxb7xWuwyrGsf8gGc+SxnnCsaxZMA3v4YyLlSLY/mAL76SMq5Vi2PV5AZuVvuUYfXisKE+mj/ZpRSMw+6zf3Qrw6rGYXvPsmEZVjgO22+iPcuw2nHYHnNtW4aVj8N6T3ej+nHYhj6ah9UiDhsac/MyrE8ctnLYlGGt4rDFI6eMSa84bMHgKeNTuzhsdvyUca5jHPY/gvMUnt4eKONCrPcEO9J1H7jQdOfAEsQBiTggEQeklBekcd7GtTZ2DkjEAYk4IBEHJOKAFDQO93d2PljM4w0aByI4Pb6+eD+GOeWf0oi5Z0yi7xyR12674EcXfeeAo+g7BxwRByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigPQPw0ahLZ0ppdYAAAAASUVORK5CYII=">
+<title>Huishouden</title>
+<style>
+:root{
+  --bg:#E7EEEA;--surface:#FFFFFF;--sunk:#D5E1DB;--ink:#12343B;--muted:#5B7175;--line:#D3DED9;
+  --accent:#1F6F68;--accent-ink:#FFFFFF;--attn:#C38A0A;--attn-fill:#E9B53B;--late:#B23A48;
+  --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --round:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  color-scheme:light;box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1E22;--surface:#18292E;--sunk:#22383D;--ink:#E4EEEA;--muted:#94A9AC;--line:#253C40;
+  --accent:#5CC2B5;--accent-ink:#0F1E22;--attn:#F0C14B;--attn-fill:#E2B33F;--late:#F08391;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1E22;--surface:#18292E;--sunk:#22383D;--ink:#E4EEEA;--muted:#94A9AC;--line:#253C40;
+  --accent:#5CC2B5;--accent-ink:#0F1E22;--attn:#F0C14B;--attn-fill:#E2B33F;--late:#F08391;color-scheme:dark}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--ui);-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg)}
+.top .wrap{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:16px 20px 10px}
+.wrap{max-width:640px;margin:0 auto}
+h1{font:700 32px/1.1 var(--round);letter-spacing:-.015em;margin:0}
+.today-line{color:var(--muted);font-size:15px;margin:2px 0 0}
+.actions{display:flex;gap:8px}
+.iconbtn{width:40px;height:40px;border-radius:50%;border:0;background:var(--surface);display:grid;place-items:center}
+.iconbtn[hidden]{display:none}
+
+main .wrap{padding:0 16px calc(100px + env(safe-area-inset-bottom,0px))}
+section{margin-top:24px}
+h2{font:600 19px/1.25 var(--round);margin:0 0 8px 4px}
+.group{background:var(--surface);border-radius:14px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:11px 14px;min-height:56px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.plain{background:none;border:0;padding:0;text-align:left;font:inherit;color:inherit}
+.row.plain{padding:11px 14px}
+.main{flex:1;min-width:0}
+.title{font-weight:500;overflow-wrap:anywhere}
+.sub{font-size:14px;color:var(--muted)}
+.amt{font-variant-numeric:tabular-nums;font-weight:500;white-space:nowrap}
+.late{color:var(--late);font-weight:600}
+.due{color:var(--attn);font-weight:600}
+.check{width:30px;height:30px;border-radius:50%;border:2px solid var(--accent);background:none;flex:none;display:grid;place-items:center;color:var(--accent-ink);padding:0}
+.check.on{background:var(--accent)}
+.x{border:0;background:none;color:var(--muted);width:32px;height:32px;font-size:22px;line-height:1;flex:none}
+.addrow{width:100%;border:0;border-top:1px solid var(--line);background:none;color:var(--accent);font-weight:600;text-align:left;display:flex;align-items:center;gap:10px}
+.group > .addrow:first-child{border-top:0}
+.isdone .title{text-decoration:line-through;color:var(--muted)}
+.empty{padding:20px 18px;color:var(--muted);background:var(--surface);border-radius:14px}
+.empty p{margin:0 0 12px}
+.empty p:last-child{margin:0}
+
+.btn{border:0;border-radius:12px;padding:12px 16px;font:600 16px var(--ui);background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:var(--sunk);color:var(--ink)}
+.btn.danger{background:none;color:var(--late)}
+.btn.wide{width:100%;display:block;text-align:center}
+
+/* week strip */
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.day{background:var(--surface);border:0;border-radius:12px;padding:8px 0 9px;display:flex;flex-direction:column;align-items:center;gap:1px}
+.day .wd{font-size:12px;color:var(--muted)}
+.day .n{font:700 21px/1.15 var(--round)}
+.day.is-today{background:var(--accent);color:var(--accent-ink)}
+.day.is-today .wd{color:inherit;opacity:.8}
+.dots{display:flex;gap:2px;height:5px;margin-top:3px}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.dot.ev{background:var(--attn-fill)}
+.is-today .dot{background:var(--accent-ink)}
+.is-today .dot.ev{background:var(--attn-fill)}
+.legend{display:flex;gap:16px;font-size:13px;color:var(--muted);margin:8px 4px 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+
+/* money */
+.purse{padding:16px}
+.purse .label{color:var(--muted);font-size:15px}
+.purse .big{font:700 36px/1.1 var(--round);font-variant-numeric:tabular-nums;margin:2px 0 12px;letter-spacing:-.01em}
+.purse .big.neg{color:var(--late)}
+.bar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--sunk)}
+.bar i{display:block;height:100%}
+.bar .f{background:var(--accent)}
+.bar .s{background:var(--attn-fill)}
+.ledger{margin:12px 0 0;display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:15px}
+.ledger dt{display:flex;align-items:center;gap:8px;color:var(--muted)}
+.ledger dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.sw{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
+.monthnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.monthnav b{font:600 17px var(--round);text-transform:none}
+.monthnav button{border:0;background:var(--sunk);width:34px;height:34px;border-radius:50%;font-size:20px;line-height:1}
+.cats{display:flex;flex-wrap:wrap;gap:6px;margin:8px 4px 0}
+.cat{font-size:13px;background:var(--surface);border-radius:999px;padding:4px 10px;color:var(--muted)}
+.cat b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+
+/* groceries */
+.quick{display:flex;gap:8px}
+.quick input{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;font-size:15px}
+
+/* agenda */
+.datebox{width:44px;flex:none;text-align:center;border-radius:10px;background:var(--sunk);padding:4px 0 5px}
+.datebox b{display:block;font:700 19px/1.1 var(--round)}
+.datebox span{font-size:12px;color:var(--muted)}
+.datebox.dl{background:color-mix(in srgb,var(--attn-fill) 30%,var(--surface))}
+details summary{cursor:pointer;color:var(--muted);margin:0 0 8px 4px;font-weight:500}
+
+.hint{background:var(--surface);border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start;margin-top:12px}
+.hint p{margin:0;flex:1;font-size:15px}
+
+input,select,textarea{width:100%;font:16px var(--ui);padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);-webkit-appearance:none;appearance:none}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+input[type=date],input[type=time]{min-height:48px}
+
+/* tab bar */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs .wrap{display:flex}
+.tab{flex:1;border:0;background:none;color:var(--muted);padding:8px 0 6px;font:500 11px var(--ui);display:flex;flex-direction:column;align-items:center;gap:3px}
+.tab[aria-current="page"]{color:var(--accent)}
+
+/* sheet */
+dialog{border:0;padding:0;margin:auto auto 0;width:100%;max-width:640px;border-radius:18px 18px 0 0;background:var(--bg);color:var(--ink);max-height:92dvh}
+dialog::backdrop{background:rgba(8,20,22,.45)}
+dialog[open]{animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+.sheet{padding:6px 16px calc(20px + env(safe-area-inset-bottom,0px))}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0 14px}
+.sheet-head h3{font:600 17px var(--round);margin:0;text-align:center;flex:1}
+.link{border:0;background:none;color:var(--accent);font-size:17px;padding:6px 0;min-width:84px;text-align:left}
+.link.strong{font-weight:600;text-align:right}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{grid-column:1/-1}
+.field.half{grid-column:auto}
+.field label{display:block;font-size:14px;color:var(--muted);margin:0 0 5px 2px}
+.err{color:var(--late);margin:12px 2px 0}
+.sheet .btn.danger{margin-top:18px}
+.sheet .stack{display:grid;gap:10px;margin-top:14px}
+.sheet p{margin:0 0 6px}
+.filebtn{position:relative;overflow:hidden}
+.filebtn input{position:absolute;inset:0;opacity:0}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:20;background:var(--ink);color:var(--bg);border-radius:12px;padding:10px 14px;display:flex;gap:14px;align-items:center;width:max-content;max-width:calc(100% - 32px);font-size:15px;box-shadow:0 6px 24px rgba(0,0,0,.2)}
+.toast[hidden]{display:none}
+.toast button{border:0;background:none;color:var(--attn-fill);font-weight:600;padding:4px 0;white-space:nowrap}
+
+@media (prefers-reduced-motion:reduce){dialog[open]{animation:none}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div><h1 id="title">Overzicht</h1><p class="today-line" id="todayLine"></p></div>
+  <div class="actions">
+    <button class="iconbtn" id="addBtn" data-action="headerAdd" aria-label="Toevoegen" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button class="iconbtn" data-action="settings" aria-label="Back-up en instellingen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
+  </div>
+</div></header>
+
+<main><div class="wrap" id="view"></div></main>
+
+<nav class="tabs" aria-label="Onderdelen"><div class="wrap" id="tabs"></div></nav>
+<dialog id="sheet"></dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+/* ---------- opslag ---------- */
+const KEY = 'huishouden.v1';
+const empty = () => ({tasks:[], income:[], fixed:[], spend:[], groceries:[], history:{}, events:[], ui:{}});
+let memory = null;
+function load(){
+  try { const raw = localStorage.getItem(KEY); if (raw) return Object.assign(empty(), JSON.parse(raw)); } catch(e){}
+  return memory ? JSON.parse(memory) : empty();
+}
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){ memory = JSON.stringify(S); }
+}
+let S = load();
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch(e){}
+
+/* ---------- hulpjes ---------- */
+const $ = s => document.querySelector(s);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = v => { let s = String(v ?? '').trim().replace(/[€\s]/g,''); if (s.includes(',')) s = s.replace(/\./g,'').replace(',','.'); const n = parseFloat(s); return isFinite(n) ? n : 0; };
+const euro = n => n.toLocaleString('nl-NL', {style:'currency', currency:'EUR'});
+const pad = n => String(n).padStart(2,'0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse = s => { const [y,m,d] = String(s).split('-').map(Number); return new Date(y, (m||1)-1, d||1); };
+const today = () => { const d = new Date(); d.setHours(0,0,0,0); return d; };
+const daysBetween = (a,b) => Math.round((b - a) / 86400000);
+const fmtDate = d => d.toLocaleDateString('nl-NL', {weekday:'short', day:'numeric', month:'short'}).replace(/\./g,'');
+const monthName = ym => parse(ym + '-01').toLocaleDateString('nl-NL', {month:'long', year:'numeric'});
+const CHECK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const PLUS = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+
+function addInterval(date, every, unit){
+  const d = new Date(date); every = Math.max(1, +every || 1);
+  if (unit === 'm'){ const day = d.getDate(); d.setDate(1); d.setMonth(d.getMonth() + every);
+    d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth()+1, 0).getDate())); }
+  else d.setDate(d.getDate() + every * (unit === 'w' ? 7 : 1));
+  return d;
+}
+const nextDue = t => t.next ? parse(t.next) : today();
+function intervalLabel(t){
+  const n = +t.every || 1, u = t.unit;
+  if (n === 1) return {d:'Elke dag', w:'Elke week', m:'Elke maand'}[u];
+  return `Elke ${n} ` + {d:'dagen', w:'weken', m:'maanden'}[u];
+}
+function relDay(diff, date, pastWord='te laat'){
+  if (diff < 0) return `${-diff} dag${diff === -1 ? '' : 'en'} ${pastWord}`;
+  if (diff === 0) return 'Vandaag';
+  if (diff === 1) return 'Morgen';
+  if (diff < 7) return `Over ${diff} dagen`;
+  return fmtDate(date);
+}
+
+let toastTimer;
+function toast(msg, undo){
+  const t = $('#toast');
+  t.innerHTML = `<span>${esc(msg)}</span>` + (undo ? '<button type="button">Ongedaan maken</button>' : '');
+  t.hidden = false;
+  if (undo) t.querySelector('button').onclick = () => { undo(); t.hidden = true; };
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.hidden = true, 4500);
+}
+const snapshot = () => { const snap = JSON.stringify(S); return () => { S = JSON.parse(snap); save(); render(); }; };
+
+/* ---------- navigatie ---------- */
+const TABS = {
+  home:  ['Overzicht', '<path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>'],
+  taken: ['Taken', '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>'],
+  geld:  ['Geld', '<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10.5h18"/><circle cx="16.5" cy="14.8" r="1.3"/>'],
+  lijst: ['Boodschappen', '<path d="M4 9h16l-1.6 10.2a1 1 0 0 1-1 .8H6.6a1 1 0 0 1-1-.8z"/><path d="M8.5 9L12 3.5 15.5 9"/>'],
+  agenda:['Agenda', '<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>']
+};
+let tab = TABS[S.ui.tab] ? S.ui.tab : 'home';
+let ym = iso(today()).slice(0,7);
+
+function render(){
+  $('#title').textContent = TABS[tab][0];
+  $('#todayLine').textContent = tab === 'home' ? today().toLocaleDateString('nl-NL', {weekday:'long', day:'numeric', month:'long'}) : '';
+  $('#todayLine').hidden = tab !== 'home';
+  $('#addBtn').hidden = !['taken','geld','agenda'].includes(tab);
+  $('#addBtn').setAttribute('aria-label', {taken:'Taak toevoegen', geld:'Uitgave toevoegen', agenda:'Afspraak toevoegen'}[tab] || 'Toevoegen');
+  $('#tabs').innerHTML = Object.entries(TABS).map(([k,[label,icon]]) =>
+    `<button class="tab" data-action="tab" data-tab="${k}"${k === tab ? ' aria-current="page"' : ''}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icon}</svg>${label}</button>`).join('');
+  $('#view').innerHTML = ({home:renderHome, taken:renderTasks, geld:renderMoney, lijst:renderList, agenda:renderAgenda})[tab]();
+}
+
+/* ---------- overzicht ---------- */
+function renderHome(){
+  const t0 = today();
+  const tasks = S.tasks.map(t => ({t, due: nextDue(t)})).sort((a,b) => a.due - b.due);
+  let week = '';
+  for (let i = 0; i < 7; i++){
+    const d = new Date(t0); d.setDate(d.getDate() + i); const k = iso(d);
+    const nt = tasks.filter(x => i === 0 ? x.due <= d : iso(x.due) === k).length;
+    const ne = S.events.filter(e => e.date === k && !e.done).length;
+    const dots = '<i class="dot"></i>'.repeat(Math.min(nt,3)) + '<i class="dot ev"></i>'.repeat(Math.min(ne,2));
+    week += `<button class="day${i === 0 ? ' is-today' : ''}" data-action="tab" data-tab="${ne && !nt ? 'agenda' : 'taken'}" aria-label="${esc(d.toLocaleDateString('nl-NL',{weekday:'long', day:'numeric', month:'long'}))}: ${nt} taken, ${ne} afspraken"><span class="wd">${d.toLocaleDateString('nl-NL',{weekday:'short'}).replace('.','')}</span><span class="n">${d.getDate()}</span><span class="dots">${dots}</span></button>`;
+  }
+  let html = `<section style="margin-top:12px"><div class="week">${week}</div>
+    <div class="legend"><span><i class="dot"></i>Taken</span><span><i class="dot ev"></i>Afspraken en deadlines</span></div></section>`;
+
+  const standalone = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+  if (!standalone && !S.ui.hideInstall) html += `<div class="hint"><p>Zet de app op je beginscherm: tik in Safari op Deel en kies Zet op beginscherm. Dan opent hij schermvullend en blijven je gegevens goed bewaard.</p><button class="x" data-action="hideInstall" aria-label="Melding sluiten">×</button></div>`;
+
+  const dueNow = tasks.filter(x => x.due <= t0);
+  html += `<section><h2>Te doen vandaag</h2>`;
+  if (dueNow.length) html += `<div class="group">${dueNow.map(taskRow).join('')}</div>`;
+  else if (tasks.length) html += `<div class="empty"><p>Alles is bij. Volgende: ${esc(tasks[0].t.name)}, ${relDay(daysBetween(t0, tasks[0].due), tasks[0].due).toLowerCase()}.</p></div>`;
+  else html += `<div class="empty"><p>Nog geen taken. Zet je terugkerende klussen erin, dan zie je hier elke dag wat aan de beurt is.</p><button class="btn" data-action="tab" data-tab="taken">Naar taken</button></div>`;
+  html += `</section>`;
+
+  const todayIso = iso(t0);
+  const ev = S.events.filter(e => !e.done && (e.date >= todayIso || e.kind === 'deadline'))
+    .sort((a,b) => (a.date + (a.time||'')).localeCompare(b.date + (b.time||''))).slice(0,3);
+  html += `<section><h2>Binnenkort</h2>` + (ev.length ? `<div class="group">${ev.map(eventRow).join('')}</div>`
+    : `<div class="empty"><p>Geen afspraken of deadlines gepland.</p><button class="btn ghost" data-action="add" data-what="event">Afspraak toevoegen</button></div>`) + `</section>`;
+
+  const c = monthCalc(iso(t0).slice(0,7));
+  html += `<section><h2>Geld deze maand</h2>` + (c.inc || c.fix || c.spent
+    ? `<button class="group plain purse" style="width:100%;display:block" data-action="tab" data-tab="geld"><div class="label">Nog te besteden in ${monthName(iso(t0).slice(0,7)).split(' ')[0]}</div><div class="big${c.left < 0 ? ' neg' : ''}">${euro(c.left)}</div>${moneyBar(c)}</button>`
+    : `<div class="empty"><p>Vul je inkomsten en vaste lasten in om te zien wat je elke maand overhoudt.</p><button class="btn" data-action="tab" data-tab="geld">Naar geld</button></div>`) + `</section>`;
+
+  const open = S.groceries.filter(g => !g.done).length;
+  html += `<section><h2>Boodschappen</h2><div class="group"><button class="row plain" style="width:100%" data-action="tab" data-tab="lijst"><div class="main"><div class="title">${open ? `${open} ${open === 1 ? 'ding' : 'dingen'} op de lijst` : 'Je lijst is leeg'}</div><div class="sub">${open ? esc(S.groceries.filter(g => !g.done).slice(0,4).map(g => g.name).join(', ')) : 'Tik om iets toe te voegen'}</div></div></button></div></section>`;
+  return html;
+}
+
+/* ---------- taken ---------- */
+function taskRow({t, due}){
+  const diff = daysBetween(today(), due);
+  const cls = diff < 0 ? 'late' : diff === 0 ? 'due' : '';
+  return `<div class="row"><button class="check" data-action="done" data-id="${t.id}" aria-label="${esc(t.name)} afvinken"></button>
+    <button class="main plain" data-action="editTask" data-id="${t.id}"><div class="title">${esc(t.name)}</div>
+    <div class="sub"><span class="${cls}">${relDay(diff, due)}</span>, ${intervalLabel(t).toLowerCase()}${t.who ? ', ' + esc(t.who) : ''}</div></button></div>`;
+}
+function renderTasks(){
+  const tasks = S.tasks.map(t => ({t, due: nextDue(t)})).sort((a,b) => a.due - b.due);
+  if (!tasks.length) return `<section style="margin-top:12px"><div class="empty"><p>Voeg je terugkerende klussen toe, zoals stofzuigen of het beddengoed verschonen. Vink ze af als ze gedaan zijn; de app plant de volgende keer vanzelf in.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-action="add" data-what="task">Taak toevoegen</button><button class="btn ghost" data-action="sampleTasks">Voorbeeldtaken gebruiken</button></div></div></section>`;
+  const t0 = today(), wk = new Date(t0); wk.setDate(wk.getDate() + 7);
+  const groups = [['Nu aan de beurt', x => x.due <= t0], ['Deze week', x => x.due > t0 && x.due < wk], ['Later', x => x.due >= wk]];
+  return groups.map(([label, f]) => { const list = tasks.filter(f); return list.length ? `<section><h2>${label}</h2><div class="group">${list.map(taskRow).join('')}</div></section>` : ''; }).join('')
+    + `<section><div class="group"><button class="row addrow" data-action="add" data-what="task">${PLUS}Taak toevoegen</button></div></section>`;
+}
+const taskFields = [
+  {key:'name', label:'Taak', type:'text', required:true, placeholder:'Bijv. badkamer schoonmaken'},
+  {key:'every', label:'Elke', type:'int', def:1, half:true, min:1, max:365},
+  {key:'unit', label:'Eenheid', type:'select', def:'w', half:true, options:[['d','dag(en)'],['w','week/weken'],['m','maand(en)']]},
+  {key:'next', label:'Volgende keer', type:'date', required:true},
+  {key:'who', label:'Wie (optioneel)', type:'text', placeholder:'Bijv. Sam'}
+];
+function taskForm(t){
+  openForm({title: t ? 'Taak' : 'Nieuwe taak', fields: taskFields, values: t || {next: iso(today())},
+    onSave: v => t ? Object.assign(t, v) : S.tasks.push({id: uid(), ...v}),
+    onDelete: t && (() => S.tasks = S.tasks.filter(x => x !== t))});
+}
+const SAMPLE = [['Stofzuigen',1,'w'],['Badkamer schoonmaken',1,'w'],['Afval buiten zetten',1,'w'],['Beddengoed verschonen',2,'w'],['Planten water geven',4,'d'],['Koelkast schoonmaken',1,'m'],['Ramen lappen',2,'m']];
+
+/* ---------- geld ---------- */
+function monthCalc(m){
+  const inc = S.income.reduce((a,x) => a + num(x.amount), 0);
+  const fix = S.fixed.reduce((a,x) => a + num(x.amount) / (+x.freq || 1), 0);
+  const sp = S.spend.filter(x => String(x.date).startsWith(m));
+  const spent = sp.reduce((a,x) => a + num(x.amount), 0);
+  return {inc, fix, spent, left: inc - fix - spent, sp};
+}
+function moneyBar(c){
+  const total = Math.max(c.inc, c.fix + c.spent) || 1;
+  return `<div class="bar" role="img" aria-label="Vaste lasten ${euro(c.fix)}, uitgaven ${euro(c.spent)}, inkomsten ${euro(c.inc)}"><i class="f" style="width:${c.fix/total*100}%"></i><i class="s" style="width:${c.spent/total*100}%"></i></div>
+  <dl class="ledger"><dt><span class="sw" style="background:var(--sunk);outline:1px solid var(--line)"></span>Inkomsten</dt><dd>${euro(c.inc)}</dd>
+  <dt><span class="sw" style="background:var(--accent)"></span>Vaste lasten per maand</dt><dd>${euro(c.fix)}</dd>
+  <dt><span class="sw" style="background:var(--attn-fill)"></span>Uitgaven</dt><dd>${euro(c.spent)}</dd></dl>`;
+}
+const CATS = ['Boodschappen','Huis','Vervoer','Vrije tijd','Kleding','Gezondheid','Kinderen','Overig'];
+const FREQ = {1:'per maand', 3:'per kwartaal', 12:'per jaar'};
+function renderMoney(){
+  const c = monthCalc(ym);
+  let html = `<section style="margin-top:12px"><div class="group purse">
+    <div class="monthnav"><button data-action="month" data-d="-1" aria-label="Vorige maand">‹</button><b>${monthName(ym)}</b><button data-action="month" data-d="1" aria-label="Volgende maand">›</button></div>
+    <div class="label">Nog te besteden</div><div class="big${c.left < 0 ? ' neg' : ''}">${euro(c.left)}</div>${moneyBar(c)}</div></section>`;
+
+  const sp = c.sp.slice().sort((a,b) => b.date.localeCompare(a.date));
+  html += `<section><h2>Uitgaven</h2><div class="group">${sp.map(x => `<div class="row"><button class="main plain" data-action="editSpend" data-id="${x.id}"><div class="title">${esc(x.name)}</div><div class="sub">${fmtDate(parse(x.date))}, ${esc(x.cat)}</div></button><span class="amt">${euro(num(x.amount))}</span></div>`).join('')}
+    <button class="row addrow" data-action="add" data-what="spend">${PLUS}Uitgave toevoegen</button></div>`;
+  if (sp.length){
+    const by = {}; sp.forEach(x => by[x.cat] = (by[x.cat]||0) + num(x.amount));
+    html += `<div class="cats">${Object.entries(by).sort((a,b) => b[1]-a[1]).map(([k,v]) => `<span class="cat">${esc(k)} <b>${euro(v)}</b></span>`).join('')}</div>`;
+  }
+  html += `</section>`;
+
+  const fx = S.fixed.slice().sort((a,b) => (+a.day||99) - (+b.day||99));
+  html += `<section><h2>Vaste lasten</h2><div class="group">${fx.map(x => `<div class="row"><button class="main plain" data-action="editFixed" data-id="${x.id}"><div class="title">${esc(x.name)}</div><div class="sub">${FREQ[x.freq] || 'per maand'}${x.day ? `, rond de ${x.day}e` : ''}${+x.freq > 1 ? `, ${euro(num(x.amount)/x.freq)} per maand` : ''}</div></button><span class="amt">${euro(num(x.amount))}</span></div>`).join('')}
+    <button class="row addrow" data-action="add" data-what="fixed">${PLUS}Vaste last toevoegen</button></div></section>`;
+
+  html += `<section><h2>Inkomsten per maand</h2><div class="group">${S.income.map(x => `<div class="row"><button class="main plain" data-action="editIncome" data-id="${x.id}"><div class="title">${esc(x.name)}</div></button><span class="amt">${euro(num(x.amount))}</span></div>`).join('')}
+    <button class="row addrow" data-action="add" data-what="income">${PLUS}Inkomen toevoegen</button></div></section>`;
+  return html;
+}
+function spendForm(x){
+  const def = ym === iso(today()).slice(0,7) ? iso(today()) : ym + '-01';
+  openForm({title: x ? 'Uitgave' : 'Nieuwe uitgave', values: x || {date: def, cat: 'Boodschappen'},
+    fields: [{key:'name', label:'Omschrijving', type:'text', required:true, placeholder:'Bijv. weekboodschappen'},
+      {key:'amount', label:'Bedrag', type:'money', required:true, half:true, placeholder:'0,00'},
+      {key:'date', label:'Datum', type:'date', required:true, half:true},
+      {key:'cat', label:'Categorie', type:'select', options: CATS.map(c => [c,c])}],
+    onSave: v => x ? Object.assign(x, v) : S.spend.push({id: uid(), ...v}),
+    onDelete: x && (() => S.spend = S.spend.filter(y => y !== x))});
+}
+function fixedForm(x){
+  openForm({title: x ? 'Vaste last' : 'Nieuwe vaste last', values: x || {freq: 1},
+    fields: [{key:'name', label:'Omschrijving', type:'text', required:true, placeholder:'Bijv. huur, energie, zorgverzekering'},
+      {key:'amount', label:'Bedrag', type:'money', required:true, half:true, placeholder:'0,00'},
+      {key:'freq', label:'Hoe vaak', type:'select', half:true, options:[[1,'Per maand'],[3,'Per kwartaal'],[12,'Per jaar']]},
+      {key:'day', label:'Rond welke dag van de maand (optioneel)', type:'int', min:1, max:31}],
+    onSave: v => { v.freq = +v.freq; x ? Object.assign(x, v) : S.fixed.push({id: uid(), ...v}); },
+    onDelete: x && (() => S.fixed = S.fixed.filter(y => y !== x))});
+}
+function incomeForm(x){
+  openForm({title: x ? 'Inkomen' : 'Nieuw inkomen', values: x || {},
+    fields: [{key:'name', label:'Omschrijving', type:'text', required:true, placeholder:'Bijv. salaris, toeslag'},
+      {key:'amount', label:'Netto bedrag per maand', type:'money', required:true, placeholder:'0,00'}],
+    onSave: v => x ? Object.assign(x, v) : S.income.push({id: uid(), ...v}),
+    onDelete: x && (() => S.income = S.income.filter(y => y !== x))});
+}
+
+/* ---------- boodschappen ---------- */
+function renderList(){
+  const open = S.groceries.filter(g => !g.done), done = S.groceries.filter(g => g.done);
+  const onList = new Set(open.map(g => g.name.toLowerCase()));
+  const sugg = Object.values(S.history).filter(h => !onList.has(h.name.toLowerCase())).sort((a,b) => b.count - a.count).slice(0,12);
+  const row = g => `<div class="row${g.done ? ' isdone' : ''}"><button class="check${g.done ? ' on' : ''}" data-action="toggleG" data-id="${g.id}" aria-label="${esc(g.name)} ${g.done ? 'terugzetten' : 'afvinken'}">${g.done ? CHECK : ''}</button><div class="main title">${esc(g.name)}</div><button class="x" data-action="delG" data-id="${g.id}" aria-label="${esc(g.name)} verwijderen">×</button></div>`;
+  return `<section style="margin-top:12px"><form class="quick" data-form="grocery"><input name="item" placeholder="Wat moet er in huis?" autocomplete="off" enterkeyhint="done" aria-label="Boodschap toevoegen"><button class="btn">Toevoegen</button></form>
+    <p class="sub" style="margin:6px 4px 0">Meerdere tegelijk? Scheid ze met een komma.</p></section>`
+    + (open.length ? `<section><h2>Nog halen</h2><div class="group">${open.map(row).join('')}</div></section>` : `<section><div class="empty"><p>Je lijst is leeg.</p></div></section>`)
+    + (sugg.length ? `<section><h2>Vaak gekocht</h2><div class="chips">${sugg.map(h => `<button class="chip" data-action="sugg" data-name="${esc(h.name)}">+ ${esc(h.name)}</button>`).join('')}</div></section>` : '')
+    + (done.length ? `<section><h2>In het mandje</h2><div class="group">${done.map(row).join('')}</div><button class="btn ghost wide" style="margin-top:10px" data-action="clearG">Afgevinkte weghalen</button></section>` : '');
+}
+function addGrocery(name){
+  name = name.trim(); if (!name) return;
+  const key = name.toLowerCase();
+  if (!S.groceries.some(g => !g.done && g.name.toLowerCase() === key)) S.groceries.push({id: uid(), name, done:false});
+  const h = S.history[key] || {name, count:0}; h.count++; h.name = name; S.history[key] = h;
+}
+
+/* ---------- agenda ---------- */
+function eventRow(e){
+  const d = parse(e.date), diff = daysBetween(today(), d);
+  const late = e.kind === 'deadline' && !e.done && diff < 0;
+  const when = e.done ? 'Afgerond' : diff < 0 && e.kind !== 'deadline' ? fmtDate(d) : relDay(diff, d);
+  return `<div class="row${e.done ? ' isdone' : ''}"><div class="datebox${e.kind === 'deadline' ? ' dl' : ''}"><b>${d.getDate()}</b><span>${d.toLocaleDateString('nl-NL',{month:'short'}).replace('.','')}</span></div>
+    <button class="main plain" data-action="editEvent" data-id="${e.id}"><div class="title">${esc(e.title)}</div><div class="sub"><span class="${late ? 'late' : diff === 0 && !e.done ? 'due' : ''}">${when}</span>${e.time ? ', ' + esc(e.time) : ''}, ${e.kind === 'deadline' ? 'deadline' : 'afspraak'}</div></button>
+    ${e.kind === 'deadline' ? `<button class="check${e.done ? ' on' : ''}" data-action="toggleEv" data-id="${e.id}" aria-label="${esc(e.title)} ${e.done ? 'heropenen' : 'afronden'}">${e.done ? CHECK : ''}</button>` : ''}</div>`;
+}
+function renderAgenda(){
+  const t = iso(today());
+  const sorted = S.events.slice().sort((a,b) => (a.date + (a.time||'')).localeCompare(b.date + (b.time||'')));
+  const late = sorted.filter(e => e.kind === 'deadline' && !e.done && e.date < t);
+  const up = sorted.filter(e => !e.done && e.date >= t);
+  const past = sorted.filter(e => (e.done || e.date < t) && !late.includes(e)).reverse();
+  if (!S.events.length) return `<section style="margin-top:12px"><div class="empty"><p>Zet hier afspraken en deadlines neer, zoals de tandarts, de belastingaangifte of het opzeggen van een abonnement. Deadlines kun je afvinken als ze geregeld zijn.</p><button class="btn" data-action="add" data-what="event">Afspraak toevoegen</button></div></section>`;
+  return (late.length ? `<section style="margin-top:12px"><h2 class="late">Over de deadline</h2><div class="group">${late.map(eventRow).join('')}</div></section>` : '')
+    + `<section${late.length ? '' : ' style="margin-top:12px"'}><h2>Komend</h2><div class="group">${up.map(eventRow).join('')}<button class="row addrow" data-action="add" data-what="event">${PLUS}Afspraak of deadline toevoegen</button></div></section>`
+    + (past.length ? `<section><details><summary>Geweest en afgerond (${past.length})</summary><div class="group">${past.map(eventRow).join('')}</div></details></section>` : '');
+}
+function eventForm(e){
+  openForm({title: e ? (e.kind === 'deadline' ? 'Deadline' : 'Afspraak') : 'Nieuw in de agenda', values: e || {kind:'afspraak', date: iso(today())},
+    fields: [{key:'title', label:'Wat', type:'text', required:true, placeholder:'Bijv. tandarts, aangifte inkomstenbelasting'},
+      {key:'kind', label:'Soort', type:'select', options:[['afspraak','Afspraak'],['deadline','Deadline']]},
+      {key:'date', label:'Datum', type:'date', required:true, half:true},
+      {key:'time', label:'Tijd (optioneel)', type:'time', half:true},
+      {key:'note', label:'Notitie (optioneel)', type:'textarea'}],
+    onSave: v => e ? Object.assign(e, v) : S.events.push({id: uid(), done:false, ...v}),
+    onDelete: e && (() => S.events = S.events.filter(x => x !== e))});
+}
+
+/* ---------- formulier-sheet ---------- */
+function openForm({title, fields, values = {}, onSave, onDelete}){
+  const dlg = $('#sheet');
+  const inputs = fields.map(fl => {
+    let v = values[fl.key] ?? fl.def ?? ''; const id = 'f_' + fl.key; let input;
+    if (fl.type === 'select') input = `<select id="${id}" name="${fl.key}">${fl.options.map(([val,lab]) => `<option value="${esc(val)}"${String(val) === String(v) ? ' selected' : ''}>${esc(lab)}</option>`).join('')}</select>`;
+    else if (fl.type === 'textarea') input = `<textarea id="${id}" name="${fl.key}" rows="3">${esc(v)}</textarea>`;
+    else { if (fl.type === 'money' && v !== '') v = num(v).toFixed(2).replace('.', ',');
+      const type = fl.type === 'money' || fl.type === 'int' ? 'text' : fl.type;
+      const mode = fl.type === 'money' ? ' inputmode="decimal"' : fl.type === 'int' ? ' inputmode="numeric"' : '';
+      input = `<input id="${id}" name="${fl.key}" type="${type}"${mode} value="${esc(v)}"${fl.placeholder ? ` placeholder="${esc(fl.placeholder)}"` : ''} autocomplete="off">`; }
+    return `<div class="field${fl.half ? ' half' : ''}"><label for="${id}">${esc(fl.label)}</label>${input}</div>`;
+  }).join('');
+  dlg.innerHTML = `<form class="sheet" novalidate><div class="sheet-head"><button type="button" class="link" data-close>Annuleren</button><h3>${esc(title)}</h3><button type="submit" class="link strong">Bewaren</button></div>
+    <div class="fields">${inputs}</div><p class="err" hidden></p>${onDelete ? '<button type="button" class="btn danger wide" data-del>Verwijderen</button>' : ''}</form>`;
+  const form = dlg.querySelector('form'), err = form.querySelector('.err');
+  form.onsubmit = ev => {
+    ev.preventDefault(); const out = {};
+    for (const fl of fields){
+      let v = form.elements[fl.key].value.trim();
+      if (fl.required && !v){ err.textContent = `Vul ${fl.label.toLowerCase()} in.`; err.hidden = false; form.elements[fl.key].focus(); return; }
+      if (fl.type === 'money') v = v === '' ? 0 : num(v);
+      if (fl.type === 'int') v = v === '' ? '' : Math.min(fl.max ?? 9999, Math.max(fl.min ?? 1, parseInt(v) || 1));
+      out[fl.key] = v;
+    }
+    onSave(out); dlg.close(); save(); render(); toast('Bewaard');
+  };
+  form.querySelector('[data-close]').onclick = () => dlg.close();
+  const del = form.querySelector('[data-del]');
+  if (del) del.onclick = () => { const undo = snapshot(); onDelete(); dlg.close(); save(); render(); toast('Verwijderd', undo); };
+  dlg.showModal();
+}
+$('#sheet').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+
+/* ---------- back-up ---------- */
+function openSettings(){
+  const dlg = $('#sheet');
+  const count = `${S.tasks.length} taken, ${S.fixed.length} vaste lasten, ${S.spend.length} uitgaven, ${S.events.length} agenda-items`;
+  dlg.innerHTML = `<div class="sheet"><div class="sheet-head"><span style="min-width:84px"></span><h3>Back-up</h3><button type="button" class="link strong" data-close>Klaar</button></div>
+    <p>Je gegevens staan alleen op deze telefoon, niet op een server. Maak af en toe een back-up, zodat je niets kwijtraakt als je Safari-gegevens wist of een nieuwe telefoon krijgt.</p>
+    <p class="sub">${count}</p>
+    <div class="stack"><button class="btn" data-action="export">Back-up maken</button>
+    <label class="btn ghost filebtn" style="text-align:center">Back-up terugzetten<input type="file" accept="application/json,.json" id="importFile"></label>
+    <button class="btn danger" data-action="wipe">Alle gegevens wissen</button></div></div>`;
+  dlg.querySelector('[data-close]').onclick = () => dlg.close();
+  dlg.querySelector('#importFile').onchange = ev => importData(ev.target.files[0]);
+  dlg.showModal();
+}
+async function exportData(){
+  const name = `huishouden-backup-${iso(today())}.json`;
+  const blob = new Blob([JSON.stringify(S, null, 2)], {type:'application/json'});
+  try { const file = new File([blob], name, {type:'application/json'});
+    if (navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:'Back-up huishouden'}); return; }
+  } catch(e){ if (e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+}
+function importData(file){
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = () => {
+    let data; try { data = JSON.parse(r.result); } catch(e){ toast('Dit bestand kan niet gelezen worden. Kies een back-up die met deze app is gemaakt.'); return; }
+    const keys = ['tasks','income','fixed','spend','groceries','events'];
+    if (!data || typeof data !== 'object' || !keys.some(k => Array.isArray(data[k]))){ toast('Dit bestand is geen back-up van deze app.'); return; }
+    if (!confirm('Dit vervangt alle gegevens op deze telefoon door de back-up. Doorgaan?')) return;
+    const undo = snapshot(); S = Object.assign(empty(), data); save(); $('#sheet').close(); render(); toast('Back-up teruggezet', undo);
+  };
+  r.readAsText(file);
+}
+
+/* ---------- interactie ---------- */
+const find = (list, id) => S[list].find(x => x.id === id);
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-action]'); if (!b) return;
+  const {action, id} = b.dataset;
+  switch (action){
+    case 'tab': tab = b.dataset.tab; S.ui.tab = tab; save(); render(); scrollTo(0,0); break;
+    case 'headerAdd': ({taken:() => taskForm(), geld:() => spendForm(), agenda:() => eventForm()})[tab]?.(); break;
+    case 'add': ({task:() => taskForm(), spend:() => spendForm(), fixed:() => fixedForm(), income:() => incomeForm(), event:() => eventForm()})[b.dataset.what](); break;
+    case 'done': { const t = find('tasks', id), prev = {next:t.next, last:t.last};
+      t.last = iso(today()); t.next = iso(addInterval(today(), t.every, t.unit)); save(); render();
+      toast(`${t.name} gedaan. Volgende keer: ${fmtDate(parse(t.next))}`, () => { Object.assign(t, prev); save(); render(); }); break; }
+    case 'editTask': taskForm(find('tasks', id)); break;
+    case 'sampleTasks': { const d = iso(today()); SAMPLE.forEach(([name, every, unit]) => S.tasks.push({id: uid(), name, every, unit, next: d, who:''})); save(); render(); toast('Voorbeeldtaken toegevoegd. Pas ze aan door erop te tikken.'); break; }
+    case 'editSpend': spendForm(find('spend', id)); break;
+    case 'editFixed': fixedForm(find('fixed', id)); break;
+    case 'editIncome': incomeForm(find('income', id)); break;
+    case 'month': { const d = parse(ym + '-01'); d.setMonth(d.getMonth() + (+b.dataset.d)); ym = iso(d).slice(0,7); render(); break; }
+    case 'toggleG': { const g = find('groceries', id); g.done = !g.done; save(); render(); break; }
+    case 'delG': S.groceries = S.groceries.filter(g => g.id !== id); save(); render(); break;
+    case 'clearG': { const undo = snapshot(); S.groceries = S.groceries.filter(g => !g.done); save(); render(); toast('Afgevinkte weggehaald', undo); break; }
+    case 'sugg': addGrocery(b.dataset.name); save(); render(); break;
+    case 'editEvent': eventForm(find('events', id)); break;
+    case 'toggleEv': { const ev = find('events', id); ev.done = !ev.done; save(); render(); break; }
+    case 'hideInstall': S.ui.hideInstall = true; save(); render(); break;
+    case 'settings': openSettings(); break;
+    case 'export': exportData(); break;
+    case 'wipe': if (confirm('Weet je zeker dat je alle gegevens op deze telefoon wilt wissen?')){ const undo = snapshot(); const ui = S.ui; S = empty(); S.ui = ui; save(); $('#sheet').close(); render(); toast('Alles gewist', undo); } break;
+  }
+});
+document.addEventListener('submit', e => {
+  if (e.target.dataset.form !== 'grocery') return;
+  e.preventDefault();
+  const input = e.target.querySelector('input[name=item]');
+  input.value.split(',').forEach(addGrocery); save(); render();
+  $('#view input[name=item]').focus();
+});
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('#sheet').open) render(); });
+render();
+</script>
+</body>
+</html>
