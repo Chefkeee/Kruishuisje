@@ -174,6 +174,24 @@ dialog[open]{animation:up .22s ease-out}
 .qty{color:var(--accent);font-weight:700}
 .aisle-in{flex:1;padding:8px 10px}
 .x:disabled{opacity:.3}
+.datebox[style]{background:color-mix(in srgb,var(--k) 24%,var(--surface))}
+.kind{display:inline-flex;align-items:center;gap:6px}
+.kind::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--k);flex:none}
+.pair{display:inline-flex;flex:none}
+.pair .who + .who{margin-left:-8px;box-shadow:0 0 0 2px var(--surface)}
+.h2sub{font:500 15px var(--ui);color:var(--muted);margin-left:8px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.cal-wd{font-size:12px;color:var(--muted);padding:2px 0 4px}
+.cal-day{border:0;background:none;border-radius:10px;padding:6px 0 4px;display:flex;flex-direction:column;align-items:center;gap:3px;font:500 15px var(--ui);color:var(--ink);min-height:46px}
+.cal-day.is-today > span:first-child{color:var(--accent);font-weight:800}
+.cal-day.is-sel{background:var(--accent);color:var(--accent-ink)}
+.cal-day.is-sel > span:first-child{color:inherit}
+.cal-dots{display:flex;gap:2px;height:6px}
+.cal-dots i{width:6px;height:6px;border-radius:50%}
+.cal-day.is-sel .cal-dots i{box-shadow:0 0 0 1.5px var(--accent-ink)}
+.filt{flex-wrap:nowrap;overflow-x:auto;margin-top:12px;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.chip{white-space:nowrap}
+.chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 @media (prefers-reduced-motion:reduce){dialog[open]{animation:none}}
 .iconbtn{position:relative}
 .syncdot{position:absolute;top:5px;right:5px;width:10px;height:10px;border-radius:50%;border:2px solid var(--surface);display:none}
@@ -207,7 +225,7 @@ dialog[open]{animation:up .22s ease-out}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-const APP_VERSION = '4';
+const APP_VERSION = '5';
 if (/[?&](v|check)=/.test(location.search)) try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){}
 /* ---------- opslag ---------- */
 const KEY = 'huishouden.v1';
@@ -298,7 +316,7 @@ function render(){
   $('#todayLine').textContent = tab === 'home' ? today().toLocaleDateString('nl-NL', {weekday:'long', day:'numeric', month:'long'}) : '';
   $('#todayLine').hidden = tab !== 'home';
   $('#addBtn').hidden = !['taken','geld','agenda'].includes(tab);
-  $('#addBtn').setAttribute('aria-label', {taken:'Taak toevoegen', geld:'Uitgave toevoegen', agenda:'Afspraak toevoegen'}[tab] || 'Toevoegen');
+  $('#addBtn').setAttribute('aria-label', {taken:'Taak toevoegen', geld:'Uitgave toevoegen', agenda:'Toevoegen aan de agenda'}[tab] || 'Toevoegen');
   $('#tabs').innerHTML = Object.entries(TABS).map(([k,[label,icon]]) =>
     `<button class="tab" data-action="tab" data-tab="${k}"${k === tab ? ' aria-current="page"' : ''}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icon}</svg>${label}</button>`).join('');
   $('#view').innerHTML = (updateAvailable ? `<div class="hint" style="margin-top:12px;align-items:center"><p><b>Er is een nieuwe versie.</b> Je gegevens blijven gewoon staan.</p><button class="btn" data-action="applyUpdate">Vernieuwen</button></div>` : '')
@@ -313,20 +331,25 @@ function renderHome(){
   for (let i = 0; i < 7; i++){
     const d = new Date(t0); d.setDate(d.getDate() + i); const k = iso(d);
     const nt = tasks.filter(x => i === 0 ? x.due <= d : iso(x.due) === k).length;
-    const ne = S.events.filter(e => e.date === k && !e.done).length;
-    const dots = '<i class="dot"></i>'.repeat(Math.min(nt,3)) + '<i class="dot ev"></i>'.repeat(Math.min(ne,2));
+    const evs = S.events.filter(e => e.date === k && !e.done).sort(evSort), ne = evs.length;
+    const dots = '<i class="dot"></i>'.repeat(Math.min(nt,3)) + evs.slice(0,2).map(e => `<i class="dot" style="background:${KINDS[kindOf(e)].c}"></i>`).join('');
     week += `<button class="day${i === 0 ? ' is-today' : ''}" data-action="tab" data-tab="${ne && !nt ? 'agenda' : 'taken'}" aria-label="${esc(d.toLocaleDateString('nl-NL',{weekday:'long', day:'numeric', month:'long'}))}: ${nt} taken, ${ne} afspraken"><span class="wd">${d.toLocaleDateString('nl-NL',{weekday:'short'}).replace('.','')}</span><span class="n">${d.getDate()}</span><span class="dots">${dots}</span></button>`;
   }
   let html = `<section style="margin-top:12px"><div class="week">${week}</div>
-    <div class="legend"><span><i class="dot"></i>Taken</span><span><i class="dot ev"></i>Afspraken en deadlines</span></div></section>`;
+    <div class="legend"><span><i class="dot"></i>Taken</span><span><i class="dot ev"></i>Agenda</span></div></section>`;
 
+  const etenNu = S.events.filter(e => e.date === iso(t0) && kindOf(e) === 'eten' && !e.done).sort(evSort)[0];
+  if (etenNu){
+    const solo = named() && (etenNu.for === 'p1' || etenNu.for === 'p2') ? person(etenNu.for).name : '';
+    html += `<div class="hint" style="margin-top:12px"><p><b>Vandaag</b> ${solo ? `eet ${esc(solo)}` : 'eten jullie'} ${etenNu.where ? 'bij ' + esc(etenNu.where) : 'ergens anders'}${etenNu.time ? ' om ' + esc(etenNu.time) : ''}.${solo ? '' : ' Niet koken dus.'}</p></div>`;
+  }
   const standalone = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
   if (!standalone && !S.ui.hideInstall) html += `<div class="hint"><p>Zet de app op je beginscherm: tik in Safari op Deel en kies Zet op beginscherm. Dan opent hij schermvullend en blijven je gegevens goed bewaard.</p><button class="x" data-action="hideInstall" aria-label="Melding sluiten">×</button></div>`;
 
   let dueNow = tasks.filter(x => x.due <= t0), othersDue = 0;
   const mine = named() ? me() : null;
   if (mine){ const all = dueNow.length; dueNow = dueNow.filter(x => { const a = assignee(x.t); return !a || a === mine.id; }); othersDue = all - dueNow.length; }
-  html += `<section><h2>Te doen vandaag</h2>`;
+  html += `<section>${h2('Te doen vandaag', sumMins(dueNow))}`;
   if (dueNow.length) html += `<div class="group">${dueNow.map(taskRow).join('')}</div>`;
   else if (othersDue) html += `<div class="empty"><p>Niets voor jou vandaag.</p></div>`;
   else if (tasks.length) html += `<div class="empty"><p>Alles is bij. Volgende: ${esc(tasks[0].t.name)}, ${relDay(daysBetween(t0, tasks[0].due), tasks[0].due).toLowerCase()}.</p></div>`;
@@ -395,8 +418,11 @@ function taskRow({t, due}){
   const cls = diff < 0 ? 'late' : diff === 0 ? 'due' : '';
   return `<div class="row"><button class="check" data-action="done" data-id="${t.id}" aria-label="${esc(t.name)} afvinken"></button>
     <button class="main plain" data-action="editTask" data-id="${t.id}"><div class="title">${esc(t.name)}</div>
-    <div class="sub"><span class="${cls}">${relDay(diff, due)}</span>, ${intervalLabel(t).toLowerCase()}${whoText(t)}</div></button>${assignee(t) ? badge(assignee(t)) : ''}</div>`;
+    <div class="sub"><span class="${cls}">${relDay(diff, due)}</span>${t.mins ? ', ' + fmtMins(t.mins) : ''}, ${intervalLabel(t).toLowerCase()}${whoText(t)}</div></button>${assignee(t) ? badge(assignee(t)) : ''}</div>`;
 }
+function fmtMins(m){ m = +m; if (!m) return ''; if (m < 60) return `${m} min`; const h = Math.floor(m / 60), r = m % 60; return r ? `${h} u ${r} min` : `${h} uur`; }
+const sumMins = list => list.reduce((a, x) => a + (+x.t.mins || 0), 0);
+const h2 = (label, mins) => `<h2>${label}${mins ? `<span class="h2sub">${fmtMins(mins)}</span>` : ''}</h2>`;
 function whoText(t){
   const a = assignee(t), n = a && person(a) && person(a).name;
   if (t.who === 'rotate') return ', om de beurt' + (n ? ` (nu ${esc(n)})` : '');
@@ -412,7 +438,7 @@ function renderTasks(){
   const shown = f === 'mine' ? tasks.filter(x => { const a = assignee(x.t); return !a || a === mine.id; }) : tasks;
   const t0 = today(), wk = new Date(t0); wk.setDate(wk.getDate() + 7);
   const groups = [['Nu aan de beurt', x => x.due <= t0], ['Deze week', x => x.due > t0 && x.due < wk], ['Later', x => x.due >= wk]];
-  return `<section style="margin-top:12px">${top}</section>` + (shown.length ? '' : '<section><div class="empty"><p>Geen taken voor jou op dit moment.</p></div></section>') + groups.map(([label, g]) => { const list = shown.filter(g); return list.length ? `<section><h2>${label}</h2><div class="group">${list.map(taskRow).join('')}</div></section>` : ''; }).join('')
+  return `<section style="margin-top:12px">${top}</section>` + (shown.length ? '' : '<section><div class="empty"><p>Geen taken voor jou op dit moment.</p></div></section>') + groups.map(([label, g]) => { const list = shown.filter(g); return list.length ? `<section>${h2(label, sumMins(list))}<div class="group">${list.map(taskRow).join('')}</div></section>` : ''; }).join('')
     + `<section><div class="group"><button class="row addrow" data-action="add" data-what="task">${PLUS}Taak toevoegen</button></div></section>`;
 }
 function peopleCard(){
@@ -421,10 +447,10 @@ function peopleCard(){
   return '';
 }
 function statsCard(){
-  const m = iso(today()).slice(0,7), cnt = {p1:0, p2:0};
-  S.tasks.forEach(t => (t.log || []).forEach(l => { if (String(l.d).startsWith(m) && l.by in cnt) cnt[l.by]++; }));
+  const m = iso(today()).slice(0,7), cnt = {p1:0, p2:0}, mins = {p1:0, p2:0};
+  S.tasks.forEach(t => (t.log || []).forEach(l => { if (String(l.d).startsWith(m) && l.by in cnt){ cnt[l.by]++; mins[l.by] += +l.m || 0; } }));
   const max = Math.max(1, cnt.p1, cnt.p2);
-  return `<div class="group purse" style="padding:14px 16px"><div class="label">Gedaan in ${monthName(m).split(' ')[0]}</div>${people().map(p => `<div class="statrow">${badge(p.id)}<span class="statname">${esc(p.name)}</span><span class="statbar"><i class="who-${p.id}-bg" style="width:${cnt[p.id] / max * 100}%"></i></span><b class="amt">${cnt[p.id]}</b></div>`).join('')}</div>`;
+  return `<div class="group purse" style="padding:14px 16px"><div class="label">Gedaan in ${monthName(m).split(' ')[0]}</div>${people().map(p => `<div class="statrow">${badge(p.id)}<span class="statname">${esc(p.name)}${mins[p.id] ? `<span class="sub" style="display:block;font-size:12px;line-height:1.2">${fmtMins(mins[p.id])}</span>` : ''}</span><span class="statbar"><i class="who-${p.id}-bg" style="width:${cnt[p.id] / max * 100}%"></i></span><b class="amt">${cnt[p.id]}</b></div>`).join('')}</div>`;
 }
 function filterSeg(){
   const f = S.ui.taskFilter === 'mine' ? 'mine' : 'all';
@@ -434,6 +460,7 @@ const taskFields = [
   {key:'name', label:'Taak', type:'text', required:true, placeholder:'Bijv. badkamer schoonmaken'},
   {key:'every', label:'Elke', type:'int', def:1, half:true, min:1, max:365},
   {key:'unit', label:'Eenheid', type:'select', def:'w', half:true, options:[['d','dag(en)'],['w','week/weken'],['m','maand(en)']]},
+  {key:'mins', label:'Hoe lang duurt het', type:'select', options:[['','Weet ik niet'],[5,'5 min'],[10,'10 min'],[15,'15 min'],[20,'20 min'],[30,'30 min'],[45,'45 min'],[60,'1 uur'],[90,'1,5 uur'],[120,'2 uur'],[180,'3 uur'],[240,'4 uur']]},
   {key:'next', label:'Volgende keer', type:'date', required:true}
 ];
 function taskForm(t){
@@ -445,12 +472,13 @@ function taskForm(t){
   const vals = t ? {...t, who: ['p1','p2','rotate'].includes(t.who) ? t.who : ''} : {next: iso(today()), who: ''};
   openForm({title: t ? 'Taak' : 'Nieuwe taak', fields, values: vals,
     onSave: v => {
+      v.mins = v.mins ? +v.mins : '';
       if (v.who === 'rotate' && !(t && t.who === 'rotate' && t.turn)) v.turn = (me() && me().id) || 'p1';
       t ? Object.assign(t, v) : S.tasks.push({id: uid(), ...v});
     },
     onDelete: t && (() => S.tasks = S.tasks.filter(x => x !== t))});
 }
-const SAMPLE = [['Stofzuigen',1,'w'],['Badkamer schoonmaken',1,'w'],['Afval buiten zetten',1,'w'],['Beddengoed verschonen',2,'w'],['Planten water geven',4,'d'],['Koelkast schoonmaken',1,'m'],['Ramen lappen',2,'m']];
+const SAMPLE = [['Stofzuigen',1,'w',30],['Badkamer schoonmaken',1,'w',45],['Afval buiten zetten',1,'w',5],['Beddengoed verschonen',2,'w',20],['Planten water geven',4,'d',5],['Koelkast schoonmaken',1,'m',30],['Ramen lappen',2,'m',60]];
 
 /* ---------- geld ---------- */
 function monthCalc(m){
@@ -623,33 +651,90 @@ function aisleSheet(){
 }
 
 /* ---------- agenda ---------- */
+const KINDS = {
+  afspraak: {label:'Afspraak', c:'#2F8F86'},
+  eten:     {label:'Ergens eten', c:'#E07A3F'},
+  samen:    {label:'Samen iets doen', c:'#9B6BD6'},
+  anderen:  {label:'Met anderen', c:'#4A7FE0'},
+  deadline: {label:'Deadline', c:'#E2B33F'}
+};
+const kindOf = e => KINDS[e.kind] ? e.kind : 'afspraak';
+let agMonth = iso(today()).slice(0,7), agDay = null, agFilter = 'all';
+const evSort = (a,b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || ''));
+const evMatch = e => agFilter === 'all' || kindOf(e) === agFilter;
+const longDate = d => d.toLocaleDateString('nl-NL', {weekday:'long', day:'numeric', month:'long'});
+function forBadges(e){
+  if (!named()) return '';
+  if (e.for === 'p1' || e.for === 'p2') return badge(e.for);
+  return ['eten','samen','anderen'].includes(kindOf(e)) ? `<span class="pair" aria-label="Samen">${badge('p1')}${badge('p2')}</span>` : '';
+}
 function eventRow(e){
-  const d = parse(e.date), diff = daysBetween(today(), d);
-  const late = e.kind === 'deadline' && !e.done && diff < 0;
-  const when = e.done ? 'Afgerond' : diff < 0 && e.kind !== 'deadline' ? fmtDate(d) : relDay(diff, d);
-  return `<div class="row${e.done ? ' isdone' : ''}"><div class="datebox${e.kind === 'deadline' ? ' dl' : ''}"><b>${d.getDate()}</b><span>${d.toLocaleDateString('nl-NL',{month:'short'}).replace('.','')}</span></div>
-    <button class="main plain" data-action="editEvent" data-id="${e.id}"><div class="title">${esc(e.title)}</div><div class="sub"><span class="${late ? 'late' : diff === 0 && !e.done ? 'due' : ''}">${when}</span>${e.time ? ', ' + esc(e.time) : ''}, ${e.kind === 'deadline' ? 'deadline' : 'afspraak'}</div></button>
-    ${e.kind === 'deadline' ? `<button class="check${e.done ? ' on' : ''}" data-action="toggleEv" data-id="${e.id}" aria-label="${esc(e.title)} ${e.done ? 'heropenen' : 'afronden'}">${e.done ? CHECK : ''}</button>` : ''}</div>`;
+  const k = kindOf(e), K = KINDS[k], d = parse(e.date), diff = daysBetween(today(), d);
+  const late = k === 'deadline' && !e.done && diff < 0;
+  const when = e.done ? 'Afgerond' : diff < 0 && k !== 'deadline' ? fmtDate(d) : relDay(diff, d);
+  const time = e.time ? ', ' + esc(e.time) + (e.end ? '–' + esc(e.end) : '') : '';
+  const where = e.where ? (k === 'eten' ? ' bij ' : ', ') + esc(e.where) : '';
+  const withw = e.with ? ', met ' + esc(e.with) : '';
+  return `<div class="row${e.done ? ' isdone' : ''}"><div class="datebox" style="--k:${K.c}"><b>${d.getDate()}</b><span>${d.toLocaleDateString('nl-NL',{month:'short'}).replace('.','')}</span></div>
+    <button class="main plain" data-action="editEvent" data-id="${e.id}"><div class="title">${esc(e.title)}</div>
+    <div class="sub"><span class="${late ? 'late' : diff === 0 && !e.done ? 'due' : ''}">${when}</span>${time}</div>
+    <div class="sub"><span class="kind" style="--k:${K.c}">${K.label}${where}${withw}</span></div></button>
+    ${forBadges(e)}${k === 'deadline' ? `<button class="check${e.done ? ' on' : ''}" data-action="toggleEv" data-id="${e.id}" aria-label="${esc(e.title)} ${e.done ? 'heropenen' : 'afronden'}">${e.done ? CHECK : ''}</button>` : ''}</div>`;
+}
+function dayList(list){
+  let out = '', cur = null;
+  for (const e of list){
+    if (e.date !== cur){ cur = e.date; const d = parse(cur), diff = daysBetween(today(), d);
+      out += `<div class="aisle">${diff === 0 ? 'Vandaag' : diff === 1 ? 'Morgen' : esc(longDate(d))}</div>`; }
+    out += eventRow(e);
+  }
+  return out;
+}
+function monthGrid(){
+  const [y, m] = agMonth.split('-').map(Number), first = new Date(y, m - 1, 1);
+  const lead = (first.getDay() + 6) % 7, days = new Date(y, m, 0).getDate(), t = iso(today());
+  let cells = ['ma','di','wo','do','vr','za','zo'].map(w => `<span class="cal-wd">${w}</span>`).join('') + '<span></span>'.repeat(lead);
+  for (let dn = 1; dn <= days; dn++){
+    const k = `${agMonth}-${pad(dn)}`, evs = S.events.filter(e => e.date === k && evMatch(e)).sort(evSort);
+    const dots = evs.slice(0,3).map(e => `<i style="background:${KINDS[kindOf(e)].c}"></i>`).join('');
+    cells += `<button class="cal-day${k === t ? ' is-today' : ''}${k === agDay ? ' is-sel' : ''}" data-action="pickDay" data-d="${k}" aria-label="${esc(longDate(parse(k)))}, ${evs.length} ${evs.length === 1 ? 'item' : 'items'}"><span>${dn}</span><span class="cal-dots">${dots}</span></button>`;
+  }
+  return `<div class="group purse" style="padding:12px 10px"><div class="monthnav"><button data-action="agMonth" data-d="-1" aria-label="Vorige maand">‹</button><b>${monthName(agMonth)}</b><button data-action="agMonth" data-d="1" aria-label="Volgende maand">›</button></div><div class="cal">${cells}</div></div>`;
 }
 function renderAgenda(){
   const t = iso(today());
-  const sorted = S.events.slice().sort((a,b) => (a.date + (a.time||'')).localeCompare(b.date + (b.time||'')));
-  const late = sorted.filter(e => e.kind === 'deadline' && !e.done && e.date < t);
-  const up = sorted.filter(e => !e.done && e.date >= t);
-  const past = sorted.filter(e => (e.done || e.date < t) && !late.includes(e)).reverse();
-  if (!S.events.length) return `<section style="margin-top:12px"><div class="empty"><p>Zet hier afspraken en deadlines neer, zoals de tandarts, de belastingaangifte of het opzeggen van een abonnement. Deadlines kun je afvinken als ze geregeld zijn.</p><button class="btn" data-action="add" data-what="event">Afspraak toevoegen</button></div></section>`;
-  return (late.length ? `<section style="margin-top:12px"><h2 class="late">Over de deadline</h2><div class="group">${late.map(eventRow).join('')}</div></section>` : '')
-    + `<section${late.length ? '' : ' style="margin-top:12px"'}><h2>Komend</h2><div class="group">${up.map(eventRow).join('')}<button class="row addrow" data-action="add" data-what="event">${PLUS}Afspraak of deadline toevoegen</button></div></section>`
+  const all = S.events.filter(evMatch).sort(evSort);
+  const chips = [['all','Alles'], ...Object.entries(KINDS).map(([k, v]) => [k, v.label])];
+  let html = `<section style="margin-top:12px">${monthGrid()}<div class="chips filt">${chips.map(([k, l]) => `<button class="chip${agFilter === k ? ' on' : ''}" data-action="agFilter" data-k="${k}" aria-pressed="${agFilter === k}">${esc(l)}</button>`).join('')}</div></section>`;
+  if (agDay){
+    const list = all.filter(e => e.date === agDay);
+    return html + `<section><h2>${esc(longDate(parse(agDay)))}</h2><div class="group">${list.map(eventRow).join('')}<button class="row addrow" data-action="add" data-what="event">${PLUS}Iets toevoegen op deze dag</button></div>
+      <button class="linkbtn" data-action="pickDay" data-d="" style="margin-left:4px">Alles tonen</button></section>`;
+  }
+  if (!S.events.length) return html + `<section><div class="empty"><p>Zet hier alles neer wat jullie plannen: afspraken, ergens eten en bij wie, dingen die jullie samen gaan doen of met anderen, en deadlines. Tik op een dag in de kalender om meteen iets op die dag te zetten.</p><button class="btn" data-action="add" data-what="event">Iets toevoegen</button></div></section>`;
+  const late = all.filter(e => e.kind === 'deadline' && !e.done && e.date < t);
+  const up = all.filter(e => !e.done && e.date >= t);
+  const past = all.filter(e => (e.done || e.date < t) && !late.includes(e)).reverse();
+  return html
+    + (late.length ? `<section><h2 class="late">Over de deadline</h2><div class="group">${late.map(eventRow).join('')}</div></section>` : '')
+    + `<section><h2>Komend</h2><div class="group">${dayList(up)}<button class="row addrow" data-action="add" data-what="event">${PLUS}Iets toevoegen</button></div></section>`
     + (past.length ? `<section><details><summary>Geweest en afgerond (${past.length})</summary><div class="group">${past.map(eventRow).join('')}</div></details></section>` : '');
 }
 function eventForm(e){
-  openForm({title: e ? (e.kind === 'deadline' ? 'Deadline' : 'Afspraak') : 'Nieuw in de agenda', values: e || {kind:'afspraak', date: iso(today())},
-    fields: [{key:'title', label:'Wat', type:'text', required:true, placeholder:'Bijv. tandarts, aangifte inkomstenbelasting'},
-      {key:'kind', label:'Soort', type:'select', options:[['afspraak','Afspraak'],['deadline','Deadline']]},
-      {key:'date', label:'Datum', type:'date', required:true, half:true},
-      {key:'time', label:'Tijd (optioneel)', type:'time', half:true},
-      {key:'note', label:'Notitie (optioneel)', type:'textarea'}],
-    onSave: v => e ? Object.assign(e, v) : S.events.push({id: uid(), done:false, ...v}),
+  const fields = [{key:'title', label:'Wat', type:'text', placeholder:'Bijv. tandarts, verjaardag Tim, bioscoop'},
+    {key:'kind', label:'Soort', type:'select', options: Object.entries(KINDS).map(([k, v]) => [k, v.label])}];
+  if (named()){ const [a, b] = people(); fields.push({key:'for', label:'Voor wie', type:'select', options:[['', 'Samen'], ['p1', a.name], ['p2', b.name]]}); }
+  fields.push({key:'date', label:'Datum', type:'date', required:true},
+    {key:'time', label:'Van (optioneel)', type:'time', half:true},
+    {key:'end', label:'Tot (optioneel)', type:'time', half:true},
+    {key:'where', label:'Waar of bij wie (optioneel)', type:'text', placeholder:'Bijv. bij oma, restaurant De Haven'},
+    {key:'with', label:'Met wie (optioneel)', type:'text', placeholder:'Bijv. Tim en Eva'},
+    {key:'note', label:'Notitie (optioneel)', type:'textarea'});
+  openForm({title: e ? KINDS[kindOf(e)].label : 'Nieuw in de agenda', fields, values: e || {kind:'afspraak', for:'', date: agDay || iso(today())},
+    onSave: v => {
+      if (!v.title) v.title = v.kind === 'eten' ? (v.where ? `Eten bij ${v.where}` : 'Uit eten') : KINDS[v.kind].label + (v.where ? `, ${v.where}` : '');
+      e ? Object.assign(e, v) : S.events.push({id: uid(), done:false, ...v});
+    },
     onDelete: e && (() => S.events = S.events.filter(x => x !== e))});
 }
 
@@ -795,7 +880,7 @@ document.addEventListener('click', e => {
     case 'done': { const t = find('tasks', id), prev = JSON.stringify(t), at = centerOf(b);
       const by = (me() && me().id) || assignee(t) || null;
       t.last = iso(today()); t.next = iso(addInterval(today(), t.every, t.unit));
-      t.log = (t.log || []).concat({d: t.last, by}).slice(-60);
+      t.log = (t.log || []).concat({d: t.last, by, m: +t.mins || 0}).slice(-60);
       if (t.who === 'rotate'){ const cur = by || assignee(t); t.turn = other(cur).id; }
       save(); render(); confetti(...at);
       const nxt = t.who === 'rotate' && person(t.turn).name ? `, ${person(t.turn).name} is aan de beurt` : '';
@@ -806,7 +891,7 @@ document.addEventListener('click', e => {
     case 'editG': groceryForm(find('groceries', id)); break;
     case 'aisles': aisleSheet(); break;
     case 'editTask': taskForm(find('tasks', id)); break;
-    case 'sampleTasks': { const d = iso(today()); SAMPLE.forEach(([name, every, unit]) => S.tasks.push({id: uid(), name, every, unit, next: d, who:''})); save(); render(); toast('Voorbeeldtaken toegevoegd. Pas ze aan door erop te tikken.'); break; }
+    case 'sampleTasks': { const d = iso(today()); SAMPLE.forEach(([name, every, unit, mins]) => S.tasks.push({id: uid(), name, every, unit, mins, next: d, who:''})); save(); render(); toast('Voorbeeldtaken toegevoegd. Pas ze aan door erop te tikken.'); break; }
     case 'editSpend': spendForm(find('spend', id)); break;
     case 'editFixed': fixedForm(find('fixed', id)); break;
     case 'editIncome': incomeForm(find('income', id)); break;
@@ -819,6 +904,9 @@ document.addEventListener('click', e => {
     case 'editEvent': eventForm(find('events', id)); break;
     case 'toggleEv': { const ev = find('events', id), at = centerOf(b); ev.done = !ev.done; save(); render(); if (ev.done) confetti(...at); break; }
     case 'applyUpdate': applyUpdate(); break;
+    case 'pickDay': agDay = b.dataset.d && b.dataset.d !== agDay ? b.dataset.d : null; render(); break;
+    case 'agMonth': { const d = parse(agMonth + '-01'); d.setMonth(d.getMonth() + (+b.dataset.d)); agMonth = iso(d).slice(0,7); render(); break; }
+    case 'agFilter': agFilter = b.dataset.k; render(); break;
     case 'checkUpdate': checkUpdate(true); break;
     case 'toggleConfetti': S.ui.noConfetti = !S.ui.noConfetti; save(); b.textContent = `Confetti bij afvinken: ${S.ui.noConfetti ? 'uit' : 'aan'}`; if (!S.ui.noConfetti) confetti(...centerOf(b)); break;
     case 'hideInstall': S.ui.hideInstall = true; save(); render(); break;
