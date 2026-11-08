@@ -702,6 +702,9 @@ input[type=month]{min-height:44px}
 .sheet-head .link:not(.strong):active{transform:scale(.95);filter:brightness(.92)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .sheet-head .link:not(.strong){background:#4A4E59;color:#E9E6E7}}
 :root[data-theme="dark"] .sheet-head .link:not(.strong){background:#4A4E59;color:#E9E6E7}
+
+/* ===== v31: taken en klussen samen ===== */
+.segn{display:inline-grid;place-items:center;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-size:11px;margin-left:4px}
 </style>
 </head>
 <body>
@@ -726,7 +729,7 @@ input[type=month]{min-height:44px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-const APP_VERSION = '29';
+const APP_VERSION = '31';
 if (/[?&](v|check)=/.test(location.search)) try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){}
 /* ---------- opslag ---------- */
 const KEY = 'huishouden.v1';
@@ -836,11 +839,11 @@ function putItem(kind, id, data, at){
 const TABS = {
   home:  ['Overzicht', '<path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>'],
   taken: ['Taken', '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>'],
-  klussen:['Klussen', '<path d="M14.7 6.3a4 4 0 0 0-5.3 5.3L3.5 17.5a1.8 1.8 0 0 0 2.5 2.5l5.9-5.9a4 4 0 0 0 5.3-5.3l-2.6 2.6-2.3-.5-.5-2.3z"/>'],
   geld:  ['Geld', '<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10.5h18"/><circle cx="16.5" cy="14.8" r="1.3"/>'],
   lijst: ['Boodschappen', '<path d="M4 9h16l-1.6 10.2a1 1 0 0 1-1 .8H6.6a1 1 0 0 1-1-.8z"/><path d="M8.5 9L12 3.5 15.5 9"/>'],
   agenda:['Agenda', '<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>']
 };
+if (S.ui.tab === 'klussen'){ S.ui.tab = 'taken'; S.ui.taskView = 'jobs'; }
 let tab = TABS[S.ui.tab] ? S.ui.tab : 'home';
 let ym = iso(today()).slice(0,7);
 
@@ -855,7 +858,7 @@ function render(){
     $('#view').innerHTML = renderGate(); return;
   }
   setStatus(syncStatus, syncError);
-  $('#title').textContent = tab === 'lijst' ? (S.ui.listView === 'meals' ? 'Weekmenu' : 'Boodschappen') : TABS[tab][0];
+  $('#title').textContent = tab === 'taken' ? (S.ui.taskView === 'jobs' ? 'Klussen' : 'Taken') : tab === 'lijst' ? (S.ui.listView === 'meals' ? 'Weekmenu' : 'Boodschappen') : TABS[tab][0];
   $('#todayLine').textContent = tab === 'home' ? today().toLocaleDateString('nl-NL', {weekday:'long', day:'numeric', month:'long'}) : '';
   $('#todayLine').hidden = tab !== 'home';
   $('#addBtn').hidden = true; $('#fab').hidden = false;
@@ -989,7 +992,7 @@ function searchAll(q){
     ['Taken', '✅', S.tasks.filter(t => hit(t.name, pn(assignee(t)))).map(t => { const d = nextDue(t); return {r:`task:${t.id}`, title:t.name, sub:`${t.finished ? 'Afgerond' : relDay(daysBetween(t0, d), d)}, ${intervalLabel(t).toLowerCase()}`}; })],
     ['Agenda', '📅', S.events.filter(e => hit(e.title, e.where, e.with, e.note, KINDS[kindOf(e)].label)).sort((a, b) => b.date.localeCompare(a.date))
       .map(e => ({r:`event:${e.id}`, title:e.title, sub:`${fmtDate(parse(e.date))}${e.repeat ? ', ' + repeatLabel(e.repeat).toLowerCase() : ''}, ${KINDS[kindOf(e)].label.toLowerCase()}${e.where ? ', ' + e.where : ''}`}))],
-    ['Klussen', '🔧', (S.jobs || []).filter(j => hit(j.title, j.pro, j.note, areaOf(j)[1], (j.mats || []).map(m => m.name).join(' ')))
+    ['Klussen', '🔧', (S.jobs || []).filter(j => hit(j.title, j.who === 'uit' ? j.pro : '', j.note, areaOf(j)[1], (j.mats || []).map(m => m.name).join(' ')))
       .map(j => { const mats = (j.mats || []).filter(m => hit(m.name)).map(m => m.name); return {r:`job:${j.id}`, title:j.title, sub:`${areaOf(j)[1]}, ${statusLabel(j).toLowerCase()}${mats.length && !hit(j.title) ? `, nodig: ${mats.join(', ')}` : ''}`}; })],
     ['Weekmenu', '🍽️', (S.meals || []).filter(m => m.dish && hit(m.dish, m.ingredients, m.note)).sort((a, b) => b.date.localeCompare(a.date)).map(m => ({r:`meal:${m.date}`, title: m.dish, sub: fmtDate(parse(m.date)) + (m.cook ? `, ${cookName(m)} kookt` : '')}))],
     ['Boodschappen', '🛒', S.groceries.filter(g => hit(g.name)).map(g => ({r:`grocery:${g.id}`, title:`${(g.qty || 1) > 1 ? g.qty + '× ' : ''}${g.name}`, sub: g.done ? 'In het mandje' : 'Nog halen'}))],
@@ -1092,9 +1095,15 @@ function whoText(t){
   return n ? ', ' + esc(n) : '';
 }
 function renderTasks(){
+  const nDue = activeTasks().filter(t => nextDue(t) <= today()).length;
+  const nJobs = (S.jobs || []).filter(j => j.status !== 'klaar').length;
+  const seg = `<div class="seg" style="margin:8px 0 0"><button data-action="taskView" data-v="tasks" aria-pressed="${S.ui.taskView !== 'jobs'}">✅ Huishouden${nDue ? ` <span class="segn">${nDue}</span>` : ''}</button><button data-action="taskView" data-v="jobs" aria-pressed="${S.ui.taskView === 'jobs'}">🔧 Klussen${nJobs ? ` <span class="segn">${nJobs}</span>` : ''}</button></div>`;
+  return seg + (S.ui.taskView === 'jobs' ? renderJobs() : renderHouseTasks());
+}
+function renderHouseTasks(){
   const tasks = activeTasks().map(t => ({t, due: nextDue(t)})).sort((a,b) => a.due - b.due);
   const finished = S.tasks.filter(t => t.finished).sort((a, b) => b.finished.localeCompare(a.finished));
-  if (!tasks.length && !finished.length) return `<section style="margin-top:12px"><div class="empty"><p>Voeg je terugkerende klussen toe, zoals stofzuigen of het beddengoed verschonen. Vink ze af als ze gedaan zijn; de app plant de volgende keer vanzelf in.</p>
+  if (!tasks.length && !finished.length) return `<section style="margin-top:12px"><div class="empty"><p>Voeg je terugkerende huishoudtaken toe, zoals stofzuigen of het beddengoed verschonen. Vink ze af als ze gedaan zijn; de app plant de volgende keer vanzelf in.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-action="add" data-what="task">Taak toevoegen</button><button class="btn ghost" data-action="sampleTasks">Voorbeeldtaken gebruiken</button></div></div></section>`;
   const top = peopleCard() || (statsCard() + filterSeg());
   const mine = me();
@@ -1146,7 +1155,19 @@ function taskForm(t){
       if (t && v.next !== t.next) delete t.due0;
       t ? Object.assign(t, v) : S.tasks.push({id: uid(), ...v});
     },
-    onDelete: t && (() => S.tasks = S.tasks.filter(x => x !== t))});
+    onDelete: t && (() => S.tasks = S.tasks.filter(x => x !== t)),
+    alt: t ? {label: '🔧 Omzetten naar klus', run: () => taskToJob(t)} : {label: '🔧 Dit is een klus: open het klusformulier', run: v => jobForm(null, {title: v.name || ''})}});
+}
+// Een taak die eigenlijk een klus is, omzetten naar een klus met alle klusgegevens.
+function taskToJob(t){
+  const undo = snapshot();
+  const repeat = t.unit === 'y' ? String(12 * (+t.every || 1)) : t.unit === 'm' ? String(+t.every || 1) : '';
+  const j = {id: uid(), title: t.name, area: 'overig', type: repeat ? 'onderhoud' : 'klus', repeat: repeat ? String([3, 6, 12, 24, 60].reduce((b, x) => Math.abs(x - +repeat) < Math.abs(b - +repeat) ? x : b)) : '',
+    prio: 'normaal', status: 'gepland', date: t.next || iso(today()), who: t.who === 'p1' || t.who === 'p2' ? t.who : '', hours: t.mins ? String(Math.max(1, Math.round(t.mins / 60))) : '',
+    costType: 'once', mats: [], log: (t.log || []).map(l => l.d), note: ''};
+  (S.jobs = S.jobs || []).push(j); S.tasks = S.tasks.filter(x => x !== t);
+  S.ui.taskView = 'jobs'; save(); render();
+  jobSheet(j.id); toast(`${j.title} is nu een klus`, () => { $('#sheet').close(); undo(); });
 }
 const SAMPLE = [['Stofzuigen',1,'w',30],['Badkamer schoonmaken',1,'w',45],['Afval buiten zetten',1,'w',5],['Beddengoed verschonen',2,'w',20],['Planten water geven',4,'d',5],['Koelkast schoonmaken',1,'m',30],['Ramen lappen',2,'m',60]];
 
@@ -1615,7 +1636,7 @@ function eventForm(e, occDate, preset = {}){
 }
 
 /* ---------- formulier-sheet ---------- */
-function openForm({title, fields, values = {}, onSave, onDelete, extra, note, after, deleteLabel = 'Verwijderen'}){
+function openForm({title, fields, values = {}, onSave, onDelete, extra, alt, note, after, deleteLabel = 'Verwijderen'}){
   const dlg = $('#sheet');
   const inputs = fields.map(fl => {
     let v = values[fl.key] ?? fl.def ?? ''; const id = 'f_' + fl.key; let input;
@@ -1631,7 +1652,7 @@ function openForm({title, fields, values = {}, onSave, onDelete, extra, note, af
   dlg.onclick = null; dlg.oninput = null; dlg.onsubmit = null;
   dlg.innerHTML = `<form class="sheet" novalidate><div class="sheet-head"><button type="button" class="link" data-close>Annuleren</button><h3>${esc(title)}</h3><button type="submit" class="link strong">Bewaren</button></div>
     ${note ? `<p class="sub" style="margin:0 2px 12px">${esc(note)}</p>` : ''}<div class="fields">${inputs}</div><p class="err" hidden></p>
-    ${extra ? `<button type="button" class="btn ghost wide" data-extra style="margin-top:18px">${esc(extra.label)}</button>` : ''}${onDelete ? `<button type="button" class="btn danger wide" data-del>${esc(deleteLabel)}</button>` : ''}</form>`;
+    ${alt ? `<button type="button" class="btn ghost wide" data-alt style="margin-top:18px">${esc(alt.label)}</button>` : ''}${extra ? `<button type="button" class="btn ghost wide" data-extra style="margin-top:18px">${esc(extra.label)}</button>` : ''}${onDelete ? `<button type="button" class="btn danger wide" data-del>${esc(deleteLabel)}</button>` : ''}</form>`;
   const form = dlg.querySelector('form'), err = form.querySelector('.err');
   const cond = fields.filter(f => f.showIf);
   const refresh = () => { const vals = {}; fields.forEach(f => vals[f.key] = form.elements[f.key].value); cond.forEach(f => form.querySelector('#f_' + f.key).closest('.field').hidden = !f.showIf(vals)); };
@@ -1651,6 +1672,8 @@ function openForm({title, fields, values = {}, onSave, onDelete, extra, note, af
   form.querySelector('[data-close]').onclick = () => dlg.close();
   const del = form.querySelector('[data-del]');
   if (del) del.onclick = () => { const undo = snapshot(); onDelete(); dlg.close(); save(); render(); toast('Verwijderd', undo); };
+  const al = form.querySelector('[data-alt]');
+  if (al) al.onclick = () => { const vals = {}; fields.forEach(f => vals[f.key] = form.elements[f.key].value.trim()); alt.run(vals); };
   const ex = form.querySelector('[data-extra]');
   if (ex) ex.onclick = () => { const undo = snapshot(); extra.run(); dlg.close(); save(); render(); toast('Verwijderd', undo); };
   if (!dlg.open) dlg.showModal();
@@ -1747,7 +1770,6 @@ function jobMonthly(j){
 }
 function doerText(j){
   if (j.who === 'uit') return j.pro ? `Uitbesteed aan ${j.pro}` : 'Uitbesteden';
-  if (j.pro && j.type === 'onderhoud') return j.pro;
   const p = (j.who === 'p1' || j.who === 'p2') && named() ? person(j.who).name : '';
   return p ? `Zelf, ${p}` : 'Zelf, samen';
 }
@@ -1773,13 +1795,13 @@ function jobCard(j){
 }
 function renderJobs(){
   const jobs = S.jobs || [];
-  if (!jobs.length) return `<section style="margin-top:12px"><div class="house"><h3>Ons huis</h3><p style="margin:0 0 14px;max-width:30ch">Houd hier bij welke klussen en welk onderhoud er in huis moet gebeuren, wat je ervoor nodig hebt en wie het doet.</p>
+  if (!jobs.length) return `<section style="margin-top:10px"><div class="house"><h3>Ons huis</h3><p style="margin:0 0 14px;max-width:30ch">Houd hier bij welke klussen en welk onderhoud er in huis moet gebeuren, wat je ervoor nodig hebt en wie het doet.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" style="background:#fff;color:#5D6E8B" data-action="add" data-what="job">Klus toevoegen</button><button class="btn" style="background:rgba(255,255,255,.18);color:#fff" data-action="sampleJobs">Standaard onderhoud toevoegen</button></div></div></section>`;
   const open = jobs.filter(j => j.status !== 'klaar');
   const cnt = k => open.filter(j => (j.status || 'idee') === k).length;
   const costSelf = open.filter(j => j.who !== 'uit').reduce((a, j) => a + num(j.cost), 0), costPro = open.filter(j => j.who === 'uit').reduce((a, j) => a + num(j.cost), 0);
   const nextM = open.filter(j => j.type === 'onderhoud' && j.date).sort((a, b) => a.date.localeCompare(b.date))[0];
-  let html = `<section style="margin-top:12px"><div class="house"><h3>Ons huis</h3>
+  let html = `<section style="margin-top:10px"><div class="house"><h3>Ons huis</h3>
     <div class="house-stats"><div><b>${cnt('bezig')}</b><span>Bezig</span></div><div><b>${cnt('gepland')}</b><span>Gepland</span></div><div><b>${cnt('idee')}</b><span>Ideeën</span></div></div>
     ${costSelf + costPro ? `<div class="house-money">Begroot voor open klussen: <b>${euro(costSelf + costPro)}</b><br><span style="opacity:.85;font-size:14px">Zelf ${euro(costSelf)}, uitbesteed ${euro(costPro)}</span></div>` : ''}
     ${nextM ? `<div class="house-next">Volgend onderhoud: ${esc(nextM.title)}, ${relDay(daysBetween(today(), parse(nextM.date)), parse(nextM.date)).toLowerCase()}</div>` : ''}</div>
@@ -1800,7 +1822,7 @@ function renderJobs(){
   if (done.length) html += `<section><details><summary>Klaar (${done.length})</summary><div class="jobs">${done.map(jobCard).join('')}</div></details></section>`;
   return html;
 }
-function jobForm(j){
+function jobForm(j, preset = {}){
   const doers = named() ? [['', 'Zelf, samen'], ['p1', `Zelf, ${person('p1').name}`], ['p2', `Zelf, ${person('p2').name}`], ['uit', 'Uitbesteden']] : [['', 'Zelf'], ['uit', 'Uitbesteden']];
   const fields = [
     {key:'title', label:'Wat moet er gebeuren', type:'text', required:true, placeholder:'Bijv. kitrand douche vervangen'},
@@ -1812,14 +1834,14 @@ function jobForm(j){
     {key:'date', label:'Gepland op', type:'date', half:true},
     {key:'who', label:'Wie doet het', type:'select', options: doers},
     {key:'hours', label:'Hoeveel tijd kost het', type:'select', options: HOURS, showIf: v => v.who !== 'uit'},
-    {key:'pro', label:'Bedrijf of vakman', type:'text', placeholder:'Bijv. Installatiebedrijf Jansen', list: proList(), showIf: v => v.who === 'uit' || v.type === 'onderhoud'},
-    {key:'contact', label:'Telefoon of e-mail', type:'text', placeholder:'Bijv. 06 12345678', showIf: v => v.who === 'uit' || v.type === 'onderhoud'},
+    {key:'pro', label:'Bedrijf of vakman', type:'text', placeholder:'Bijv. Installatiebedrijf Jansen', list: proList(), showIf: v => v.who === 'uit'},
+    {key:'contact', label:'Telefoon of e-mail', type:'text', placeholder:'Bijv. 06 12345678', showIf: v => v.who === 'uit'},
     {key:'costType', label:'Soort kosten', type:'select', half:true, options: COSTTYPES},
     {key:'cost', label:'Bedrag (optioneel)', type:'money', half:true, placeholder:'0,00'},
     {key:'note', label:'Notitie (optioneel)', type:'textarea'}];
   let created = null;
   openForm({title: j ? 'Klus bewerken' : 'Nieuwe klus', fields,
-    values: j ? {costType: 'once', ...j} : {area:'overig', type:'klus', prio:'normaal', status:'idee', who:'', repeat:'', costType:'once'},
+    values: j ? {costType: 'once', ...j} : {area:'overig', type:'klus', prio:'normaal', status:'idee', who:'', repeat:'', costType:'once', ...preset},
     onSave: v => {
       if (v.type !== 'onderhoud') v.repeat = '';
       if (j) Object.assign(j, v); else { created = {id: uid(), mats: [], log: [], ...v}; (S.jobs = S.jobs || []).push(created); }
@@ -1860,7 +1882,7 @@ function jobSheet(id){
     const a = areaOf(j), P = prioOf(j), mats = j.mats || [], have = mats.filter(m => m.done).length;
     const d = j.date ? parse(j.date) : null;
     const hours = (HOURS.find(h => h[0] === String(j.hours || '')) || [,''])[1];
-    const contact = j.contact ? (/@/.test(j.contact) ? `<a href="mailto:${esc(j.contact)}">${esc(j.contact)}</a>` : `<a href="tel:${esc(j.contact.replace(/[^\d+]/g, ''))}">${esc(j.contact)}</a>`) : '';
+    const contact = j.contact && j.who === 'uit' ? (/@/.test(j.contact) ? `<a href="mailto:${esc(j.contact)}">${esc(j.contact)}</a>` : `<a href="tel:${esc(j.contact.replace(/[^\d+]/g, ''))}">${esc(j.contact)}</a>`) : '';
     dlg.innerHTML = `<div class="sheet"><div class="sheet-head"><button type="button" class="link" data-close>Sluiten</button><h3>Klus</h3><button type="button" class="link strong" data-edit>Bewerken</button></div>
       <div class="jhero"><span class="job-icon big" aria-hidden="true">${a[2]}</span><div><div class="job-top">${esc(a[1])}${j.type === 'onderhoud' ? `<span class="tag" style="--t:#6E9184">Onderhoud${j.repeat ? ', ' + JREPEAT.find(r => r[0] === String(j.repeat))[1].toLowerCase() : ''}</span>` : ''}<span class="tag" style="--t:${P[1]}">${P[0]}</span></div><h2>${esc(j.title)}</h2></div></div>
       <div class="seg seg4" role="group" aria-label="Status">${STATUS.map(([k, l]) => `<button type="button" data-status="${k}" aria-pressed="${(j.status || 'idee') === k}">${l}</button>`).join('')}</div>
@@ -1869,7 +1891,6 @@ function jobSheet(id){
         ${contact ? `<div class="inforow"><dt>Contact</dt><dd>${contact}</dd></div>` : ''}
         <div class="inforow"><dt>Wanneer</dt><dd>${d ? `${esc(longDate(d))}` : '<span class="sub">Nog niet gepland</span>'}</dd></div>
         ${hours && j.who !== 'uit' ? `<div class="inforow"><dt>Tijd</dt><dd>${hours}</dd></div>` : ''}
-        ${j.pro && j.who !== 'uit' ? `<div class="inforow"><dt>Bedrijf</dt><dd>${esc(j.pro)}</dd></div>` : ''}
         <div class="inforow"><dt>Kosten</dt><dd>${num(j.cost) ? `${costText(j)}${jobMonthly(j) && j.costType !== 'month' ? ` <span class="sub">(≈ ${euro(jobMonthly(j))} per maand)</span>` : ''}` : '<button type="button" class="linkbtn" data-edit style="padding:0">Bedrag invullen</button>'}</dd></div>
         ${(j.costLog || []).length ? `<div class="inforow"><dt>Betaald</dt><dd><span class="sub">${j.costLog.slice(-4).reverse().map(x => `${fmtDate(parse(x.d))}: ${euro(x.a)}`).join(', ')}</span></dd></div>` : ''}
         ${(j.costType === 'month' || j.costType === 'year') && num(j.cost) ? (j.fixedId && S.fixed.some(f => f.id === j.fixedId) ? `<div class="inforow"><dt></dt><dd class="sub">Staat ook bij je vaste lasten</dd></div>` : `<div class="inforow"><dt></dt><dd><button type="button" class="linkbtn" data-tofixed style="padding:0">Ook toevoegen aan vaste lasten</button></dd></div>`) : ''}
@@ -1892,7 +1913,7 @@ function jobSheet(id){
     if (d.mat){ const m = j.mats.find(x => x.id === d.mat); m.done = !m.done; save(); render(); draw(); if (m.done && j.mats.every(x => x.done)) confetti(...centerOf(b)); return; }
     if (d.rmmat){ j.mats = j.mats.filter(x => x.id !== d.rmmat); save(); render(); draw(); return; }
     if ('tolist' in d){ materialsToList(j); render(); return; }
-    if ('tofixed' in d){ const f = {id: uid(), name: j.title, company: j.pro || '', amount: num(j.cost), freq: j.costType === 'year' ? 12 : 1, cat: 'wonen', method: 'incasso', note: 'Onderhoudsabonnement, gekoppeld aan de klus'}; S.fixed.push(f); j.fixedId = f.id; save(); render(); draw(); toast('Toegevoegd aan vaste lasten'); return; }
+    if ('tofixed' in d){ const f = {id: uid(), name: j.title, company: j.who === 'uit' ? (j.pro || '') : '', amount: num(j.cost), freq: j.costType === 'year' ? 12 : 1, cat: 'wonen', method: 'incasso', note: 'Onderhoudsabonnement, gekoppeld aan de klus'}; S.fixed.push(f); j.fixedId = f.id; save(); render(); draw(); toast('Toegevoegd aan vaste lasten'); return; }
     if ('deljob' in d){ const undo = snapshot(); S.jobs = S.jobs.filter(x => x !== j); dlg.close(); save(); render(); toast('Klus verwijderd', undo); }
   };
   dlg.onsubmit = e => {
@@ -1998,8 +2019,8 @@ function jobsMoneyCard(){
   if (!(S.jobs || []).some(j => num(j.cost))) return (S.jobs || []).length ? `<section><h2>Klussen en onderhoud</h2><div class="empty"><p>Vul bij je klussen de kosten in, dan zie je hier wat jullie dit jaar uitgaven en wat er de komende twaalf maanden aankomt.</p><button class="btn ghost" data-action="tab" data-tab="klussen">Naar klussen</button></div></section>` : '';
   const c = jobCosts();
   const reserve = c.upTotal / 12;
-  const rows = c.up.slice(0, 6).map(x => `<button class="row plain" data-action="openJob" data-id="${x.j.id}" style="width:100%"><div class="main"><div class="title">${esc(x.j.title)}</div><div class="sub">${x.d ? fmtDate(x.d) : 'Nog geen datum'}${x.j.pro ? `, ${esc(x.j.pro)}` : ''}</div></div><span class="amt">${euro(x.a)}</span></button>`).join('');
-  const subRows = c.subList.map(j => `<button class="row plain" data-action="openJob" data-id="${j.id}" style="width:100%"><div class="main"><div class="title">${esc(j.title)}</div><div class="sub">${j.pro ? esc(j.pro) + ', ' : ''}abonnement</div></div><span class="amt">${costText(j)}</span></button>`).join('');
+  const rows = c.up.slice(0, 6).map(x => `<button class="row plain" data-action="openJob" data-id="${x.j.id}" style="width:100%"><div class="main"><div class="title">${esc(x.j.title)}</div><div class="sub">${x.d ? fmtDate(x.d) : 'Nog geen datum'}${x.j.who === 'uit' && x.j.pro ? `, ${esc(x.j.pro)}` : ''}</div></div><span class="amt">${euro(x.a)}</span></button>`).join('');
+  const subRows = c.subList.map(j => `<button class="row plain" data-action="openJob" data-id="${j.id}" style="width:100%"><div class="main"><div class="title">${esc(j.title)}</div><div class="sub">${j.who === 'uit' && j.pro ? esc(j.pro) + ', ' : ''}abonnement</div></div><span class="amt">${costText(j)}</span></button>`).join('');
   return `<section><h2>Klussen en onderhoud</h2>
     <div class="group purse" style="padding:12px 14px"><div class="etiles">
       <div class="etile" style="--k:#8A7064"><span class="sub">Uitgegeven in ${t0year()}</span><b>${euro(c.spent)}</b><span class="sub">${c.nSpent} ${c.nSpent === 1 ? 'keer' : 'keer'}</span></div>
@@ -2692,7 +2713,8 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-action]'); if (!b) return;
   const {action, id} = b.dataset;
   switch (action){
-    case 'tab': tab = b.dataset.tab; S.ui.tab = tab; save(); render(); scrollTo(0,0); break;
+    case 'tab': tab = b.dataset.tab; if (tab === 'klussen'){ tab = 'taken'; S.ui.taskView = 'jobs'; } else if (tab === 'taken' && !b.classList.contains('tab')) S.ui.taskView = 'tasks'; S.ui.tab = tab; save(); render(); scrollTo(0,0); break;
+    case 'taskView': S.ui.taskView = b.dataset.v; saveLocal(); render(); scrollTo(0,0); break;
     case 'headerAdd': ({taken:() => taskForm(), klussen:() => jobForm(), geld:() => spendForm(), agenda:() => eventForm()})[tab]?.(); break;
     case 'add': ({task:() => taskForm(), spend:() => spendForm(), fixed:() => fixedForm(), income:() => incomeForm(), event:() => eventForm(), job:() => jobForm()})[b.dataset.what](); break;
     case 'done': doneTask(id, centerOf(b)); break;
