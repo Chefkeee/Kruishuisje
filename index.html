@@ -718,6 +718,7 @@ input[type=month]{min-height:44px}
 .row + .brow::before{left:54px}
 .bic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:16px;background:var(--sunk);flex:none}
 .bamt{width:84px;flex:none;padding:8px 10px;text-align:right}
+.amt.free{color:#6E9184;font-size:13px;font-weight:700}
 </style>
 </head>
 <body>
@@ -742,7 +743,7 @@ input[type=month]{min-height:44px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-const APP_VERSION = '35';
+const APP_VERSION = '37';
 if (/[?&](v|check)=/.test(location.search)) try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){}
 /* ---------- opslag ---------- */
 const KEY = 'huishouden.v1';
@@ -1290,12 +1291,12 @@ function renderMoney(){
     const endD = x.end ? parse(x.end) : null, endDays = endD ? daysBetween(t0, endD) : null;
     const bits = [x.company ? `<b>${esc(x.company)}</b>` : '', esc(FREQ[x.freq] || 'per maand'), x.day ? `rond de ${x.day}e` : '', x.method === 'zelf' ? 'zelf overmaken' : x.method === 'kaart' ? 'creditcard' : '', +x.freq > 1 && num(x.amount) ? `${euro(num(x.amount) / x.freq)} per maand` : ''].filter(Boolean).join(', ');
     const endTxt = endD ? (endDays < 0 ? `<span class="late">Contract afgelopen op ${fmtDate(endD)}</span>` : endD <= monthAhead(t0) ? `<span class="due">Contract loopt af ${relDay(endDays, endD).toLowerCase()}</span>` : `Contract tot ${fmtDate(endD)}`) : '';
-    return `<div class="row" data-sw="fixed:${x.id}"><button class="main plain" data-action="editFixed" data-id="${x.id}"><div class="title">${esc(x.name)}</div><div class="sub">${bits}</div>${endTxt ? `<div class="sub">${endTxt}</div>` : ''}</button>${num(x.amount) ? `<span class="amt">${euro(num(x.amount))}</span>` : `<span class="amt due" style="font-size:13px">Bedrag?</span>`}</div>`;
+    return `<div class="row" data-sw="fixed:${x.id}"><button class="main plain" data-action="editFixed" data-id="${x.id}"><div class="title">${esc(x.name)}</div><div class="sub">${bits}</div>${endTxt ? `<div class="sub">${endTxt}</div>` : ''}</button>${fixedMissing(x) ? `<span class="amt due" style="font-size:13px">Bedrag?</span>` : num(x.amount) ? `<span class="amt">${euro(num(x.amount))}</span>` : `<span class="amt free">Gratis</span>`}</div>`;
   };
   const groups = FCATS.map(([cid, cl, ic]) => { const its = fx.filter(x => (x.cat || 'overig') === cid); if (!its.length) return '';
     const sub = its.reduce((a, x) => a + num(x.amount) / (+x.freq || 1), 0);
     return `<div class="aisle fgroup"><span>${ic} ${cl}</span><span>${euro(sub)} p/m</span></div>${its.map(fRow).join('')}${cid === 'energie' ? `<button class="row plain" data-action="energy" style="width:100%"><div class="main"><div class="title" style="color:var(--accent)">📊 Energieverbruik bekijken</div></div><span class="chev">›</span></button>` : ''}`; }).join('');
-  const missing = S.fixed.filter(x => !num(x.amount)).length;
+  const missing = S.fixed.filter(fixedMissing).length;
   html += `<section><div class="h2row"><h2>Vaste lasten</h2><button class="linkbtn" data-action="stdFixed">Standaard kiezen</button></div>
     ${missing ? `<p class="sub" style="margin:0 4px 8px"><span class="due">Bij ${missing} ${missing === 1 ? 'vaste last' : 'vaste lasten'} moet het bedrag nog worden ingevuld.</span></p>` : ''}
     <div class="group">${groups}
@@ -1318,7 +1319,8 @@ function spendForm(x, preset = {}){
     after: () => { if (saved) budgetWarn(saved.cat, saved.date); },
     onDelete: x && (() => S.spend = S.spend.filter(y => y !== x))});
 }
-const FCATS = [['wonen','Wonen','🏠'],['energie','Energie en water','⚡'],['belasting','Belastingen','🏛️'],['verzekering','Verzekeringen','🛡️'],['zorg','Zorg','🩺'],['telecom','Internet en telefoon','📶'],['abonnement','Abonnementen','📺'],['vervoer','Vervoer','🚗'],['kinderen','Kinderen','🧸'],['sparen','Sparen en goede doelen','💰'],['overig','Overig','📌']];
+const FCATS = [['wonen','Wonen','🏠'],['energie','Energie en water','⚡'],['belasting','Belastingen','🏛️'],['verzekering','Verzekeringen','🛡️'],['zorg','Zorg','🩺'],['telecom','Internet en telefoon','📶'],['abonnement','Abonnementen','📺'],['vervoer','Vervoer','🚗'],['kinderen','Kinderen','🧸'],['bank','Bank en financiën','🏦'],['sparen','Sparen en goede doelen','💰'],['overig','Overig','📌']];
+const fixedMissing = x => !num(x.amount) && !x.amountSet;
 const fcat = id => FCATS.find(c => c[0] === id) || FCATS[FCATS.length - 1];
 const METHODS = [['incasso','Automatische incasso'],['zelf','Zelf overmaken'],['kaart','Creditcard']];
 const COMPANIES = {
@@ -1331,6 +1333,7 @@ const COMPANIES = {
   abonnement: ['Netflix','Spotify','Disney+','Videoland','HBO Max','NPO Start','YouTube Premium','Amazon Prime','Apple','Google','Basic-Fit','Krant'],
   vervoer: ['Belastingdienst','ANWB','NS','Leasemaatschappij'],
   kinderen: ['Kinderopvang','School','Sportclub'],
+  bank: ['ING','Rabobank','ABN AMRO','SNS','ASN Bank','RegioBank','Triodos Bank','bunq','Knab','Revolut','American Express','ICS (Visa/Mastercard)'],
   sparen: ['Spaarrekening','Goed doel'],
   overig: []
 };
@@ -1344,24 +1347,25 @@ const STD_FIXED = [
   ['Internet en tv','telecom',1,''],['Mobiel abonnement','telecom',1,''],
   ['Streamingdienst','abonnement',1,''],['Muziekabonnement','abonnement',1,''],['Sportschool','abonnement',1,''],['Krant of tijdschrift','abonnement',1,''],
   ['Autoverzekering','vervoer',1,''],['Wegenbelasting','vervoer',3,''],['OV-abonnement','vervoer',1,''],
+  ['Bankkosten betaalrekening','bank',1,''],['Creditcard (jaarbijdrage)','bank',12,''],
   ['Kinderopvang','kinderen',1,''],['Sparen','sparen',1,''],['Goed doel','sparen',1,'']
 ];
 function fixedForm(x, preset = {}){
   const curCat = (x && x.cat) || preset.cat || 'overig';
   const allCompanies = [...new Set(Object.values(COMPANIES).flat())];
   openForm({title: x ? 'Vaste last' : 'Nieuwe vaste last', values: x || {freq: 1, cat: 'overig', method: 'incasso', ...preset},
-    note: x && !num(x.amount) ? 'Vul nog het bedrag in.' : '',
+    note: x && fixedMissing(x) ? 'Vul nog het bedrag in. Is het gratis, vul dan 0 in.' : '',
     fields: [{key:'name', label:'Omschrijving', type:'text', required:true, placeholder:'Bijv. huur, energie, zorgverzekering'},
       {key:'company', label:'Bij welk bedrijf', type:'text', placeholder:'Bijv. Vattenfall', list: [...new Set([...(COMPANIES[curCat] || []), ...allCompanies])]},
       {key:'cat', label:'Categorie', type:'select', options: FCATS.map(c => [c[0], `${c[2]} ${c[1]}`])},
-      {key:'amount', label:'Bedrag', type:'money', required:true, half:true, placeholder:'0,00'},
+      {key:'amount', label:'Bedrag (0 = gratis)', type:'money', required:true, half:true, placeholder:'0,00'},
       {key:'freq', label:'Hoe vaak', type:'select', half:true, options:[[1,'Per maand'],[3,'Per kwartaal'],[12,'Per jaar']]},
       {key:'day', label:'Afschrijfdag (optioneel)', type:'int', min:1, max:31, half:true, placeholder:'Bijv. 28'},
       {key:'method', label:'Betaalwijze', type:'select', half:true, options: METHODS},
       {key:'ref', label:'Klant-, polis- of contractnummer (optioneel)', type:'text'},
       {key:'end', label:'Contract loopt tot (optioneel)', type:'date'},
       {key:'note', label:'Notitie (optioneel)', type:'textarea', placeholder:'Bijv. opzegtermijn 1 maand, eigen risico, korting tot juni'}],
-    onSave: v => { v.freq = +v.freq; x ? Object.assign(x, v) : S.fixed.push({id: uid(), ...v}); },
+    onSave: v => { v.freq = +v.freq; v.amountSet = true; x ? Object.assign(x, v) : S.fixed.push({id: uid(), ...v}); },
     onDelete: x && (() => S.fixed = S.fixed.filter(y => y !== x))});
 }
 function stdFixedSheet(){
@@ -1386,7 +1390,7 @@ function stdFixedSheet(){
     if (d.pick){ sel.has(d.pick) ? sel.delete(d.pick) : sel.add(d.pick); const top = dlg.scrollTop; draw(); dlg.scrollTop = top; return; }
     if ('add' in d){
       if (!sel.size){ toast('Kies eerst een of meer vaste lasten'); return; }
-      items.filter(i => sel.has(i[0])).forEach(([name, cat, freq]) => S.fixed.push({id: uid(), name, cat, freq, amount: 0, method: 'incasso', company: '', day: ''}));
+      items.filter(i => sel.has(i[0])).forEach(([name, cat, freq]) => S.fixed.push({id: uid(), name, cat, freq, amount: '', method: 'incasso', company: '', day: ''}));
       dlg.close(); save(); render(); toast(`${sel.size} vaste ${sel.size === 1 ? 'last' : 'lasten'} toegevoegd. Vul nog de bedragen in.`);
     }
   };
