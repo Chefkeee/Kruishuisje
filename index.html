@@ -657,6 +657,22 @@ html{transition:background-color .25s ease}
 .fgroup span:last-child{font-variant-numeric:tabular-nums;font-weight:500}
 .sub b{color:var(--ink);font-weight:600}
 .setrow[disabled]{opacity:.55}
+
+/* ===== v24: energie ===== */
+.ecard{width:100%;display:block;padding:12px 14px;text-align:left;background:var(--surface)}
+.etiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.etile{border-radius:12px;padding:10px 12px;background:color-mix(in srgb,var(--k) 14%,var(--surface))}
+.etile b{display:block;font:700 24px/1.1 var(--round);margin-top:4px}
+.etile small{font:500 13px var(--ui);color:var(--muted)}
+.ebars{display:block;width:100%;height:auto;margin-top:12px}
+.eb-l{font:500 10px var(--ui);fill:var(--muted)}
+.eb-v{font:600 8.5px var(--ui);fill:var(--ink)}
+.eb-none{fill:var(--line)}
+input[type=month]{min-height:44px}
+
+/* ===== v25: klussen in geld ===== */
+.subh{font:600 15px var(--round);margin:14px 4px 6px}
+.etile .sub{display:block}
 </style>
 </head>
 <body>
@@ -681,13 +697,13 @@ html{transition:background-color .25s ease}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-const APP_VERSION = '23';
+const APP_VERSION = '25';
 if (/[?&](v|check)=/.test(location.search)) try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){}
 /* ---------- opslag ---------- */
 const KEY = 'huishouden.v1';
 const AISLES = [['groente','Groente & fruit'],['brood','Brood & bakkerij'],['vlees','Vlees, vis & vega'],['vleeswaren','Kaas & vleeswaren'],['zuivel','Zuivel & eieren'],['ontbijt','Ontbijt & beleg'],['houdbaar','Pasta, rijst & houdbaar'],['diepvries','Diepvries'],['snacks','Snacks & snoep'],['dranken','Dranken'],['drogist','Drogisterij'],['huishouden','Huishouden'],['bouwmarkt','Bouwmarkt'],['overig','Overig']];
 const defaultSettings = () => ({v:0, people:[{id:'p1', name:'', email:''},{id:'p2', name:'', email:''}], aisles: AISLES.map(([id,name]) => ({id, name}))});
-const empty = () => ({tasks:[], income:[], fixed:[], spend:[], groceries:[], history:{}, events:[], jobs:[], ui:{}, settings: defaultSettings()});
+const empty = () => ({tasks:[], income:[], fixed:[], spend:[], groceries:[], history:{}, events:[], jobs:[], meter:[], ui:{}, settings: defaultSettings()});
 let memory = null;
 function load(){
   try { const raw = localStorage.getItem(KEY); if (raw) return Object.assign(empty(), JSON.parse(raw)); } catch(e){}
@@ -1119,6 +1135,8 @@ function renderMoney(){
     <div class="monthnav"><button data-action="month" data-d="-1" aria-label="Vorige maand">‹</button><b>${monthName(ym)}</b><button data-action="month" data-d="1" aria-label="Volgende maand">›</button></div>
     <div class="label">Nog te besteden</div><div class="big${c.left < 0 ? ' neg' : ''}">${euro(c.left)}</div>${moneyBar(c)}</div></section>`;
 
+  html += energyCard();
+  html += jobsMoneyCard();
   const sp = c.sp.slice().sort((a,b) => b.date.localeCompare(a.date));
   html += `<section><h2>Uitgaven</h2><div class="group">${sp.map(x => `<div class="row" data-sw="spend:${x.id}"><button class="main plain" data-action="editSpend" data-id="${x.id}"><div class="title">${esc(x.name)}</div><div class="sub">${fmtDate(parse(x.date))}, ${esc(x.cat)}</div></button><span class="amt">${euro(num(x.amount))}</span></div>`).join('')}
     <button class="row addrow" data-action="add" data-what="spend">${PLUS}Uitgave toevoegen</button></div>`;
@@ -1139,7 +1157,7 @@ function renderMoney(){
   };
   const groups = FCATS.map(([cid, cl, ic]) => { const its = fx.filter(x => (x.cat || 'overig') === cid); if (!its.length) return '';
     const sub = its.reduce((a, x) => a + num(x.amount) / (+x.freq || 1), 0);
-    return `<div class="aisle fgroup"><span>${ic} ${cl}</span><span>${euro(sub)} p/m</span></div>${its.map(fRow).join('')}`; }).join('');
+    return `<div class="aisle fgroup"><span>${ic} ${cl}</span><span>${euro(sub)} p/m</span></div>${its.map(fRow).join('')}${cid === 'energie' ? `<button class="row plain" data-action="energy" style="width:100%"><div class="main"><div class="title" style="color:var(--accent)">📊 Energieverbruik bekijken</div></div><span class="chev">›</span></button>` : ''}`; }).join('');
   const missing = S.fixed.filter(x => !num(x.amount)).length;
   html += `<section><div class="h2row"><h2>Vaste lasten</h2><button class="linkbtn" data-action="stdFixed">Standaard kiezen</button></div>
     ${missing ? `<p class="sub" style="margin:0 4px 8px"><span class="due">Bij ${missing} ${missing === 1 ? 'vaste last' : 'vaste lasten'} moet het bedrag nog worden ingevuld.</span></p>` : ''}
@@ -1555,8 +1573,9 @@ function openForm({title, fields, values = {}, onSave, onDelete, extra, note, af
     if (fl.type === 'select') input = `<select id="${id}" name="${fl.key}">${fl.options.map(([val,lab]) => `<option value="${esc(val)}"${String(val) === String(v) ? ' selected' : ''}>${esc(lab)}</option>`).join('')}</select>`;
     else if (fl.type === 'textarea') input = `<textarea id="${id}" name="${fl.key}" rows="3">${esc(v)}</textarea>`;
     else { if (fl.type === 'money' && v !== '') v = num(v).toFixed(2).replace('.', ',');
-      const type = fl.type === 'money' || fl.type === 'int' ? 'text' : fl.type;
-      const mode = fl.type === 'money' ? ' inputmode="decimal"' : fl.type === 'int' ? ' inputmode="numeric"' : '';
+      if (fl.type === 'num' && v !== '') v = String(v).replace('.', ',');
+      const type = ['money','int','num'].includes(fl.type) ? 'text' : fl.type;
+      const mode = fl.type === 'money' || fl.type === 'num' ? ' inputmode="decimal"' : fl.type === 'int' ? ' inputmode="numeric"' : '';
       input = `<input id="${id}" name="${fl.key}" type="${type}"${mode} value="${esc(v)}"${fl.placeholder ? ` placeholder="${esc(fl.placeholder)}"` : ''}${fl.list ? ` list="dl_${fl.key}"` : ''} autocomplete="off">` + (fl.list ? `<datalist id="dl_${fl.key}">${fl.list.map(o => `<option value="${esc(o)}">`).join('')}</datalist>` : ''); }
     return `<div class="field${fl.half ? ' half' : ''}"><label for="${id}">${esc(fl.label)}</label>${input}</div>`;
   }).join('');
@@ -1574,6 +1593,7 @@ function openForm({title, fields, values = {}, onSave, onDelete, extra, note, af
       let v = form.elements[fl.key].value.trim();
       if (fl.required && !v){ err.textContent = `Vul ${fl.label.toLowerCase()} in.`; err.hidden = false; form.elements[fl.key].focus(); return; }
       if (fl.type === 'money') v = v === '' ? 0 : num(v);
+      if (fl.type === 'num') v = v === '' ? '' : num(v);
       if (fl.type === 'int') v = v === '' ? '' : Math.min(fl.max ?? 9999, Math.max(fl.min ?? 1, parseInt(v) || 1));
       out[fl.key] = v;
     }
@@ -1660,8 +1680,24 @@ let jobFilter = 'all';
 const areaOf = j => AREAS.find(a => a[0] === j.area) || AREAS[AREAS.length - 1];
 const statusLabel = j => (STATUS.find(x => x[0] === (j.status || 'idee')) || STATUS[0])[1];
 const prioOf = j => PRIO[j.prio] || PRIO.normaal;
+const COSTTYPES = [['once','Per keer'], ['month','Vast per maand'], ['year','Vast per jaar']];
+const PROS = ['Installatiebedrijf','Loodgieter','Elektricien','Schilder','Dakdekker','Glazenwasser','Hovenier','Klusbedrijf','Schoorsteenveger','Ongediertebestrijder'];
+const proList = () => [...new Set([...(S.jobs || []).map(j => j.pro).filter(Boolean), ...PROS])];
+function costText(j){
+  const c = num(j.cost); if (!c) return '';
+  if (j.costType === 'month') return `${euro(c)} per maand`;
+  if (j.costType === 'year') return `${euro(c)} per jaar`;
+  return j.repeat ? `${euro(c)} per keer` : euro(c);
+}
+function jobMonthly(j){
+  const c = num(j.cost); if (!c) return 0;
+  if (j.costType === 'month') return c;
+  if (j.costType === 'year') return c / 12;
+  return j.repeat ? c / +j.repeat : 0;
+}
 function doerText(j){
   if (j.who === 'uit') return j.pro ? `Uitbesteed aan ${j.pro}` : 'Uitbesteden';
+  if (j.pro && j.type === 'onderhoud') return j.pro;
   const p = (j.who === 'p1' || j.who === 'p2') && named() ? person(j.who).name : '';
   return p ? `Zelf, ${p}` : 'Zelf, samen';
 }
@@ -1681,7 +1717,7 @@ function jobCard(j){
     <span class="job-body">
       <span class="job-top">${esc(a[1])}${j.type === 'onderhoud' ? `<span class="tag" style="--t:#6E9184">Onderhoud</span>` : ''}${j.prio && j.prio !== 'normaal' ? `<span class="tag" style="--t:${P[1]}">${P[0]}</span>` : ''}</span>
       <span class="job-title">${esc(j.title)}</span>
-      <span class="job-meta"><span>${doerBadge(j)}${doerTextEsc(j)}</span>${d && j.status !== 'klaar' ? `<span class="${late ? 'late' : diff === 0 ? 'due' : ''}">${relDay(diff, d)}</span>` : ''}${j.status === 'klaar' && j.doneAt ? `<span>Klaar op ${fmtDate(parse(j.doneAt))}</span>` : ''}${hours ? `<span>${hours}</span>` : ''}${num(j.cost) ? `<span>${euro(num(j.cost))}</span>` : ''}</span>
+      <span class="job-meta"><span>${doerBadge(j)}${doerTextEsc(j)}</span>${d && j.status !== 'klaar' ? `<span class="${late ? 'late' : diff === 0 ? 'due' : ''}">${relDay(diff, d)}</span>` : ''}${j.status === 'klaar' && j.doneAt ? `<span>Klaar op ${fmtDate(parse(j.doneAt))}</span>` : ''}${hours ? `<span>${hours}</span>` : ''}${num(j.cost) ? `<span>${costText(j)}</span>` : ''}</span>
       ${mats.length && j.status !== 'klaar' ? `<span class="mat"><span class="matbar"><i style="width:${have / mats.length * 100}%"></i></span><span>${have} van ${mats.length} spullen in huis</span></span>` : ''}
     </span></button>`;
 }
@@ -1726,13 +1762,14 @@ function jobForm(j){
     {key:'date', label:'Gepland op', type:'date', half:true},
     {key:'who', label:'Wie doet het', type:'select', options: doers},
     {key:'hours', label:'Hoeveel tijd kost het', type:'select', options: HOURS, showIf: v => v.who !== 'uit'},
-    {key:'pro', label:'Vakman of bedrijf', type:'text', placeholder:'Bijv. Installatiebedrijf Jansen', showIf: v => v.who === 'uit'},
-    {key:'contact', label:'Telefoon of e-mail', type:'text', placeholder:'Bijv. 06 12345678', showIf: v => v.who === 'uit'},
-    {key:'cost', label:'Kosten (materiaal of offerte, optioneel)', type:'money', placeholder:'0,00'},
+    {key:'pro', label:'Bedrijf of vakman', type:'text', placeholder:'Bijv. Installatiebedrijf Jansen', list: proList(), showIf: v => v.who === 'uit' || v.type === 'onderhoud'},
+    {key:'contact', label:'Telefoon of e-mail', type:'text', placeholder:'Bijv. 06 12345678', showIf: v => v.who === 'uit' || v.type === 'onderhoud'},
+    {key:'costType', label:'Soort kosten', type:'select', half:true, options: COSTTYPES},
+    {key:'cost', label:'Bedrag (optioneel)', type:'money', half:true, placeholder:'0,00'},
     {key:'note', label:'Notitie (optioneel)', type:'textarea'}];
   let created = null;
   openForm({title: j ? 'Klus bewerken' : 'Nieuwe klus', fields,
-    values: j || {area:'overig', type:'klus', prio:'normaal', status:'idee', who:'', repeat:''},
+    values: j ? {costType: 'once', ...j} : {area:'overig', type:'klus', prio:'normaal', status:'idee', who:'', repeat:'', costType:'once'},
     onSave: v => {
       if (v.type !== 'onderhoud') v.repeat = '';
       if (j) Object.assign(j, v); else { created = {id: uid(), mats: [], log: [], ...v}; (S.jobs = S.jobs || []).push(created); }
@@ -1743,6 +1780,7 @@ function setJobStatus(j, k, at){
   if (k !== 'klaar'){ j.status = k; save(); return; }
   const undo = snapshot();
   j.log = (j.log || []).concat(iso(today())).slice(-20);
+  if (num(j.cost) && (j.costType || 'once') === 'once') j.costLog = (j.costLog || []).concat({d: iso(today()), a: num(j.cost)}).slice(-30);
   if (j.repeat){
     j.date = iso(addInterval(today(), +j.repeat, 'm')); j.status = 'gepland'; (j.mats || []).forEach(m => m.done = false);
     toast(`Klaar! Volgende keer: ${fmtDate(parse(j.date))}`, () => { $('#sheet').close(); undo(); });
@@ -1781,7 +1819,10 @@ function jobSheet(id){
         ${contact ? `<div class="inforow"><dt>Contact</dt><dd>${contact}</dd></div>` : ''}
         <div class="inforow"><dt>Wanneer</dt><dd>${d ? `${esc(longDate(d))}` : '<span class="sub">Nog niet gepland</span>'}</dd></div>
         ${hours && j.who !== 'uit' ? `<div class="inforow"><dt>Tijd</dt><dd>${hours}</dd></div>` : ''}
-        ${num(j.cost) ? `<div class="inforow"><dt>Kosten</dt><dd>${euro(num(j.cost))}</dd></div>` : ''}
+        ${j.pro && j.who !== 'uit' ? `<div class="inforow"><dt>Bedrijf</dt><dd>${esc(j.pro)}</dd></div>` : ''}
+        <div class="inforow"><dt>Kosten</dt><dd>${num(j.cost) ? `${costText(j)}${jobMonthly(j) && j.costType !== 'month' ? ` <span class="sub">(≈ ${euro(jobMonthly(j))} per maand)</span>` : ''}` : '<button type="button" class="linkbtn" data-edit style="padding:0">Bedrag invullen</button>'}</dd></div>
+        ${(j.costLog || []).length ? `<div class="inforow"><dt>Betaald</dt><dd><span class="sub">${j.costLog.slice(-4).reverse().map(x => `${fmtDate(parse(x.d))}: ${euro(x.a)}`).join(', ')}</span></dd></div>` : ''}
+        ${(j.costType === 'month' || j.costType === 'year') && num(j.cost) ? (j.fixedId && S.fixed.some(f => f.id === j.fixedId) ? `<div class="inforow"><dt></dt><dd class="sub">Staat ook bij je vaste lasten</dd></div>` : `<div class="inforow"><dt></dt><dd><button type="button" class="linkbtn" data-tofixed style="padding:0">Ook toevoegen aan vaste lasten</button></dd></div>`) : ''}
       </dl>
       <h4>Wat hebben we nodig${mats.length ? `<span>${have} van ${mats.length} in huis</span>` : ''}</h4>
       <div class="group">${mats.map(m => `<div class="row${m.done ? ' isdone' : ''}"><button type="button" class="check${m.done ? ' on' : ''}" data-mat="${m.id}" aria-label="${esc(m.name)} ${m.done ? 'niet in huis' : 'in huis'}">${m.done ? CHECK : ''}</button><div class="main title">${m.qty > 1 ? `<b class="qty">${m.qty}×</b> ` : ''}${esc(m.name)}</div><button type="button" class="x" data-rmmat="${m.id}" aria-label="${esc(m.name)} verwijderen">×</button></div>`).join('')}
@@ -1801,6 +1842,7 @@ function jobSheet(id){
     if (d.mat){ const m = j.mats.find(x => x.id === d.mat); m.done = !m.done; save(); render(); draw(); if (m.done && j.mats.every(x => x.done)) confetti(...centerOf(b)); return; }
     if (d.rmmat){ j.mats = j.mats.filter(x => x.id !== d.rmmat); save(); render(); draw(); return; }
     if ('tolist' in d){ materialsToList(j); render(); return; }
+    if ('tofixed' in d){ const f = {id: uid(), name: j.title, company: j.pro || '', amount: num(j.cost), freq: j.costType === 'year' ? 12 : 1, cat: 'wonen', method: 'incasso', note: 'Onderhoudsabonnement, gekoppeld aan de klus'}; S.fixed.push(f); j.fixedId = f.id; save(); render(); draw(); toast('Toegevoegd aan vaste lasten'); return; }
     if ('deljob' in d){ const undo = snapshot(); S.jobs = S.jobs.filter(x => x !== j); dlg.close(); save(); render(); toast('Klus verwijderd', undo); }
   };
   dlg.onsubmit = e => {
@@ -1883,6 +1925,189 @@ function downloadFile(name, text, type){
   const url = URL.createObjectURL(new Blob([text], {type}));
   const a = document.createElement('a'); a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+/* ---------- klussen in geld ---------- */
+function jobCosts(){
+  const t0 = today(), end = new Date(t0.getFullYear() + 1, t0.getMonth(), t0.getDate()), year = String(t0.getFullYear());
+  let spent = 0, nSpent = 0; const up = []; let subs = 0; const subList = [];
+  for (const j of S.jobs || []){
+    for (const x of j.costLog || []) if (x.d.startsWith(year)){ spent += +x.a || 0; nSpent++; }
+    if (!(j.costLog || []).length && j.status === 'klaar' && j.doneAt && j.doneAt.startsWith(year) && num(j.cost) && (j.costType || 'once') === 'once'){ spent += num(j.cost); nSpent++; }
+    const c = num(j.cost); if (!c) continue;
+    if (j.costType === 'month' || j.costType === 'year'){ subs += jobMonthly(j); subList.push(j); continue; }
+    if (j.status === 'klaar') continue;
+    if (!j.date){ up.push({j, d: null, a: c}); continue; }
+    let d = parse(j.date), n = 0;
+    while (d <= end && n < 60){ if (d >= addDays(t0, -60)) up.push({j, d, a: c}); if (!j.repeat) break; n++; d = addInterval(parse(j.date), +j.repeat * n, 'm'); }
+  }
+  up.sort((a, b) => (a.d ? a.d.getTime() : 9e15) - (b.d ? b.d.getTime() : 9e15));
+  return {spent, nSpent, up, upTotal: up.reduce((a, x) => a + x.a, 0), subs, subList};
+}
+function jobsMoneyCard(){
+  if (!(S.jobs || []).some(j => num(j.cost))) return (S.jobs || []).length ? `<section><h2>Klussen en onderhoud</h2><div class="empty"><p>Vul bij je klussen de kosten in, dan zie je hier wat jullie dit jaar uitgaven en wat er de komende twaalf maanden aankomt.</p><button class="btn ghost" data-action="tab" data-tab="klussen">Naar klussen</button></div></section>` : '';
+  const c = jobCosts();
+  const reserve = c.upTotal / 12;
+  const rows = c.up.slice(0, 6).map(x => `<button class="row plain" data-action="openJob" data-id="${x.j.id}" style="width:100%"><div class="main"><div class="title">${esc(x.j.title)}</div><div class="sub">${x.d ? fmtDate(x.d) : 'Nog geen datum'}${x.j.pro ? `, ${esc(x.j.pro)}` : ''}</div></div><span class="amt">${euro(x.a)}</span></button>`).join('');
+  const subRows = c.subList.map(j => `<button class="row plain" data-action="openJob" data-id="${j.id}" style="width:100%"><div class="main"><div class="title">${esc(j.title)}</div><div class="sub">${j.pro ? esc(j.pro) + ', ' : ''}abonnement</div></div><span class="amt">${costText(j)}</span></button>`).join('');
+  return `<section><h2>Klussen en onderhoud</h2>
+    <div class="group purse" style="padding:12px 14px"><div class="etiles">
+      <div class="etile" style="--k:#8A7064"><span class="sub">Uitgegeven in ${t0year()}</span><b>${euro(c.spent)}</b><span class="sub">${c.nSpent} ${c.nSpent === 1 ? 'keer' : 'keer'}</span></div>
+      <div class="etile" style="--k:#6B7C98"><span class="sub">Komende 12 maanden</span><b>${euro(c.upTotal)}</b><span class="sub">${c.up.length} ${c.up.length === 1 ? 'klus' : 'klussen'}</span></div></div>
+      ${reserve ? `<p class="sub" style="margin:10px 2px 0">💡 Zet ongeveer <b>${euro(reserve)}</b> per maand opzij, dan heb je het geld klaar als het nodig is.</p>` : ''}</div>
+    ${rows ? `<div class="group" style="margin-top:8px">${rows}</div>` : ''}
+    ${subRows ? `<h4 class="subh">Onderhoudsabonnementen, samen ${euro(c.subs)} per maand</h4><div class="group">${subRows}</div>` : ''}</section>`;
+}
+const t0year = () => String(today().getFullYear());
+
+/* ---------- energie ---------- */
+const EKEYS = {elec: {label:'Stroom', unit:'kWh', c:'#6B7C98', ic:'⚡'}, gas: {label:'Gas', unit:'m³', c:'#AB978C', ic:'🔥'}};
+let energyTab = 'elec';
+const DAY = 864e5;
+function meterSeries(key){
+  return (S.meter || []).filter(r => r.type !== 'month' && r[key] !== '' && r[key] != null && isFinite(+r[key]))
+    .map(r => ({t: parse(r.date).getTime() + 12 * 3600e3, v: +r[key]})).sort((a, b) => a.t - b.t);
+}
+function valAt(s, t){
+  if (s.length < 2 || t < s[0].t || t > s[s.length - 1].t) return null;
+  for (let i = 0; i < s.length - 1; i++) if (t >= s[i].t && t <= s[i + 1].t){ const a = s[i], b = s[i + 1]; return b.t === a.t ? b.v : a.v + (b.v - a.v) * (t - a.t) / (b.t - a.t); }
+  return null;
+}
+// Verbruik van één soort (elec, ret, gas) in een maand: uit een ingevoerd maandverbruik, of berekend tussen meterstanden.
+function monthUse(key, y, m){
+  const ym = `${y}-${pad(m + 1)}`;
+  const direct = (S.meter || []).find(r => r.type === 'month' && r.month === ym && r[key] !== '' && r[key] != null && isFinite(+r[key]));
+  if (direct) return {v: +direct[key], full: true};
+  const s = meterSeries(key); if (s.length < 2) return null;
+  const a = new Date(y, m, 1).getTime(), b = new Date(y, m + 1, 1).getTime(), days = (b - a) / DAY;
+  const va = valAt(s, a), vb = valAt(s, b);
+  if (va != null && vb != null){ const v = vb - va; return v >= 0 ? {v, full: true} : null; }
+  const last = s[s.length - 1], now = Date.now();
+  if (va != null && now >= a && now < b && last.t > a){ const used = last.v - va, d = (last.t - a) / DAY; if (used < 0 || d < 1) return null; return {v: used, full: false, days: d, proj: used / d * days}; }
+  return null;
+}
+function netUse(key, y, m){
+  const u = monthUse(key, y, m); if (!u || key !== 'elec') return u;
+  const r = monthUse('ret', y, m); if (!r) return u;
+  return {...u, v: u.v - r.v, ret: r.v, proj: u.proj != null && r.proj != null ? u.proj - r.proj : u.proj};
+}
+const eTariff = () => ST().energy || {};
+function eCost(key, v){ const t = eTariff(); const p = key === 'elec' ? +t.pElec : +t.pGas; return p ? v * p : null; }
+const fmtN = (v, d = 0) => (Math.round(v * 10 ** d) / 10 ** d).toLocaleString('nl-NL');
+function lastMonths(n){ const t0 = today(), out = []; for (let i = n - 1; i >= 0; i--){ const d = new Date(t0.getFullYear(), t0.getMonth() - i, 1); out.push([d.getFullYear(), d.getMonth()]); } return out; }
+function energyBars(key){
+  const K = EKEYS[key], ms = lastMonths(12).map(([y, m]) => ({y, m, u: netUse(key, y, m)}));
+  const max = Math.max(1, ...ms.map(x => x.u ? Math.max(x.u.v, x.u.proj || 0) : 0));
+  const W = 340, H = 150, top = 18, base = 128, slot = W / 12, bw = 17;
+  let g = '';
+  ms.forEach((x, i) => {
+    const cx = i * slot + slot / 2, lab = new Date(x.y, x.m, 1).toLocaleDateString('nl-NL', {month:'short'}).replace('.', '').slice(0, 3);
+    g += `<text x="${cx}" y="${H - 6}" text-anchor="middle" class="eb-l">${lab}</text>`;
+    if (!x.u){ g += `<rect x="${cx - bw / 2}" y="${base - 2}" width="${bw}" height="2" rx="1" class="eb-none"/>`; return; }
+    const h = Math.max(2, (base - top) * Math.max(0, x.u.v) / max);
+    if (!x.u.full && x.u.proj){ const hp = (base - top) * x.u.proj / max; g += `<rect x="${cx - bw / 2}" y="${base - hp}" width="${bw}" height="${hp}" rx="4" fill="none" stroke="${K.c}" stroke-dasharray="3 3" stroke-width="1.5"/>`; }
+    g += `<rect x="${cx - bw / 2}" y="${base - h}" width="${bw}" height="${h}" rx="4" fill="${K.c}" opacity="${x.u.full ? 1 : .55}"/>`;
+    g += `<text x="${cx}" y="${base - Math.max(h, x.u.proj && !x.u.full ? (base - top) * x.u.proj / max : 0) - 4}" text-anchor="middle" class="eb-v">${fmtN(x.u.full ? x.u.v : x.u.proj || x.u.v)}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" class="ebars" role="img" aria-label="${K.label}verbruik per maand, laatste 12 maanden">${g}</svg>`;
+}
+function energyInsights(key){
+  const K = EKEYS[key], out = [], t0 = today(), y = t0.getFullYear(), m = t0.getMonth();
+  const pd = new Date(y, m - 1, 1), ppd = new Date(y, m - 2, 1), ly = new Date(y - 1, m - 1, 1);
+  const cur = netUse(key, y, m), prev = netUse(key, pd.getFullYear(), pd.getMonth());
+  const pPrev = netUse(key, ppd.getFullYear(), ppd.getMonth()), pLy = netUse(key, ly.getFullYear(), ly.getMonth());
+  const mn = d => d.toLocaleDateString('nl-NL', {month:'long'});
+  if (cur && !cur.full) out.push(['📈', `Deze maand tot nu toe ${fmtN(cur.v)} ${K.unit} in ${Math.round(cur.days)} ${Math.round(cur.days) === 1 ? 'dag' : 'dagen'}, op koers voor ongeveer ${fmtN(cur.proj)} ${K.unit}.`]);
+  if (prev && prev.full){
+    let t = `${mn(pd)[0].toUpperCase() + mn(pd).slice(1)}: ${fmtN(prev.v)} ${K.unit}, gemiddeld ${fmtN(prev.v / new Date(pd.getFullYear(), pd.getMonth() + 1, 0).getDate(), 1)} per dag.`;
+    if (pPrev && pPrev.full && pPrev.v > 0){ const pc = Math.round((prev.v - pPrev.v) / pPrev.v * 100); t += ` Dat is ${Math.abs(pc)}% ${pc >= 0 ? 'meer' : 'minder'} dan ${mn(ppd)}.`; }
+    out.push(['📅', t]);
+    if (pLy && pLy.full && pLy.v > 0){ const pc = Math.round((prev.v - pLy.v) / pLy.v * 100); out.push([pc > 0 ? '🔺' : '🔻', `Vergeleken met ${mn(ly)} vorig jaar ${Math.abs(pc)}% ${pc >= 0 ? 'meer' : 'minder'}.`]); }
+  }
+  if (key === 'gas' && prev && prev.full) out.push(['🌡️', 'Gasverbruik hangt sterk af van het seizoen: in de winter is het vaak een veelvoud van de zomer. Vergelijk daarom vooral met dezelfde maand vorig jaar.']);
+  if (key === 'elec' && cur && cur.ret != null) out.push(['☀️', `Deze maand ${fmtN(cur.ret)} kWh teruggeleverd; het getoonde verbruik is al netto.`]);
+  const full = lastMonths(13).slice(0, 12).map(([yy, mm]) => netUse(key, yy, mm)).filter(u => u && u.full);
+  const t = eTariff();
+  if (full.length >= 3 && (t.pElec || t.pGas)){
+    const avgCost = lastMonths(13).slice(0, 12).map(([yy, mm]) => ['elec','gas'].map(k => { const u = netUse(k, yy, mm); return u && u.full ? eCost(k, u.v) || 0 : null; })).filter(a => a.every(v => v != null)).map(a => a[0] + a[1]);
+    const vast = +t.fixed || 0;
+    const voor = S.fixed.filter(f => (f.cat === 'energie') && /energie|stroom|gas/i.test(f.name)).reduce((a, f) => a + num(f.amount) / (+f.freq || 1), 0);
+    if (avgCost.length){ const est = avgCost.reduce((a, b) => a + b, 0) / avgCost.length + vast;
+      out.push(['💶', voor ? `Geschatte kosten gemiddeld ${euro(est)} per maand, tegenover een voorschot van ${euro(voor)}. ${est > voor * 1.05 ? 'Het voorschot lijkt aan de lage kant; houd rekening met bijbetalen bij de jaarafrekening.' : est < voor * .95 ? 'Het voorschot lijkt ruim; je krijgt bij de jaarafrekening waarschijnlijk iets terug.' : 'Het voorschot past goed bij jullie verbruik.'}` : `Geschatte kosten gemiddeld ${euro(est)} per maand.`]); }
+  }
+  const lastR = (S.meter || []).filter(r => r.type !== 'month').map(r => r.date).sort().pop();
+  if (lastR){ const age = daysBetween(parse(lastR), t0); if (age > 31) out.push(['🔎', `De laatste meterstand is ${age} dagen oud. Lees de meters af voor een actueel beeld.`]); }
+  return out;
+}
+function energyCard(){
+  const t0 = today(), y = t0.getFullYear(), m = t0.getMonth(), pd = new Date(y, m - 1, 1);
+  if (!(S.meter || []).length) return `<section><h2>Energieverbruik</h2><div class="empty"><p>Houd bij hoeveel stroom en gas jullie per maand gebruiken. Voer af en toe de meterstanden in, of het verbruik per maand uit de app van je energieleverancier.</p><button class="btn" data-action="meterAdd">Meterstand invoeren</button></div></section>`;
+  const tile = key => { const K = EKEYS[key], c = netUse(key, y, m), p = netUse(key, pd.getFullYear(), pd.getMonth());
+    const main = c ? (c.full ? c.v : c.proj) : p ? p.v : null;
+    return `<div class="etile" style="--k:${K.c}"><span class="sub">${K.ic} ${K.label}${c && !c.full ? ', verwacht deze maand' : c ? ', deze maand' : p ? ', vorige maand' : ''}</span><b>${main != null ? fmtN(main) : '–'}<small> ${K.unit}</small></b></div>`; };
+  return `<section><div class="h2row"><h2>Energieverbruik</h2><button class="linkbtn" data-action="meterAdd">+ Meterstand</button></div>
+    <button class="group plain ecard" data-action="energy"><div class="etiles">${tile('elec')}${tile('gas')}</div><span class="linkbtn" style="padding:6px 0 0;display:block">Bekijk verbruik per maand ›</span></button></section>`;
+}
+function meterForm(r, mode){
+  const isMonth = r ? r.type === 'month' : mode === 'month';
+  const t0 = today(), pd = new Date(t0.getFullYear(), t0.getMonth() - 1, 1);
+  const fields = isMonth ? [
+      {key:'month', label:'Maand', type:'month', required:true},
+      {key:'elec', label:'Stroomverbruik (kWh)', type:'num', half:true, placeholder:'Bijv. 230'},
+      {key:'gas', label:'Gasverbruik (m³)', type:'num', half:true, placeholder:'Bijv. 85'},
+      {key:'ret', label:'Teruggeleverd (kWh, optioneel)', type:'num', placeholder:'Alleen met zonnepanelen'}]
+    : [{key:'date', label:'Datum', type:'date', required:true},
+      {key:'elec', label:'Stroommeter (kWh)', type:'num', half:true, placeholder:'Normaal + dal'},
+      {key:'gas', label:'Gasmeter (m³)', type:'num', half:true, placeholder:'Bijv. 4512,3'},
+      {key:'ret', label:'Teruglevering (kWh, optioneel)', type:'num', placeholder:'Alleen met zonnepanelen'}];
+  openForm({title: isMonth ? 'Verbruik van een maand' : 'Meterstand', fields,
+    note: isMonth ? 'Het verbruik zoals de app of de jaarafrekening van je leverancier het toont.' : 'Tel bij stroom de standen voor normaal en dal bij elkaar op. Lees elke maand rond dezelfde dag af voor het mooiste overzicht.',
+    values: r || (isMonth ? {month: `${pd.getFullYear()}-${pad(pd.getMonth() + 1)}`} : {date: iso(t0)}),
+    onSave: v => { if (v.elec === '' && v.gas === '' && v.ret === '') return; r ? Object.assign(r, v) : S.meter.push({id: uid(), type: isMonth ? 'month' : 'reading', ...v}); },
+    onDelete: r && (() => S.meter = S.meter.filter(x => x !== r)),
+    after: () => energySheet()});
+}
+function tariffForm(){
+  const t = eTariff();
+  openForm({title:'Tarieven', values: t, note:'Je vindt de tarieven in je contract of in de app van je leverancier. Ze worden alleen gebruikt om de kosten te schatten.',
+    fields:[{key:'pElec', label:'Stroom per kWh (€)', type:'num', half:true, placeholder:'Bijv. 0,28'},
+      {key:'pGas', label:'Gas per m³ (€)', type:'num', half:true, placeholder:'Bijv. 1,35'},
+      {key:'fixed', label:'Vaste kosten per maand (€, optioneel)', type:'num', placeholder:'Vastrecht en netbeheer, min heffingskorting'}],
+    onSave: v => { ST().energy = v; ST().v = Date.now(); }, after: () => energySheet()});
+}
+function energySheet(){
+  const dlg = $('#sheet');
+  const draw = () => {
+    const key = energyTab, K = EKEYS[key], t0 = today(), y = t0.getFullYear(), m = t0.getMonth();
+    const cur = netUse(key, y, m), pd = new Date(y, m - 1, 1), prev = netUse(key, pd.getFullYear(), pd.getMonth());
+    const ins = energyInsights(key);
+    const rows = (S.meter || []).slice().sort((a, b) => (b.date || b.month + '-31').localeCompare(a.date || a.month + '-31'));
+    const t = eTariff();
+    const headV = cur ? (cur.full ? cur.v : cur.proj) : prev ? prev.v : null;
+    const headL = cur ? (cur.full ? 'deze maand' : 'verwacht deze maand') : prev ? 'vorige maand' : '';
+    const cost = headV != null ? eCost(key, headV) : null;
+    dlg.innerHTML = `<div class="sheet"><div class="sheet-head"><span></span><h3>Energieverbruik</h3><button type="button" class="link strong" data-close>Klaar</button></div>
+      <div class="seg" style="margin:0 0 12px">${Object.entries(EKEYS).map(([k, v]) => `<button type="button" data-ek="${k}" aria-pressed="${k === key}">${v.ic} ${v.label}</button>`).join('')}</div>
+      <div class="ana-hero">${headV != null ? `<div class="ana-big">${fmtN(headV)} <span style="font-size:18px">${K.unit}</span></div><div class="sub">${headL}${cost != null ? `, ongeveer ${euro(cost)}` : ''}</div>` : `<div class="sub">Nog te weinig gegevens. Voer minstens twee meterstanden in, of het verbruik van een maand.</div>`}
+        ${energyBars(key)}<div class="sub" style="font-size:12px">Gestippeld: verwachting voor de lopende maand.</div></div>
+      ${ins.length ? `<h4>Wat valt op</h4><div class="group">${ins.map(([ic, tx]) => `<div class="row ana-ins"><span class="ic" aria-hidden="true">${ic}</span><div class="main">${esc(tx)}</div></div>`).join('')}</div>` : ''}
+      <div class="stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px"><button type="button" class="btn" data-madd="reading">+ Meterstand</button><button type="button" class="btn ghost" data-madd="month">+ Maandverbruik</button></div>
+      <h4>Meterstanden en invoer<span>${rows.length}</span></h4>
+      <div class="group">${rows.length ? rows.slice(0, 24).map(r => `<button type="button" class="row plain" data-medit="${r.id}" style="width:100%"><div class="main"><div class="title">${r.type === 'month' ? esc(parse(r.month + '-01').toLocaleDateString('nl-NL', {month:'long', year:'numeric'})) + ' <span class="sub">maandverbruik</span>' : esc(fmtDate(parse(r.date)))}</div>
+        <div class="sub">${[r.elec !== '' && r.elec != null ? `⚡ ${fmtN(+r.elec, 1)} kWh` : '', r.gas !== '' && r.gas != null ? `🔥 ${fmtN(+r.gas, 1)} m³` : '', r.ret !== '' && r.ret != null ? `☀️ ${fmtN(+r.ret, 1)} kWh terug` : ''].filter(Boolean).join('  ')}</div></div><span class="chev">›</span></button>`).join('') : '<div class="row"><div class="main sub">Nog niets ingevoerd.</div></div>'}</div>
+      <h4>Tarieven</h4><div class="group"><button type="button" class="row plain" data-tariff style="width:100%"><div class="main"><div class="title">${t.pElec || t.pGas ? `Stroom € ${String(t.pElec || '–').replace('.', ',')} per kWh, gas € ${String(t.pGas || '–').replace('.', ',')} per m³` : 'Tarieven invullen'}</div><div class="sub">Voor een schatting van de kosten en een vergelijking met je voorschot</div></div><span class="chev">›</span></button></div></div>`;
+  };
+  dlg.oninput = null; dlg.onsubmit = null;
+  dlg.onclick = e => {
+    const b = e.target.closest('button'); if (!b) return; const d = b.dataset;
+    if ('close' in d){ dlg.close(); return; }
+    if (d.ek){ energyTab = d.ek; const top = dlg.scrollTop; draw(); dlg.scrollTop = top; return; }
+    if (d.madd){ meterForm(null, d.madd); return; }
+    if (d.medit){ meterForm(S.meter.find(x => x.id === d.medit)); return; }
+    if ('tariff' in d) tariffForm();
+  };
+  draw();
+  if (!dlg.open) dlg.showModal();
 }
 
 /* ---------- tijdsbesteding ---------- */
@@ -2050,7 +2275,7 @@ const unseen = () => (S.ui.changes || []).filter(c => c.t > (S.ui.seenAt || 0));
 const partnerId = () => { const m = me(); return m ? other(m.id).id : ''; };
 const nameOf = pid => (pid && person(pid) && person(pid).name) || (partnerId() && person(partnerId()).name) || 'Je partner';
 function noteChange(kind, b, a){
-  if (!['groceries','tasks','events','jobs','spend','fixed','income'].includes(kind)) return;
+  if (!['groceries','tasks','events','jobs','spend','fixed','income','meter'].includes(kind)) return;
   if (canon(b) === canon(a)) return;
   actBuf.push({kind, b, a}); clearTimeout(actTimer); actTimer = setTimeout(flushActivity, 1200);
 }
@@ -2066,6 +2291,8 @@ function flushActivity(){
   if (gAdd.length) add(gAdd[0].a.by, `zette ${joinNames(gAdd.map(x => x.a.name))} op de boodschappenlijst`, '🛒');
   const gDone = buf.filter(x => x.kind === 'groceries' && x.b && x.a && !x.b.done && x.a.done);
   if (gDone.length) add(pid, gDone.length > 4 ? `haalde ${gDone.length} boodschappen` : `haalde ${joinNames(gDone.map(x => x.a.name))}`, '🧺');
+  const mAdd = buf.filter(x => x.kind === 'meter' && !x.b && x.a);
+  if (mAdd.length) add(pid, mAdd.length === 1 ? (mAdd[0].a.type === 'month' ? 'voerde het energieverbruik van een maand in' : 'voerde een meterstand in') : `voerde ${mAdd.length} meterstanden in`, '⚡');
   for (const x of buf){
     const nm = (x.a || x.b || {}).name || (x.a || x.b || {}).title || '';
     if (x.kind === 'tasks'){
@@ -2086,6 +2313,7 @@ function flushActivity(){
       else add(pid, `werkte de klus ${nm} bij`, '✏️');
     } else if (x.kind === 'spend' && !x.b) add(pid, `voegde een uitgave toe: ${nm}, ${euro(num(x.a.amount))}`, '💶');
     else if ((x.kind === 'fixed' || x.kind === 'income') && x.a) add(pid, `paste ${nm} aan bij geld`, '💶');
+
   }
   if (!out.length) return;
   S.ui.changes = (S.ui.changes || []).concat(out).slice(-60);
@@ -2338,6 +2566,8 @@ document.addEventListener('click', e => {
     case 'toggleConfetti': { S.ui.noConfetti = !S.ui.noConfetti; saveLocal(); const sw = b.querySelector('.switch'); if (sw){ sw.setAttribute('aria-pressed', !S.ui.noConfetti); sw.setAttribute('aria-checked', !S.ui.noConfetti); } if (!S.ui.noConfetti) confetti(...centerOf(b)); break; }
     case 'analysis': analysisSheet(); break;
     case 'stdFixed': stdFixedSheet(); break;
+    case 'energy': energySheet(); break;
+    case 'meterAdd': meterForm(); break;
     case 'setTheme': { S.ui.theme = b.dataset.t === 'auto' ? '' : b.dataset.t; saveLocal(); applyTheme();
       document.querySelectorAll('[data-action=setTheme]').forEach(x => { const on = x === b; x.setAttribute('aria-pressed', on); x.setAttribute('aria-checked', on); }); break; }
     case 'hideInstall': S.ui.hideInstall = true; save(); render(); break;
@@ -2364,7 +2594,7 @@ document.addEventListener('visibilitychange', () => {
 
 /* ---------- synchronisatie (Supabase) ---------- */
 const CFG_KEY = 'huishouden.cfg', SYNC_KEY = 'huishouden.sync';
-const COLL = ['tasks','income','fixed','spend','groceries','events','jobs'];
+const COLL = ['tasks','income','fixed','spend','groceries','events','jobs','meter'];
 const readJSON = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch(e){ return d; } };
 const writeJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
 let cfg = readJSON(CFG_KEY, null);            // {mode:'local'} of {mode:'sync', url, key}
