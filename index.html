@@ -673,6 +673,29 @@ input[type=month]{min-height:44px}
 /* ===== v25: klussen in geld ===== */
 .subh{font:600 15px var(--round);margin:14px 4px 6px}
 .etile .sub{display:block}
+
+/* ===== v26: boodschappentaak ===== */
+.tchip{border:0;background:color-mix(in srgb,var(--accent) 14%,var(--surface));color:var(--accent);font:700 13px var(--ui);border-radius:999px;padding:5px 10px;flex:none;white-space:nowrap}
+
+/* ===== v27: weekmenu ===== */
+.meals .meal{display:flex;align-items:center;gap:12px;padding:9px 14px;border-top:1px solid var(--line)}
+.meals .meal:first-child{border-top:0}
+.meal.past{opacity:.6}
+.meal-day{width:40px;flex:none;text-align:center;border-radius:10px;background:var(--sunk);padding:3px 0 4px}
+.meal-day span{display:block;font-size:11px;color:var(--muted)}
+.meal-day b{font:700 17px/1.1 var(--round)}
+.meal-day.is-today{background:var(--accent);color:var(--accent-ink)}
+.meal-day.is-today span{color:inherit;opacity:.8}
+.meal-main{flex:1;min-width:0;text-align:left}
+.title.muted{color:var(--muted);font-weight:400}
+.meal-checks{display:flex;gap:6px;flex:none}
+.mchk{width:36px;height:36px;border-radius:11px;border:1.5px dashed color-mix(in srgb,var(--muted) 45%,transparent);background:none;font-size:16px;display:grid;place-items:center;filter:grayscale(1);opacity:.6;padding:0}
+.mchk.on{border:0;background:color-mix(in srgb,#7E9C78 28%,var(--surface));filter:none;opacity:1}
+.tchecks{display:flex;gap:8px;flex-wrap:wrap}
+.tcheck{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;font:600 14px var(--ui);color:var(--ink);display:inline-flex;align-items:center;gap:6px}
+.tcheck.on{background:#7E9C78;border-color:#7E9C78;color:#fff}
+.tcheck svg{width:14px;height:14px}
+.moved{color:var(--muted);font-style:italic}
 </style>
 </head>
 <body>
@@ -697,13 +720,13 @@ input[type=month]{min-height:44px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-const APP_VERSION = '25';
+const APP_VERSION = '28';
 if (/[?&](v|check)=/.test(location.search)) try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){}
 /* ---------- opslag ---------- */
 const KEY = 'huishouden.v1';
 const AISLES = [['groente','Groente & fruit'],['brood','Brood & bakkerij'],['vlees','Vlees, vis & vega'],['vleeswaren','Kaas & vleeswaren'],['zuivel','Zuivel & eieren'],['ontbijt','Ontbijt & beleg'],['houdbaar','Pasta, rijst & houdbaar'],['diepvries','Diepvries'],['snacks','Snacks & snoep'],['dranken','Dranken'],['drogist','Drogisterij'],['huishouden','Huishouden'],['bouwmarkt','Bouwmarkt'],['overig','Overig']];
 const defaultSettings = () => ({v:0, people:[{id:'p1', name:'', email:''},{id:'p2', name:'', email:''}], aisles: AISLES.map(([id,name]) => ({id, name}))});
-const empty = () => ({tasks:[], income:[], fixed:[], spend:[], groceries:[], history:{}, events:[], jobs:[], meter:[], ui:{}, settings: defaultSettings()});
+const empty = () => ({tasks:[], income:[], fixed:[], spend:[], groceries:[], history:{}, events:[], jobs:[], meter:[], meals:[], ui:{}, settings: defaultSettings()});
 let memory = null;
 function load(){
   try { const raw = localStorage.getItem(KEY); if (raw) return Object.assign(empty(), JSON.parse(raw)); } catch(e){}
@@ -826,12 +849,12 @@ function render(){
     $('#view').innerHTML = renderGate(); return;
   }
   setStatus(syncStatus, syncError);
-  $('#title').textContent = TABS[tab][0];
+  $('#title').textContent = tab === 'lijst' ? (S.ui.listView === 'meals' ? 'Weekmenu' : 'Boodschappen') : TABS[tab][0];
   $('#todayLine').textContent = tab === 'home' ? today().toLocaleDateString('nl-NL', {weekday:'long', day:'numeric', month:'long'}) : '';
   $('#todayLine').hidden = tab !== 'home';
   $('#addBtn').hidden = true; $('#fab').hidden = false;
   $('#addBtn').setAttribute('aria-label', {taken:'Taak toevoegen', klussen:'Klus toevoegen', geld:'Uitgave toevoegen', agenda:'Toevoegen aan de agenda'}[tab] || 'Toevoegen');
-  $('#tabs').innerHTML = Object.entries(TABS).map(([k,[full,icon]]) => [k, [k === 'lijst' ? 'Lijst' : full, icon]]).map(([k,[label,icon]]) =>
+  $('#tabs').innerHTML = Object.entries(TABS).map(([k,[full,icon]]) => [k, [k === 'lijst' ? 'Eten' : full, icon]]).map(([k,[label,icon]]) =>
     `<button class="tab" data-action="tab" data-tab="${k}"${k === tab ? ' aria-current="page"' : ''}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icon}</svg>${label}${k === 'home' && tab !== 'home' && unseen().length ? '<i class="tdot" aria-label="Nieuwe wijzigingen"></i>' : ''}</button>`).join('');
   $('#view').innerHTML = (updateAvailable ? `<div class="hint" style="margin-top:12px;align-items:center"><p><b>Er is een nieuwe versie.</b> Je gegevens blijven gewoon staan.</p><button class="btn" data-action="applyUpdate">Vernieuwen</button></div>` : '')
     + ({home:renderHome, taken:renderTasks, geld:renderMoney, lijst:renderList, agenda:renderAgenda, klussen:renderJobs})[tab]();
@@ -841,7 +864,7 @@ function render(){
 }
 
 /* ---------- overzicht ---------- */
-const HOME_SECTIONS = [['news','Sinds je laatst keek'],['week','Weekstrip'],['eten','Vandaag ergens eten'],['today','Te doen vandaag'],['soon','Binnenkort in de agenda'],['jobs','Klussen'],['money','Geld deze maand'],['groceries','Boodschappen']];
+const HOME_SECTIONS = [['news','Sinds je laatst keek'],['week','Weekstrip'],['eten','Vanavond eten'],['today','Te doen vandaag'],['soon','Binnenkort in de agenda'],['jobs','Klussen'],['money','Geld deze maand'],['groceries','Boodschappen']];
 function homeLayout(){
   const cfgH = S.ui.home || {};
   const ids = HOME_SECTIONS.map(x => x[0]);
@@ -857,7 +880,7 @@ const HOME = {
     for (let i = 0; i < 7; i++){
       const d = addDays(t0, i), k = iso(d);
       const nt = tasks.filter(x => i === 0 ? x.due <= d : iso(x.due) === k).length;
-      const evs = agendaItems(d, d, false).filter(it => !it.done), ne = evs.length;
+      const evs = agendaItems(d, d, false).filter(it => !it.done && it.type !== 'meal' && it.type !== 'mealshop'), ne = evs.length;
       const dots = '<i class="dot"></i>'.repeat(Math.min(nt,3)) + evs.slice(0,2).map(it => `<i class="dot" style="background:${KINDS[it.kind].c}"></i>`).join('');
       week += `<button class="day${i === 0 ? ' is-today' : ''}" data-action="tab" data-tab="${ne && !nt ? 'agenda' : 'taken'}" aria-label="${esc(longDate(d))}: ${nt} taken, ${ne} in de agenda"><span class="wd">${d.toLocaleDateString('nl-NL',{weekday:'short'}).replace('.','')}</span><span class="n">${d.getDate()}</span><span class="dots">${dots}</span></button>`;
     }
@@ -865,7 +888,7 @@ const HOME = {
   },
   eten: () => {
     const e = (agendaItems(today(), today(), false).find(it => it.kind === 'eten' && !it.done) || {}).e;
-    if (!e) return '';
+    if (!e) return tonightCard();
     const solo = named() && (e.for === 'p1' || e.for === 'p2') ? person(e.for).name : '';
     return `<div class="hint"><p><b>Vandaag</b> ${solo ? `eet ${esc(solo)}` : 'eten jullie'} ${e.where ? 'bij ' + esc(e.where) : 'ergens anders'}${e.time ? ' om ' + esc(e.time) : ''}.${solo ? '' : ' Niet koken dus.'}</p></div>`;
   },
@@ -883,7 +906,7 @@ const HOME = {
     return html + `</section>`;
   },
   soon: () => {
-    const t0 = today(), ev = lateDeadlines().concat(agendaItems(t0, addDays(t0, 60), false).filter(it => !it.done)).slice(0,3);
+    const t0 = today(), ev = lateDeadlines().concat(agendaItems(t0, addDays(t0, 60), false).filter(it => !it.done && it.type !== 'meal' && it.type !== 'mealshop')).slice(0,3);
     return `<section><h2>Binnenkort</h2>` + (ev.length ? `<div class="group">${ev.map(itemRow).join('')}</div>`
       : `<div class="empty"><p>Niets gepland in de agenda.</p><button class="btn ghost" data-action="add" data-what="event">Iets toevoegen</button></div>`) + `</section>`;
   },
@@ -962,6 +985,7 @@ function searchAll(q){
       .map(e => ({r:`event:${e.id}`, title:e.title, sub:`${fmtDate(parse(e.date))}${e.repeat ? ', ' + repeatLabel(e.repeat).toLowerCase() : ''}, ${KINDS[kindOf(e)].label.toLowerCase()}${e.where ? ', ' + e.where : ''}`}))],
     ['Klussen', '🔧', (S.jobs || []).filter(j => hit(j.title, j.pro, j.note, areaOf(j)[1], (j.mats || []).map(m => m.name).join(' ')))
       .map(j => { const mats = (j.mats || []).filter(m => hit(m.name)).map(m => m.name); return {r:`job:${j.id}`, title:j.title, sub:`${areaOf(j)[1]}, ${statusLabel(j).toLowerCase()}${mats.length && !hit(j.title) ? `, nodig: ${mats.join(', ')}` : ''}`}; })],
+    ['Weekmenu', '🍽️', (S.meals || []).filter(m => m.dish && hit(m.dish, m.ingredients, m.note)).sort((a, b) => b.date.localeCompare(a.date)).map(m => ({r:`meal:${m.date}`, title: m.dish, sub: fmtDate(parse(m.date)) + (m.cook ? `, ${cookName(m)} kookt` : '')}))],
     ['Boodschappen', '🛒', S.groceries.filter(g => hit(g.name)).map(g => ({r:`grocery:${g.id}`, title:`${(g.qty || 1) > 1 ? g.qty + '× ' : ''}${g.name}`, sub: g.done ? 'In het mandje' : 'Nog halen'}))],
     ['Uitgaven', '💶', S.spend.filter(x => hit(x.name, x.cat, euro(num(x.amount)))).sort((a, b) => b.date.localeCompare(a.date)).map(x => ({r:`spend:${x.id}`, title:x.name, sub:`${fmtDate(parse(x.date))}, ${x.cat}, ${euro(num(x.amount))}`}))],
     ['Vaste lasten en inkomen', '🏦', S.fixed.filter(x => hit(x.name, x.company, x.ref, x.note, fcat(x.cat || 'overig')[1])).map(x => ({r:`fixed:${x.id}`, title:x.name, sub:`${x.company ? x.company + ', ' : ''}${euro(num(x.amount))} ${FREQ[x.freq] || 'per maand'}`}))
@@ -993,6 +1017,7 @@ function searchSheet(){
     else if (type === 'spend'){ const x = find('spend', id); ym = x.date.slice(0,7); spendForm(x); }
     else if (type === 'fixed') fixedForm(find('fixed', id));
     else if (type === 'income') incomeForm(find('income', id));
+    else if (type === 'meal') mealForm(id);
   };
   drawResults(lastQuery);
   if (!dlg.open) dlg.showModal();
@@ -1044,7 +1069,12 @@ function taskRow({t, due}){
   const cls = diff < 0 ? 'late' : diff === 0 ? 'due' : '';
   return `<div class="row" data-sw="task:${t.id}"><button class="check" data-action="done" data-id="${t.id}" aria-label="${esc(t.name)} afvinken"></button>
     <button class="main plain" data-action="editTask" data-id="${t.id}"><div class="title">${esc(t.name)}</div>
-    <div class="sub"><span class="${cls}">${relDay(diff, due)}</span>${t.mins ? ', ' + fmtMins(t.mins) : ''}, ${intervalLabel(t).toLowerCase()}${whoText(t)}</div></button>${assignee(t) ? badge(assignee(t)) : ''}</div>`;
+    <div class="sub"><span class="${cls}">${relDay(diff, due)}</span>${t.due0 && t.due0 < (t.next || '') ? `<span class="moved">, doorgeschoven van ${fmtDate(parse(t.due0))}</span>` : ''}${t.mins ? ', ' + fmtMins(t.mins) : ''}, ${intervalLabel(t).toLowerCase()}${whoText(t)}</div></button>${groceryChip(t)}${assignee(t) ? badge(assignee(t)) : ''}</div>`;
+}
+function groceryChip(t){
+  if (!isGroceryTask(t)) return '';
+  const n = S.groceries.filter(g => !g.done).length;
+  return `<button class="tchip" data-action="${n ? 'shopFor' : 'tab'}" data-tab="lijst" aria-label="${n ? `Winkelmodus starten, ${n} op de lijst` : 'Naar de boodschappenlijst'}">🛒 ${n || '+'}</button>`;
 }
 function fmtHours(m){ m = +m || 0; if (m < 60) return `${m} min`; const h = Math.round(m / 6) / 10; return `${String(h).replace('.', ',')} uur`; }
 function fmtMins(m){ m = +m; if (!m) return ''; if (m < 60) return `${m} min`; const h = Math.floor(m / 60), r = m % 60; return r ? `${h} u ${r} min` : `${h} uur`; }
@@ -1100,12 +1130,14 @@ function taskForm(t){
     const [a, b] = people();
     fields.push({key:'who', label:'Wie doet het', type:'select', options:[['', 'Samen, wie tijd heeft'], ['p1', a.name], ['p2', b.name], ['rotate', 'Om de beurt']]});
   }
+  fields.push({key:'link', label:'Koppelen aan de boodschappenlijst', type:'select', options:[['', 'Ja'], ['none', 'Nee']], showIf: v => /boodschap/i.test(v.name || '')});
   const vals = t ? {...t, who: ['p1','p2','rotate'].includes(t.who) ? t.who : ''} : {next: iso(today()), who: ''};
   openForm({title: t ? 'Taak' : 'Nieuwe taak', fields, values: vals,
     onSave: v => {
       v.mins = v.mins ? +v.mins : '';
       if (v.unit === 'once') v.every = 1;
       if (v.who === 'rotate' && !(t && t.who === 'rotate' && t.turn)) v.turn = (me() && me().id) || 'p1';
+      if (t && v.next !== t.next) delete t.due0;
       t ? Object.assign(t, v) : S.tasks.push({id: uid(), ...v});
     },
     onDelete: t && (() => S.tasks = S.tasks.filter(x => x !== t))});
@@ -1302,6 +1334,11 @@ function aisleOf(g){
   return ids.has(c) ? c : 'overig';
 }
 function renderList(){
+  const seg = `<div class="seg" style="margin:8px 0 0"><button data-action="listView" data-v="meals" aria-pressed="${S.ui.listView === 'meals'}">🍽️ Weekmenu</button><button data-action="listView" data-v="list" aria-pressed="${S.ui.listView !== 'meals'}">🛒 Boodschappen</button></div>`;
+  if (S.ui.listView === 'meals') return seg + renderMeals();
+  return seg + renderGroceries();
+}
+function renderGroceries(){
   const open = S.groceries.filter(g => !g.done), done = S.groceries.filter(g => g.done);
   const onList = new Set(open.map(g => g.name.toLowerCase()));
   const sugg = Object.values(S.history).filter(h => !onList.has(h.name.toLowerCase())).sort((a,b) => b.count - a.count).slice(0,12);
@@ -1396,11 +1433,12 @@ const KINDS = {
   deadline: {label:'Deadline', c:'#B59A5A'},
   taak:     {label:'Taken', c:'#6E9184'},
   klus:     {label:'Klussen', c:'#8A7064'},
+  thuis:    {label:'Thuis eten', c:'#7E9C78'},
   contract: {label:'Contracten', c:'#A3845C'}
 };
 const REPEAT = [['', 'Niet herhalen'], ['d1', 'Elke dag'], ['w1', 'Elke week'], ['w2', 'Elke 2 weken'], ['m1', 'Elke maand'], ['y1', 'Elk jaar']];
 const repeatLabel = r => (REPEAT.find(x => x[0] === r) || ['', ''])[1];
-const kindOf = e => KINDS[e.kind] && !['taak','klus','contract'].includes(e.kind) ? e.kind : 'afspraak';
+const kindOf = e => KINDS[e.kind] && !['taak','klus','contract','thuis'].includes(e.kind) ? e.kind : 'afspraak';
 let agMonth = iso(today()).slice(0,7), agDay = null, agFilter = 'all';
 const evSort = (a,b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || ''));
 const evMatch = it => agFilter === 'all' || it.kind === agFilter;
@@ -1440,6 +1478,11 @@ function agendaItems(from, to, withTasks = true){
   const items = [];
   for (const e of S.events) for (const date of eventDates(e, from, to)) items.push({type:'ev', e, date, kind: kindOf(e), time: e.time || '', done: evDone(e, date)});
   if (withTasks) for (const t of S.tasks) for (const o of taskDates(t, from, to)) items.push({type:'task', t, kind:'taak', time:'', done:false, ...o});
+  for (const m of S.meals || []){
+    const d = parse(m.date);
+    if (m.dish && d >= from && d <= to) items.push({type:'meal', m, date: m.date, time: m.time || '', kind:'thuis', done: false});
+    if (m.dish && m.shopOn && !m.shopDone){ const sd = parse(m.shopOn); if (sd >= from && sd <= to) items.push({type:'mealshop', m, date: m.shopOn, time:'', kind:'thuis', done: false}); }
+  }
   for (const f of S.fixed) if (f.end){
     const end = parse(f.end), rem = monthBefore(end);
     if (rem >= from && rem <= to) items.push({type:'contract', f, which:'remind', date: iso(rem), kind:'contract', time:'', done:false});
@@ -1496,7 +1539,7 @@ function contractItemRow(it){
     <div class="sub"><span class="${diff === 0 ? 'due' : ''}">${relDay(diff, d)}</span>${f.company ? `, ${esc(f.company)}` : ''}</div>
     <div class="sub"><span class="kind" style="--k:${KINDS.contract.c}">${sub}</span></div></button></div>`;
 }
-const itemRow = it => it.type === 'task' ? taskItemRow(it) : it.type === 'job' ? jobItemRow(it) : it.type === 'contract' ? contractItemRow(it) : eventRow(it.e, it.date, it.done);
+const itemRow = it => it.type === 'meal' || it.type === 'mealshop' ? mealItemRow(it) : it.type === 'task' ? taskItemRow(it) : it.type === 'job' ? jobItemRow(it) : it.type === 'contract' ? contractItemRow(it) : eventRow(it.e, it.date, it.done);
 function dayList(list){
   let out = '', cur = null;
   for (const it of list){
@@ -1542,7 +1585,7 @@ function renderAgenda(){
 }
 function eventForm(e, occDate, preset = {}){
   const fields = [{key:'title', label:'Wat', type:'text', placeholder:'Bijv. tandarts, verjaardag Tim, bioscoop'},
-    {key:'kind', label:'Soort', type:'select', options: Object.entries(KINDS).filter(([k]) => !['taak','klus','contract'].includes(k)).map(([k, v]) => [k, v.label])}];
+    {key:'kind', label:'Soort', type:'select', options: Object.entries(KINDS).filter(([k]) => !['taak','klus','contract','thuis'].includes(k)).map(([k, v]) => [k, v.label])}];
   if (named()){ const [a, b] = people(); fields.push({key:'for', label:'Voor wie', type:'select', options:[['', 'Samen'], ['p1', a.name], ['p2', b.name]]}); }
   fields.push({key:'date', label: e && e.repeat ? 'Datum (eerste keer)' : 'Datum', type:'date', required:true},
     {key:'time', label:'Van (optioneel)', type:'time', half:true},
@@ -1626,6 +1669,7 @@ function openSettings(){
       ${setRow('names', '👥', 'Namen', m ? `Jij bent ${esc(m.name)}` : named() ? 'Kies wie jij bent' : 'Nog niet ingevuld')}
       ${setRow('analysis', '⏱️', 'Tijdsbesteding', 'Wie doet hoeveel, en waaraan')}
       ${setRow('aisles', '🛒', 'Winkelvolgorde', 'Afdelingen in de volgorde van jullie winkel')}
+      ${setRow('toggleRoll', '⏭️', 'Niet gedane taken doorschuiven', 'Naar de volgende dag, voor jullie allebei', `<span class="switch" role="switch" aria-checked="${!ST().noRoll}" aria-pressed="${!ST().noRoll}"></span>`)}
     </div>
     <h4>Deze telefoon</h4><div class="group">
       ${setRow('homeEdit', '🏠', 'Startpagina', 'Kies onderdelen en volgorde')}
@@ -1867,11 +1911,11 @@ function weekSheet(next){
   items.filter(i => i.type === 'task').forEach(i => { const a = assignee(i.t) || ''; mins[a] += +i.t.mins || 0; cnt[a]++; });
   const nTask = items.filter(i => i.type === 'task').length, evs = items.filter(i => i.type === 'ev');
   const nEat = evs.filter(i => i.kind === 'eten').length, nDl = evs.filter(i => i.kind === 'deadline').length, nJob = items.filter(i => i.type === 'job').length;
-  const title = it => it.type === 'contract' ? `${it.which === 'remind' ? 'Over een maand loopt af' : 'Loopt vandaag af'}: ${esc(it.f.name)}${it.f.company ? ` <small>${esc(it.f.company)}</small>` : ''}`
+  const title = it => it.type === 'meal' ? `🍽️ ${esc(it.m.dish)}${it.m.cook ? ` <small>${esc(cookName(it.m))} kookt</small>` : ''}` : it.type === 'mealshop' ? `🛒 Boodschappen voor ${esc(it.m.dish)}` : it.type === 'contract' ? `${it.which === 'remind' ? 'Over een maand loopt af' : 'Loopt vandaag af'}: ${esc(it.f.name)}${it.f.company ? ` <small>${esc(it.f.company)}</small>` : ''}`
     : it.type === 'task' ? `${esc(it.t.name)}${it.t.mins ? ` <small>${fmtMins(it.t.mins)}</small>` : ''}`
     : it.type === 'job' ? `${esc(it.j.title)} <small>klus</small>`
     : `${esc(it.e.title)}${it.e.where && it.kind !== 'eten' ? ` <small>${esc(it.e.where)}</small>` : ''}${it.e.with ? ` <small>met ${esc(it.e.with)}</small>` : ''}`;
-  const who = it => it.type === 'contract' ? '' : it.type === 'task' ? (assignee(it.t) ? badge(assignee(it.t)) : '') : it.type === 'job' ? doerBadge(it.j) : (it.e.for ? badge(it.e.for) : '');
+  const who = it => it.type === 'meal' ? (it.m.cook === 'p1' || it.m.cook === 'p2' ? badge(it.m.cook) : '') : it.type === 'mealshop' ? (it.m.shopBy === 'p1' || it.m.shopBy === 'p2' ? badge(it.m.shopBy) : '') : it.type === 'contract' ? '' : it.type === 'task' ? (assignee(it.t) ? badge(assignee(it.t)) : '') : it.type === 'job' ? doerBadge(it.j) : (it.e.for ? badge(it.e.for) : '');
   let days = '';
   for (let i = 0; i < 7; i++){
     const d = addDays(mon, i), k = iso(d), list = items.filter(it => it.date === k);
@@ -2245,11 +2289,141 @@ function quickAdd(){
   if (!dlg.open) dlg.showModal();
 }
 
+/* ---------- taken doorschuiven ---------- */
+// Taken die op hun dag niet zijn gedaan, schuiven naar vandaag. Bij samen synchroniseren gebeurt dit pas na het ophalen
+// van de nieuwste gegevens, zodat een taak die de ander al had afgevinkt niet wordt teruggezet.
+function rollOver(announce){
+  if (ST().noRoll) return 0;
+  const t0 = iso(today()), names = [];
+  for (const t of activeTasks()) if (t.next && t.next < t0){ if (!t.due0) t.due0 = t.next; t.next = t0; names.push(t.name); }
+  if (names.length){
+    save(); softRender();
+    if (announce && S.ui.rollToast !== t0){ S.ui.rollToast = t0; saveLocal();
+      setTimeout(() => toast(names.length === 1 ? `${names[0]} is doorgeschoven naar vandaag` : `${names.length} taken zijn doorgeschoven naar vandaag`), 400); }
+  }
+  return names.length;
+}
+let lastDay = iso(today());
+setInterval(() => { const d = iso(today()); if (d !== lastDay){ lastDay = d; if (cfg && cfg.mode === 'sync') refresh(); else { rollOver(true); render(); } } }, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && cfg && cfg.mode !== 'sync' && !gate) rollOver(true); });
+
+/* ---------- weekmenu: thuis eten ---------- */
+let mealWeek = 0;
+const mealOn = date => (S.meals || []).find(m => m.date === date);
+function newMeal(date){ const m = {id: 'meal-' + date, date, dish:'', time:'18:00', cook:'', shopOn: date, shopBy:'', shopDone:false, cooked:false}; (S.meals = S.meals || []).push(m); return m; }
+const cookName = m => m.cook === 'p1' || m.cook === 'p2' ? (person(m.cook).name || 'Iemand') : 'Samen';
+const eatingOut = date => agendaItems(parse(date), parse(date), false).find(it => it.kind === 'eten' && !it.done && !(it.e.for === 'p1' || it.e.for === 'p2'));
+function markMealsShopped(){
+  const lim = iso(addDays(today(), 7)); let n = 0;
+  (S.meals || []).forEach(m => { if (m.dish && !m.shopDone && m.shopOn && m.shopOn <= iso(today()) && m.date <= lim){ m.shopDone = true; n++; } });
+  return n;
+}
+function mealStatus(m){
+  const t0 = iso(today()), out = [];
+  if (!m || !m.dish) return out;
+  if (!m.shopDone){ if (m.shopOn && m.shopOn < t0) out.push(['late', 'Boodschappen nog niet gedaan']); else if (m.shopOn === t0) out.push(['due', 'Vandaag boodschappen doen']); }
+  return out;
+}
+function renderMeals(){
+  const t0 = today(), mon = addDays(t0, mealWeek * 7), sun = addDays(mon, 6);
+  let rows = '';
+  for (let i = 0; i < 7; i++){
+    const d = addDays(mon, i), k = iso(d), m = mealOn(k), out = eatingOut(k), isT = k === iso(t0), past = k < iso(t0);
+    const dayBox = `<div class="meal-day${isT ? ' is-today' : ''}"><span>${d.toLocaleDateString('nl-NL', {weekday:'short'}).replace('.', '')}</span><b>${d.getDate()}</b></div>`;
+    if (out && !(m && m.home)){
+      rows += `<div class="meal${past ? ' past' : ''}">${dayBox}<div class="meal-main"><div class="title">${esc(out.e.title)}</div><div class="sub">Ergens anders eten${out.e.time ? `, ${esc(out.e.time)}` : ''}</div></div><button class="mchk" data-action="mealHome" data-date="${k}" aria-label="Toch thuis eten">🏠</button></div>`;
+      continue;
+    }
+    if (!m || !m.dish){
+      rows += `<div class="meal${past ? ' past' : ''}">${dayBox}<button class="meal-main plain" data-action="mealEdit" data-date="${k}"><div class="title muted">Nog niets gepland</div><div class="sub">Tik om te plannen</div></button><span class="chev">+</span></div>`;
+      continue;
+    }
+    const st = mealStatus(m);
+    const sub = [m.time, m.cook ? `${cookName(m)} kookt` : '', !m.shopDone && m.shopOn ? `boodschappen ${m.shopOn === k ? 'dezelfde dag' : fmtDate(parse(m.shopOn)).toLowerCase()}` : ''].filter(Boolean).join(', ');
+    rows += `<div class="meal${past ? ' past' : ''}">${dayBox}<button class="meal-main plain" data-action="mealEdit" data-date="${k}"><div class="title">${esc(m.dish)}</div><div class="sub">${esc(sub)}</div>${st.map(([c, t]) => `<div class="sub"><span class="${c}">${t}</span></div>`).join('')}</button>
+      <div class="meal-checks"><button class="mchk${m.shopDone ? ' on' : ''}" data-action="mealCheck" data-k="shopDone" data-date="${k}" aria-pressed="${!!m.shopDone}" aria-label="Boodschappen gedaan">🛒</button><button class="mchk${m.cooked ? ' on' : ''}" data-action="mealCheck" data-k="cooked" data-date="${k}" aria-pressed="${!!m.cooked}" aria-label="Gekookt">🍳</button></div></div>`;
+  }
+  const planned = (S.meals || []).filter(m => m.dish && m.date >= iso(mon) && m.date <= iso(sun));
+  const label = mealWeek === 0 ? 'Komende 7 dagen' : `${fmtDate(mon)} t/m ${fmtDate(sun)}`;
+  return `<section style="margin-top:12px"><div class="monthnav"><button data-action="mealWeek" data-d="-1" aria-label="Vorige week">‹</button><b>${label}</b><button data-action="mealWeek" data-d="1" aria-label="Volgende week">›</button></div>
+    <div class="group meals">${rows}</div>
+    <p class="sub" style="margin:8px 4px 0">🛒 = boodschappen gedaan, 🍳 = gekookt. ${planned.length} van 7 dagen gepland. Dagen dat jullie ergens anders eten komen uit de agenda.</p></section>`;
+}
+function mealForm(date){
+  const m0 = mealOn(date);
+  const dishes = [...new Set((S.meals || []).map(m => m.dish).filter(Boolean))];
+  const ppl = named() ? [['', 'Samen'], ['p1', person('p1').name], ['p2', person('p2').name]] : [['', 'Samen']];
+  openForm({title: fmtDate(parse(date)), values: m0 ? {...m0, toList: ''} : {time:'18:00', cook:'', shopOn: date, shopBy:'', toList:''},
+    note: 'Plan wat jullie eten, wie kookt en wanneer de boodschappen worden gedaan.',
+    fields: [
+      {key:'dish', label:'Wat eten we', type:'text', required:true, placeholder:'Bijv. pasta pesto', list: dishes},
+      {key:'time', label:'Hoe laat eten', type:'time', half:true},
+      {key:'cook', label:'Wie kookt', type:'select', half:true, options: ppl},
+      {key:'shopOn', label:'Boodschappen doen op', type:'date', half:true},
+      {key:'shopBy', label:'Wie doet ze', type:'select', half:true, options: ppl},
+      {key:'ingredients', label:'Wat moet er gehaald worden (optioneel)', type:'textarea', placeholder:'Bijv. pasta, pesto, pijnboompitten, rucola'},
+      {key:'toList', label:'Op de boodschappenlijst zetten', type:'select', options:[['', 'Ja'], ['no', 'Nee']], showIf: v => (v.ingredients || '').trim()},
+      {key:'note', label:'Notitie (optioneel)', type:'textarea'}],
+    onSave: v => {
+      const m = mealOn(date) || newMeal(date);
+      const toList = v.toList !== 'no'; delete v.toList;
+      const newIng = (v.ingredients || '').split(/[,\n]/).map(x => x.trim()).filter(Boolean);
+      const oldIng = (m.listedIng || []);
+      Object.assign(m, v);
+      if (toList && newIng.length){ const add = newIng.filter(x => !oldIng.includes(x.toLowerCase())); add.forEach(addGrocery); m.listedIng = [...new Set([...oldIng, ...newIng.map(x => x.toLowerCase())])]; if (add.length) setTimeout(() => toast(`${add.length} ${add.length === 1 ? 'product' : 'producten'} op de boodschappenlijst`), 50); }
+    },
+    onDelete: m0 && m0.dish ? (() => S.meals = S.meals.filter(x => x !== m0)) : null, deleteLabel: 'Uit het weekmenu halen'});
+}
+function mealItemRow(it){
+  const m = it.m, d = parse(it.date), diff = daysBetween(today(), d);
+  if (it.type === 'mealshop') return `<div class="row">${dateBox(d, KINDS.thuis.c)}<button class="main plain" data-action="mealEdit" data-date="${m.date}"><div class="title">Boodschappen voor ${esc(m.dish)}</div>
+    <div class="sub"><span class="${diff < 0 ? 'late' : diff === 0 ? 'due' : ''}">${diff < 0 ? 'Nog niet gedaan' : relDay(diff, d)}</span>${m.shopBy === 'p1' || m.shopBy === 'p2' ? `, ${esc(person(m.shopBy).name)}` : ''}</div><div class="sub"><span class="kind" style="--k:${KINDS.thuis.c}">Voor ${esc(fmtDate(parse(m.date)).toLowerCase())}</span></div></button>
+    <button class="check${m.shopDone ? ' on' : ''}" data-action="mealCheck" data-k="shopDone" data-date="${m.date}" aria-label="Boodschappen gedaan">${m.shopDone ? CHECK : ''}</button></div>`;
+  return `<div class="row">${dateBox(d, KINDS.thuis.c)}<button class="main plain" data-action="mealEdit" data-date="${m.date}"><div class="title">${esc(m.dish)}</div>
+    <div class="sub"><span class="${diff === 0 ? 'due' : ''}">${relDay(diff, d)}</span>${m.time ? ', ' + esc(m.time) : ''}${m.cook ? `, ${esc(cookName(m))} kookt` : ''}</div><div class="sub"><span class="kind" style="--k:${KINDS.thuis.c}">Thuis eten${m.shopDone ? ', boodschappen gedaan' : ''}</span></div></button>
+    <button class="check${m.cooked ? ' on' : ''}" data-action="mealCheck" data-k="cooked" data-date="${m.date}" aria-label="Gekookt">${m.cooked ? CHECK : ''}</button></div>`;
+}
+function tonightCard(){
+  const t0 = iso(today()), m = mealOn(t0), tm = iso(addDays(today(), 1)), mt = mealOn(tm);
+  const tomorrowShop = mt && mt.dish && !mt.shopDone && mt.shopOn && mt.shopOn <= t0 ? `<p class="sub" style="margin:8px 0 0"><span class="due">Vandaag boodschappen doen voor morgen: ${esc(mt.dish)}</span></p>` : '';
+  if (!m || !m.dish) return `<section><h2>Vanavond</h2><div class="group news"><div class="news-head"><b>Wat eten we vanavond?</b><button class="linkbtn" data-action="mealEdit" data-date="${t0}">Plannen</button></div><p class="sub" style="margin:0">Nog niets gepland.${tomorrowShop ? '' : ' Plan meteen ook de rest van de week in het weekmenu.'}</p>${tomorrowShop}</div></section>`;
+  const st = mealStatus(m);
+  return `<section><h2>Vanavond</h2><div class="group news"><div class="news-head"><b>🍽️ ${esc(m.dish)}</b><button class="linkbtn" data-action="mealEdit" data-date="${t0}">Wijzigen</button></div>
+    <p class="sub" style="margin:0 0 8px">${[m.time ? `Om ${esc(m.time)}` : '', m.cook ? `${esc(cookName(m))} kookt` : ''].filter(Boolean).join(', ')}</p>
+    <div class="tchecks"><button class="tcheck${m.shopDone ? ' on' : ''}" data-action="mealCheck" data-k="shopDone" data-date="${t0}" aria-pressed="${!!m.shopDone}">${m.shopDone ? CHECK : ''} Boodschappen gedaan</button><button class="tcheck${m.cooked ? ' on' : ''}" data-action="mealCheck" data-k="cooked" data-date="${t0}" aria-pressed="${!!m.cooked}">${m.cooked ? CHECK : ''} Gekookt</button></div>
+    ${st.map(([c, t]) => `<p class="sub" style="margin:8px 0 0"><span class="${c}">${t}</span></p>`).join('')}${tomorrowShop}</div></section>`;
+}
+
+/* ---------- taak afvinken (ook gekoppeld aan boodschappen) ---------- */
+const isGroceryTask = t => t && t.link !== 'none' && /boodschap/i.test(t.name || '');
+function doneTask(id, at, auto){
+  const t = find('tasks', id); if (!t) return;
+  const undo = snapshot();
+  const by = (me() && me().id) || assignee(t) || null;
+  t.last = iso(today()); delete t.due0;
+  t.log = (t.log || []).concat({d: t.last, by, m: +t.mins || 0}).slice(-60);
+  let extra = '';
+  if (isGroceryTask(t)) markMealsShopped();
+  if (isGroceryTask(t)){ const n = S.groceries.filter(g => g.done).length; if (n){ S.groceries = S.groceries.filter(g => !g.done); extra = `. ${n} ${n === 1 ? 'product' : 'producten'} uit het mandje gehaald`; } }
+  if (t.unit === 'once'){ t.finished = t.last; save(); render(); if (at) confetti(...at); toast(`${t.name} afgerond${extra}`, undo); return; }
+  t.next = iso(addInterval(today(), t.every, t.unit));
+  if (t.who === 'rotate'){ const cur = by || assignee(t); t.turn = other(cur).id; }
+  save(); render(); if (at) confetti(...at);
+  const nxt = t.who === 'rotate' && person(t.turn).name ? `, ${person(t.turn).name} is aan de beurt` : '';
+  toast(auto ? `Alles gehaald! ${t.name} is afgevinkt${extra}` : `${t.name} gedaan. Volgende keer: ${fmtDate(parse(t.next))}${nxt}${extra}`, undo);
+}
+
 /* ---------- winkelmodus ---------- */
 function toggleGrocery(id){
   const g = find('groceries', id); if (!g) return;
   g.done = !g.done; save(); render();
-  if (g.done && !S.groceries.some(x => !x.done)){ confetti(innerWidth / 2, innerHeight * .6); toast('Alles is gehaald!'); }
+  if (g.done && !S.groceries.some(x => !x.done)){
+    confetti(innerWidth / 2, innerHeight * .6);
+    const soon = addDays(today(), 1);
+    const task = activeTasks().filter(isGroceryTask).filter(t => nextDue(t) <= soon).sort((a, b) => nextDue(a) - nextDue(b))[0];
+    if (task){ shopMode = false; keepAwake(false); doneTask(task.id, null, true); }
+    else { const n = markMealsShopped(); if (n) save(); toast(n ? `Alles gehaald! Boodschappen voor ${n} ${n === 1 ? 'maaltijd' : 'maaltijden'} afgevinkt.` : 'Alles is gehaald!'); }
+  }
 }
 let shopMode = false, wakeLock = null;
 async function keepAwake(on){
@@ -2275,7 +2449,7 @@ const unseen = () => (S.ui.changes || []).filter(c => c.t > (S.ui.seenAt || 0));
 const partnerId = () => { const m = me(); return m ? other(m.id).id : ''; };
 const nameOf = pid => (pid && person(pid) && person(pid).name) || (partnerId() && person(partnerId()).name) || 'Je partner';
 function noteChange(kind, b, a){
-  if (!['groceries','tasks','events','jobs','spend','fixed','income','meter'].includes(kind)) return;
+  if (!['groceries','tasks','events','jobs','spend','fixed','income','meter','meals'].includes(kind)) return;
   if (canon(b) === canon(a)) return;
   actBuf.push({kind, b, a}); clearTimeout(actTimer); actTimer = setTimeout(flushActivity, 1200);
 }
@@ -2291,6 +2465,12 @@ function flushActivity(){
   if (gAdd.length) add(gAdd[0].a.by, `zette ${joinNames(gAdd.map(x => x.a.name))} op de boodschappenlijst`, '🛒');
   const gDone = buf.filter(x => x.kind === 'groceries' && x.b && x.a && !x.b.done && x.a.done);
   if (gDone.length) add(pid, gDone.length > 4 ? `haalde ${gDone.length} boodschappen` : `haalde ${joinNames(gDone.map(x => x.a.name))}`, '🧺');
+  for (const x of buf.filter(x => x.kind === 'meals' && x.a)){
+    const m = x.a, b = x.b || {}, dag = parse(m.date).toLocaleDateString('nl-NL', {weekday:'long'});
+    if (m.dish && m.dish !== b.dish) add(pid, `zette ${m.dish} op het weekmenu voor ${dag}`, '🍽️');
+    else if (m.cooked && !b.cooked) add(pid, `heeft ${m.dish} gekookt`, '🍳');
+    else if (m.shopDone && !b.shopDone) add(pid, `deed de boodschappen voor ${m.dish}`, '🛒');
+  }
   const mAdd = buf.filter(x => x.kind === 'meter' && !x.b && x.a);
   if (mAdd.length) add(pid, mAdd.length === 1 ? (mAdd[0].a.type === 'month' ? 'voerde het energieverbruik van een maand in' : 'voerde een meterstand in') : `voerde ${mAdd.length} meterstanden in`, '⚡');
   for (const x of buf){
@@ -2509,17 +2689,8 @@ document.addEventListener('click', e => {
     case 'tab': tab = b.dataset.tab; S.ui.tab = tab; save(); render(); scrollTo(0,0); break;
     case 'headerAdd': ({taken:() => taskForm(), klussen:() => jobForm(), geld:() => spendForm(), agenda:() => eventForm()})[tab]?.(); break;
     case 'add': ({task:() => taskForm(), spend:() => spendForm(), fixed:() => fixedForm(), income:() => incomeForm(), event:() => eventForm(), job:() => jobForm()})[b.dataset.what](); break;
-    case 'done': { const t = find('tasks', id), prev = JSON.stringify(t), at = centerOf(b);
-      const by = (me() && me().id) || assignee(t) || null;
-      t.last = iso(today());
-      t.log = (t.log || []).concat({d: t.last, by, m: +t.mins || 0}).slice(-60);
-      const undoT = () => { const old = JSON.parse(prev); for (const k of Object.keys(t)) delete t[k]; Object.assign(t, old); save(); render(); };
-      if (t.unit === 'once'){ t.finished = t.last; save(); render(); confetti(...at); toast(`${t.name} afgerond`, undoT); break; }
-      t.next = iso(addInterval(today(), t.every, t.unit));
-      if (t.who === 'rotate'){ const cur = by || assignee(t); t.turn = other(cur).id; }
-      save(); render(); confetti(...at);
-      const nxt = t.who === 'rotate' && person(t.turn).name ? `, ${person(t.turn).name} is aan de beurt` : '';
-      toast(`${t.name} gedaan. Volgende keer: ${fmtDate(parse(t.next))}${nxt}`, () => { const old = JSON.parse(prev); for (const k of Object.keys(t)) delete t[k]; Object.assign(t, old); save(); render(); }); break; }
+    case 'done': doneTask(id, centerOf(b)); break;
+    case 'shopFor': shopMode = true; keepAwake(true); render(); break;
     case 'names': namesForm(); break;
     case 'reopenTask': { const t = find('tasks', id); delete t.finished; t.next = iso(today()); save(); render(); toast(`${t.name} staat weer open`); break; }
     case 'delTask': { const undo = snapshot(); const t = find('tasks', id); S.tasks = S.tasks.filter(x => x.id !== id); save(); render(); toast(`${t.name} verwijderd`, undo); break; }
@@ -2566,6 +2737,12 @@ document.addEventListener('click', e => {
     case 'toggleConfetti': { S.ui.noConfetti = !S.ui.noConfetti; saveLocal(); const sw = b.querySelector('.switch'); if (sw){ sw.setAttribute('aria-pressed', !S.ui.noConfetti); sw.setAttribute('aria-checked', !S.ui.noConfetti); } if (!S.ui.noConfetti) confetti(...centerOf(b)); break; }
     case 'analysis': analysisSheet(); break;
     case 'stdFixed': stdFixedSheet(); break;
+    case 'toggleRoll': { ST().noRoll = !ST().noRoll; ST().v = Date.now(); save(); const sw = b.querySelector('.switch'); if (sw){ sw.setAttribute('aria-pressed', !ST().noRoll); sw.setAttribute('aria-checked', !ST().noRoll); } if (!ST().noRoll) rollOver(true); render(); break; }
+    case 'listView': S.ui.listView = b.dataset.v; saveLocal(); render(); break;
+    case 'mealWeek': mealWeek += +b.dataset.d; render(); break;
+    case 'mealEdit': mealForm(b.dataset.date); break;
+    case 'mealCheck': { const m = mealOn(b.dataset.date); if (!m) break; const k = b.dataset.k; m[k] = !m[k]; save(); render(); if (m[k]) confetti(...centerOf(b)); break; }
+    case 'mealHome': { const m = mealOn(b.dataset.date) || newMeal(b.dataset.date); m.home = !m.home; save(); render(); break; }
     case 'energy': energySheet(); break;
     case 'meterAdd': meterForm(); break;
     case 'setTheme': { S.ui.theme = b.dataset.t === 'auto' ? '' : b.dataset.t; saveLocal(); applyTheme();
@@ -2594,7 +2771,7 @@ document.addEventListener('visibilitychange', () => {
 
 /* ---------- synchronisatie (Supabase) ---------- */
 const CFG_KEY = 'huishouden.cfg', SYNC_KEY = 'huishouden.sync';
-const COLL = ['tasks','income','fixed','spend','groceries','events','jobs','meter'];
+const COLL = ['tasks','income','fixed','spend','groceries','events','jobs','meter','meals'];
 const readJSON = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch(e){ return d; } };
 const writeJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
 let cfg = readJSON(CFG_KEY, null);            // {mode:'local'} of {mode:'sync', url, key}
@@ -2713,6 +2890,7 @@ async function pull(){
     }
   } catch(e){ setStatus(navigator.onLine ? 'error' : 'offline', e.message || String(e)); return; }
   applyRows(rows, true, start);
+  rollOver(true);
   if (!Object.keys(sync.pending).length) setStatus('ok');
 }
 function subscribe(){
@@ -2727,7 +2905,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) refr
 
 async function startSync(){
   if (!cfg){ gate = 'setup'; render(); return; }
-  if (cfg.mode !== 'sync'){ gate = null; render(); return; }
+  if (cfg.mode !== 'sync'){ gate = null; rollOver(true); render(); return; }
   if (!window.supabase){
     if (sync.member){ gate = null; render(); setStatus('offline', 'Geen verbinding met de database.'); }
     else { gate = 'login'; gateMsg = 'Geen verbinding. Controleer je internet en open de app opnieuw.'; gateMsgBad = true; render(); }
