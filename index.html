@@ -696,6 +696,12 @@ input[type=month]{min-height:44px}
 .tcheck.on{background:#7E9C78;border-color:#7E9C78;color:#fff}
 .tcheck svg{width:14px;height:14px}
 .moved{color:var(--muted);font-style:italic}
+
+/* ===== v29: annuleren als knop ===== */
+.sheet-head .link:not(.strong){background:#7B7F8A;color:#fff;border-radius:999px;padding:7px 16px;font:600 15px/1.2 var(--ui);text-align:center;min-width:0;box-shadow:0 3px 10px -4px rgba(62,56,54,.45);transition:transform .12s ease,filter .12s ease}
+.sheet-head .link:not(.strong):active{transform:scale(.95);filter:brightness(.92)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .sheet-head .link:not(.strong){background:#4A4E59;color:#E9E6E7}}
+:root[data-theme="dark"] .sheet-head .link:not(.strong){background:#4A4E59;color:#E9E6E7}
 </style>
 </head>
 <body>
@@ -720,7 +726,7 @@ input[type=month]{min-height:44px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-const APP_VERSION = '28';
+const APP_VERSION = '29';
 if (/[?&](v|check)=/.test(location.search)) try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){}
 /* ---------- opslag ---------- */
 const KEY = 'huishouden.v1';
