@@ -719,6 +719,10 @@ input[type=month]{min-height:44px}
 .bic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:16px;background:var(--sunk);flex:none}
 .bamt{width:84px;flex:none;padding:8px 10px;text-align:right}
 .amt.free{color:#6E9184;font-size:13px;font-weight:700}
+.bar .p{background:#AB978C}
+.bper{width:62px;flex:none;padding:8px 6px;font-size:14px;background-position:calc(100% - 10px) 50%,calc(100% - 5px) 50%;padding-right:18px}
+.elink .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:15px;background:var(--sunk);flex:none}
+.elink .title{color:var(--accent);font-size:14.5px}
 </style>
 </head>
 <body>
@@ -743,7 +747,7 @@ input[type=month]{min-height:44px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-const APP_VERSION = '37';
+const APP_VERSION = '39';
 if (/[?&](v|check)=/.test(location.search)) try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){}
 /* ---------- opslag ---------- */
 const KEY = 'huishouden.v1';
@@ -942,7 +946,7 @@ const HOME = {
   money: () => {
     const m = iso(today()).slice(0,7), c = monthCalc(m);
     return `<section><h2>Geld deze maand</h2>` + (c.inc || c.fix || c.spent
-      ? `<button class="group plain purse" style="width:100%;display:block" data-action="tab" data-tab="geld"><div class="label">Nog te besteden in ${monthName(m).split(' ')[0]}</div><div class="big${c.left < 0 ? ' neg' : ''}">${euro(c.left)}</div>${moneyBar(c)}</button>`
+      ? `<button class="group plain purse" style="width:100%;display:block" data-action="tab" data-tab="geld"><div class="label">Vrij te besteden in ${monthName(m).split(' ')[0]}</div><div class="big${c.left < 0 ? ' neg' : ''}">${euro(c.left)}</div>${moneyBar(c)}</button>`
       : `<div class="empty"><p>Vul je inkomsten en vaste lasten in om te zien wat je elke maand overhoudt.</p><button class="btn" data-action="tab" data-tab="geld">Naar geld</button></div>`) + `</section>`;
   },
   groceries: () => {
@@ -1191,16 +1195,26 @@ function monthCalc(m){
   const fix = S.fixed.reduce((a,x) => a + num(x.amount) / (+x.freq || 1), 0);
   const sp = S.spend.filter(x => String(x.date).startsWith(m));
   const spent = sp.reduce((a,x) => a + num(x.amount), 0);
-  return {inc, fix, spent, left: inc - fix - spent, sp};
+  // Potjes: het geschatte bedrag wordt gereserveerd. Noteer je toch uitgaven in een potje, dan telt alleen wat er
+  // boven het potje uitkomt extra mee. Uitgaven buiten de potjes tellen gewoon mee.
+  const pots = budgets() || [], byCat = {};
+  sp.forEach(x => { const k = catOf(x); byCat[k] = (byCat[k] || 0) + num(x.amount); });
+  let pot = 0, over = 0, outside = 0;
+  pots.forEach(p => { const r = potMonthly(p), s0 = byCat[p.cat] || 0; pot += r; over += Math.max(0, s0 - r); });
+  Object.entries(byCat).forEach(([k, v]) => { if (!pots.some(p => p.cat === k)) outside += v; });
+  const extra = over + outside;
+  return {inc, fix, spent, pot, extra, left: inc - fix - pot - extra, sp, byCat};
 }
+const potMonthly = p => p.per === 'y' ? num(p.amount) / 12 : num(p.amount);
 function moneyBar(c){
-  const total = Math.max(c.inc, c.fix + c.spent) || 1;
-  return `<div class="bar" role="img" aria-label="Vaste lasten ${euro(c.fix)}, uitgaven ${euro(c.spent)}, inkomsten ${euro(c.inc)}"><i class="f" style="width:${c.fix/total*100}%"></i><i class="s" style="width:${c.spent/total*100}%"></i></div>
+  const total = Math.max(c.inc, c.fix + c.pot + c.extra) || 1;
+  return `<div class="bar" role="img" aria-label="Vaste lasten ${euro(c.fix)}, potjes ${euro(c.pot)}, inkomsten ${euro(c.inc)}"><i class="f" style="width:${c.fix/total*100}%"></i><i class="p" style="width:${c.pot/total*100}%"></i><i class="s" style="width:${c.extra/total*100}%"></i></div>
   <dl class="ledger"><dt><span class="sw" style="background:var(--sunk);outline:1px solid var(--line)"></span>Inkomsten</dt><dd>${euro(c.inc)}</dd>
-  <dt><span class="sw" style="background:var(--accent)"></span>Vaste lasten per maand</dt><dd>${euro(c.fix)}</dd>
-  <dt><span class="sw" style="background:var(--attn-fill)"></span>Uitgaven</dt><dd>${euro(c.spent)}</dd></dl>`;
+  <dt><span class="sw" style="background:var(--accent)"></span>Vaste lasten</dt><dd>${euro(c.fix)}</dd>
+  ${c.pot ? `<dt><span class="sw" style="background:#AB978C"></span>Potjes</dt><dd>${euro(c.pot)}</dd>` : ''}
+  ${c.extra ? `<dt><span class="sw" style="background:var(--attn-fill)"></span>Losse uitgaven</dt><dd>${euro(c.extra)}</dd>` : ''}</dl>`;
 }
-const STD_BUDGETS = [['Boodschappen','🛒'],['Uit eten en afhalen','🍕'],['Uitjes en vrije tijd','🎟️'],['Kleding','👕'],['Verzorging en gezondheid','🧴'],['Huis en tuin','🪴'],['Vervoer','🚲'],['Cadeaus','🎁'],['Vakantie','🏖️'],['Onvoorzien','🧯']];
+const STD_BUDGETS = [['Boodschappen','🛒','m'],['Uit eten en afhalen','🍕','m'],['Uitjes en vrije tijd','🎟️','m'],['Kleding','👕','m'],['Verzorging en gezondheid','🧴','m'],['Huis en tuin','🪴','y'],['Vervoer','🚲','m'],['Cadeaus','🎁','y'],['Vakantie','🏖️','y'],['Onvoorzien','🧯','m']];
 const LEGACY_CAT = {'Huis':'Huis en tuin', 'Vrije tijd':'Uitjes en vrije tijd', 'Gezondheid':'Verzorging en gezondheid'};
 const catOf = x => LEGACY_CAT[x.cat] || x.cat || 'Overig';
 const budgets = () => ST().budgets || null;
@@ -1208,50 +1222,41 @@ const spendCats = () => [...new Set([...(budgets() || STD_BUDGETS.map(([c, ic]) 
 const CATS = spendCats;
 function budgetCard(c){
   const b = budgets();
-  if (!b) return `<section><h2>Budgetten</h2><div class="empty"><p>Geef jezelf per maand een budget voor bijvoorbeeld boodschappen, uit eten en uitjes. Je ziet dan meteen hoeveel er nog over is.</p><button class="btn" data-action="budgetStd">Standaard budgetten gebruiken</button></div></section>`;
-  const spent = {}; c.sp.forEach(x => { const k = catOf(x); spent[k] = (spent[k] || 0) + num(x.amount); });
-  const [y, m] = ym.split('-').map(Number), isCur = ym === iso(today()).slice(0,7);
-  const daysLeft = isCur ? new Date(y, m, 0).getDate() - today().getDate() + 1 : 0;
-  let tot = 0, totSpent = 0;
+  if (!b) return `<section><h2>Potjes</h2><div class="empty"><p>Reserveer per maand een geschat bedrag voor dingen die niet vast staan, zoals boodschappen, uit eten, cadeaus of vakantie. Je hoeft je uitgaven niet bij te houden: de app trekt de potjes af van wat je vrij kunt besteden.</p><button class="btn" data-action="budgetStd">Standaard potjes gebruiken</button></div></section>`;
+  const tot = b.reduce((a, x) => a + potMonthly(x), 0), open = b.filter(x => !num(x.amount)).length;
   const rows = b.map(x => {
-    const amt = num(x.amount), sp = spent[x.cat] || 0, left = amt - sp, pct = amt ? sp / amt : 0;
-    if (amt){ tot += amt; totSpent += sp; }
-    const state = !amt ? '' : pct > 1 ? 'over' : pct > .85 ? 'warn' : '';
-    const txt = !amt ? '<span class="due">Bedrag instellen</span>' : left >= 0 ? `Nog ${euro(left)}${isCur && daysLeft > 1 && left > 0 ? `, ${euro(left / daysLeft)} per dag` : ''}` : `<span class="late">${euro(-left)} over budget</span>`;
-    return `<button class="row plain brow" data-action="${amt ? 'budgetSpend' : 'budgetEdit'}" data-cat="${esc(x.cat)}" style="width:100%"><span class="ic" aria-hidden="true">${x.ic || '💶'}</span><div class="main"><div class="brow-top"><span class="title">${esc(x.cat)}</span><span class="amt">${euro(sp)}${amt ? `<small> / ${euro(amt)}</small>` : ''}</span></div>
-      ${amt ? `<div class="bbar ${state}"><i style="width:${Math.min(100, pct * 100)}%"></i></div>` : ''}<div class="sub">${txt}</div></div></button>`;
+    const r = potMonthly(x), noted = c.byCat[x.cat] || 0;
+    const sub = !num(x.amount) ? '<span class="due">Bedrag instellen</span>' : x.per === 'y' ? `${euro(num(x.amount))} per jaar` : 'per maand';
+    return `<button class="row plain brow" data-action="budgetEdit" style="width:100%"><span class="ic" aria-hidden="true">${x.ic || '💶'}</span><div class="main"><div class="brow-top"><span class="title">${esc(x.cat)}</span><span class="amt">${num(x.amount) ? euro(r) : ''}${num(x.amount) ? '<small> p/m</small>' : ''}</span></div>
+      <div class="sub">${sub}${noted ? `, deze maand ${euro(noted)} genoteerd${noted > r && r ? ` <span class="late">(${euro(noted - r)} meer dan het potje)</span>` : ''}` : ''}</div></div></button>`;
   }).join('');
-  const other = Object.entries(spent).filter(([k]) => !b.some(x => x.cat === k));
-  const otherSum = other.reduce((a, [, v]) => a + v, 0);
-  return `<section><div class="h2row"><h2>Budgetten</h2><button class="linkbtn" data-action="budgetEdit">Aanpassen</button></div>
-    ${tot ? `<p class="sub" style="margin:0 4px 8px">Samen ${euro(totSpent)} van ${euro(tot)} uitgegeven${tot - totSpent >= 0 ? `, nog ${euro(tot - totSpent)} over` : `, ${euro(totSpent - tot)} te veel`}.</p>` : ''}
-    <div class="group">${rows}</div>
-    ${otherSum ? `<p class="sub" style="margin:8px 4px 0">Zonder budget: ${euro(otherSum)} (${other.map(([k]) => esc(k)).join(', ')}).</p>` : ''}
-    <p class="sub" style="margin:6px 4px 0">Tik op een budget om er meteen een uitgave aan toe te voegen.</p></section>`;
+  return `<section><div class="h2row"><h2>Potjes</h2><button class="linkbtn" data-action="budgetEdit">Aanpassen</button></div>
+    <p class="sub" style="margin:0 4px 8px">Samen <b>${euro(tot)}</b> per maand gereserveerd${open ? `, bij ${open} ${open === 1 ? 'potje' : 'potjes'} moet het bedrag nog worden ingevuld` : ''}.</p>
+    <div class="group">${rows}</div></section>`;
 }
 function budgetSheet(){
   const dlg = $('#sheet');
-  let list = (budgets() || STD_BUDGETS.map(([cat, ic]) => ({cat, ic, amount: 0}))).map(x => ({...x}));
+  let list = (budgets() || STD_BUDGETS.map(([cat, ic, per]) => ({cat, ic, per, amount: 0}))).map(x => ({per: 'm', ...x}));
   const draw = () => {
     const missing = STD_BUDGETS.filter(([c]) => !list.some(x => x.cat === c));
-    dlg.innerHTML = `<div class="sheet"><div class="sheet-head"><button type="button" class="link" data-close>Annuleren</button><h3>Budgetten</h3><button type="button" class="link strong" data-save>Bewaren</button></div>
-      <p class="sub" style="margin:0 2px 10px">Bedrag per maand. Laat een bedrag leeg als je het nog niet weet.</p>
-      <div class="group">${list.map((x, i) => `<div class="row"><span class="ic bic" aria-hidden="true">${x.ic || '💶'}</span><input class="aisle-in" data-i="${i}" data-f="cat" value="${esc(x.cat)}" aria-label="Naam van het budget"><input class="bamt" data-i="${i}" data-f="amount" inputmode="decimal" placeholder="€" value="${num(x.amount) ? String(num(x.amount)).replace('.', ',') : ''}" aria-label="Bedrag per maand voor ${esc(x.cat)}"><button type="button" class="x" data-rm="${i}" aria-label="${esc(x.cat)} verwijderen">×</button></div>`).join('')}
-        <button type="button" class="row addrow" data-add>${PLUS}Eigen budget toevoegen</button></div>
+    dlg.innerHTML = `<div class="sheet"><div class="sheet-head"><button type="button" class="link" data-close>Annuleren</button><h3>Potjes</h3><button type="button" class="link strong" data-save>Bewaren</button></div>
+      <p class="sub" style="margin:0 2px 10px">Een geschat bedrag per maand of per jaar. Per jaar rekent de app om naar een bedrag per maand. Laat leeg als je het nog niet weet.</p>
+      <div class="group">${list.map((x, i) => `<div class="row"><span class="ic bic" aria-hidden="true">${x.ic || '💶'}</span><input class="aisle-in" data-i="${i}" data-f="cat" value="${esc(x.cat)}" aria-label="Naam van het potje"><input class="bamt" data-i="${i}" data-f="amount" inputmode="decimal" placeholder="€" value="${num(x.amount) ? String(num(x.amount)).replace('.', ',') : ''}" aria-label="Bedrag voor ${esc(x.cat)}"><select class="bper" data-i="${i}" data-f="per" aria-label="Per maand of per jaar"><option value="m"${x.per !== 'y' ? ' selected' : ''}>p/m</option><option value="y"${x.per === 'y' ? ' selected' : ''}>p/j</option></select><button type="button" class="x" data-rm="${i}" aria-label="${esc(x.cat)} verwijderen">×</button></div>`).join('')}
+        <button type="button" class="row addrow" data-add>${PLUS}Eigen potje toevoegen</button></div>
       ${missing.length ? `<h4>Standaard toevoegen</h4><div class="chips">${missing.map(([c, ic]) => `<button type="button" class="chip" data-std="${esc(c)}">${ic} ${esc(c)}</button>`).join('')}</div>` : ''}</div>`;
   };
   dlg.onsubmit = null;
-  dlg.oninput = e => { const i = e.target.dataset.i, f = e.target.dataset.f; if (i !== undefined && f) list[+i][f] = f === 'amount' ? e.target.value : e.target.value; };
+  dlg.oninput = dlg.onchange = e => { const i = e.target.dataset.i, f = e.target.dataset.f; if (i !== undefined && f) list[+i][f] = e.target.value; };
   dlg.onclick = e => {
     const b = e.target.closest('button'); if (!b) return; const d = b.dataset;
     if ('close' in d){ dlg.close(); return; }
     if ('save' in d){
-      const clean = list.map(x => ({cat: (x.cat || '').trim(), ic: x.ic || '💶', amount: num(x.amount)})).filter(x => x.cat);
-      ST().budgets = clean; ST().v = Date.now(); dlg.close(); save(); render(); toast('Budgetten bewaard'); return;
+      const clean = list.map(x => ({cat: (x.cat || '').trim(), ic: x.ic || '💶', amount: num(x.amount), per: x.per === 'y' ? 'y' : 'm'})).filter(x => x.cat);
+      ST().budgets = clean; ST().v = Date.now(); dlg.close(); save(); render(); toast('Potjes bewaard'); return;
     }
     if (d.rm !== undefined) list.splice(+d.rm, 1);
-    else if ('add' in d) list.push({cat: 'Nieuw budget', ic: '💶', amount: 0});
-    else if (d.std){ const s0 = STD_BUDGETS.find(([c]) => c === d.std); list.push({cat: s0[0], ic: s0[1], amount: 0}); }
+    else if ('add' in d) list.push({cat: 'Nieuw potje', ic: '💶', amount: 0, per: 'm'});
+    else if (d.std){ const s0 = STD_BUDGETS.find(([c]) => c === d.std); list.push({cat: s0[0], ic: s0[1], amount: 0, per: s0[2]}); }
     else return;
     const top = dlg.scrollTop; draw(); dlg.scrollTop = top;
     if ('add' in d){ const ins = dlg.querySelectorAll('.aisle-in'); const inp = ins[ins.length - 1]; if (inp){ inp.focus(); inp.select(); } }
@@ -1261,28 +1266,29 @@ function budgetSheet(){
 }
 function budgetWarn(cat, date){
   const b = (budgets() || []).find(x => x.cat === cat); if (!b || !num(b.amount)) return;
+  const r = potMonthly(b);
   const m = String(date).slice(0, 7), sp = S.spend.filter(x => String(x.date).startsWith(m) && catOf(x) === cat).reduce((a, x) => a + num(x.amount), 0);
-  const left = num(b.amount) - sp;
-  setTimeout(() => toast(left < 0 ? `Let op: budget ${cat} is ${euro(-left)} overschreden` : sp / num(b.amount) > .85 ? `Budget ${cat}: nog ${euro(left)} over deze maand` : `Opgeslagen. Budget ${cat}: nog ${euro(left)} over`), 60);
+  const left = r - sp;
+  setTimeout(() => toast(left < 0 ? `Let op: potje ${cat} is ${euro(-left)} overschreden` : `Genoteerd. Potje ${cat}: nog ${euro(left)} over deze maand`), 60);
 }
 const FREQ = {1:'per maand', 3:'per kwartaal', 12:'per jaar'};
 function renderMoney(){
   const c = monthCalc(ym);
   let html = `<section style="margin-top:12px"><div class="group purse">
     <div class="monthnav"><button data-action="month" data-d="-1" aria-label="Vorige maand">‹</button><b>${monthName(ym)}</b><button data-action="month" data-d="1" aria-label="Volgende maand">›</button></div>
-    <div class="label">Nog te besteden</div><div class="big${c.left < 0 ? ' neg' : ''}">${euro(c.left)}</div>${moneyBar(c)}</div></section>`;
+    <div class="label">Vrij te besteden</div><div class="big${c.left < 0 ? ' neg' : ''}">${euro(c.left)}</div>${moneyBar(c)}</div></section>`;
 
   html += budgetCard(c);
-  html += energyCard();
   html += jobsMoneyCard();
   const sp = c.sp.slice().sort((a,b) => b.date.localeCompare(a.date));
-  html += `<section><h2>Uitgaven</h2><div class="group">${sp.map(x => `<div class="row" data-sw="spend:${x.id}"><button class="main plain" data-action="editSpend" data-id="${x.id}"><div class="title">${esc(x.name)}</div><div class="sub">${fmtDate(parse(x.date))}, ${esc(x.cat)}</div></button><span class="amt">${euro(num(x.amount))}</span></div>`).join('')}
-    <button class="row addrow" data-action="add" data-what="spend">${PLUS}Uitgave toevoegen</button></div>`;
+  html += sp.length ? '' : `<section><button class="linkbtn" data-action="add" data-what="spend" style="margin-left:4px">+ Losse uitgave noteren (optioneel)</button></section>`;
+  if (sp.length) html += `<section><h2>Losse uitgaven<span class="h2sub">optioneel</span></h2><div class="group">${sp.map(x => `<div class="row" data-sw="spend:${x.id}"><button class="main plain" data-action="editSpend" data-id="${x.id}"><div class="title">${esc(x.name)}</div><div class="sub">${fmtDate(parse(x.date))}, ${esc(x.cat)}</div></button><span class="amt">${euro(num(x.amount))}</span></div>`).join('')}
+    <button class="row addrow" data-action="add" data-what="spend">${PLUS}Uitgave noteren</button></div>`;
   if (sp.length){
     const by = {}; sp.forEach(x => by[catOf(x)] = (by[catOf(x)]||0) + num(x.amount));
     html += `<div class="cats">${Object.entries(by).sort((a,b) => b[1]-a[1]).map(([k,v]) => `<span class="cat">${esc(k)} <b>${euro(v)}</b></span>`).join('')}</div>`;
   }
-  html += `</section>`;
+  if (sp.length) html += `</section>`;
 
   const fx = S.fixed.slice().sort((a,b) => (+a.day||99) - (+b.day||99));
   const t0 = today();
@@ -1295,7 +1301,7 @@ function renderMoney(){
   };
   const groups = FCATS.map(([cid, cl, ic]) => { const its = fx.filter(x => (x.cat || 'overig') === cid); if (!its.length) return '';
     const sub = its.reduce((a, x) => a + num(x.amount) / (+x.freq || 1), 0);
-    return `<div class="aisle fgroup"><span>${ic} ${cl}</span><span>${euro(sub)} p/m</span></div>${its.map(fRow).join('')}${cid === 'energie' ? `<button class="row plain" data-action="energy" style="width:100%"><div class="main"><div class="title" style="color:var(--accent)">📊 Energieverbruik bekijken</div></div><span class="chev">›</span></button>` : ''}`; }).join('');
+    return `<div class="aisle fgroup"><span>${ic} ${cl}</span><span>${euro(sub)} p/m</span></div>${its.map(fRow).join('')}${cid === 'energie' ? energyLink() : ''}`; }).join('');
   const missing = S.fixed.filter(fixedMissing).length;
   html += `<section><div class="h2row"><h2>Vaste lasten</h2><button class="linkbtn" data-action="stdFixed">Standaard kiezen</button></div>
     ${missing ? `<p class="sub" style="margin:0 4px 8px"><span class="due">Bij ${missing} ${missing === 1 ? 'vaste last' : 'vaste lasten'} moet het bedrag nog worden ingevuld.</span></p>` : ''}
@@ -2195,6 +2201,13 @@ function energyInsights(key){
   if (lastR){ const age = daysBetween(parse(lastR), t0); if (age > 31) out.push(['🔎', `De laatste meterstand is ${age} dagen oud. Lees de meters af voor een actueel beeld.`]); }
   return out;
 }
+function energyLink(){
+  const t0 = today(), y = t0.getFullYear(), m = t0.getMonth(), pd = new Date(y, m - 1, 1);
+  const val = key => { const c = netUse(key, y, m), p = netUse(key, pd.getFullYear(), pd.getMonth()); return c ? (c.full ? c.v : c.proj) : p ? p.v : null; };
+  const e = val('elec'), g = val('gas');
+  const sub = (S.meter || []).length ? [e != null ? `⚡ ${fmtN(e)} kWh` : '', g != null ? `🔥 ${fmtN(g)} m³` : ''].filter(Boolean).join('  ') || 'Nog te weinig gegevens' : 'Meterstanden bijhouden';
+  return `<button class="row plain elink" data-action="energy" style="width:100%"><span class="ic" aria-hidden="true">📊</span><div class="main"><div class="title">Energieverbruik</div><div class="sub">${sub}</div></div><span class="chev">›</span></button>`;
+}
 function energyCard(){
   const t0 = today(), y = t0.getFullYear(), m = t0.getMonth(), pd = new Date(y, m - 1, 1);
   if (!(S.meter || []).length) return `<section><h2>Energieverbruik</h2><div class="empty"><p>Houd bij hoeveel stroom en gas jullie per maand gebruiken. Voer af en toe de meterstanden in, of het verbruik per maand uit de app van je energieleverancier.</p><button class="btn" data-action="meterAdd">Meterstand invoeren</button></div></section>`;
@@ -2850,7 +2863,7 @@ document.addEventListener('click', e => {
     case 'toggleConfetti': { S.ui.noConfetti = !S.ui.noConfetti; saveLocal(); const sw = b.querySelector('.switch'); if (sw){ sw.setAttribute('aria-pressed', !S.ui.noConfetti); sw.setAttribute('aria-checked', !S.ui.noConfetti); } if (!S.ui.noConfetti) confetti(...centerOf(b)); break; }
     case 'analysis': analysisSheet(); break;
     case 'stdFixed': stdFixedSheet(); break;
-    case 'budgetStd': ST().budgets = STD_BUDGETS.map(([cat, ic]) => ({cat, ic, amount: 0})); ST().v = Date.now(); save(); budgetSheet(); break;
+    case 'budgetStd': ST().budgets = STD_BUDGETS.map(([cat, ic, per]) => ({cat, ic, per, amount: 0})); ST().v = Date.now(); save(); budgetSheet(); break;
     case 'budgetEdit': budgetSheet(); break;
     case 'budgetSpend': spendForm(null, {cat: b.dataset.cat}); break;
     case 'toggleRoll': { ST().noRoll = !ST().noRoll; ST().v = Date.now(); save(); const sw = b.querySelector('.switch'); if (sw){ sw.setAttribute('aria-pressed', !ST().noRoll); sw.setAttribute('aria-checked', !ST().noRoll); } if (!ST().noRoll) rollOver(true); render(); break; }
