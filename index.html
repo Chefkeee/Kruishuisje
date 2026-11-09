@@ -756,7 +756,7 @@ input[type=month]{min-height:44px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-const APP_VERSION = '40';
+const APP_VERSION = '41';
 if (/[?&](v|check)=/.test(location.search)) try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){}
 /* ---------- opslag ---------- */
 const KEY = 'huishouden.v1';
@@ -865,7 +865,7 @@ function putItem(kind, id, data, at){
 /* ---------- navigatie ---------- */
 const TABS = {
   home:  ['Overzicht', '<path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>'],
-  taken: ['Taken', '<path d="M21 3l-8.6 8.6"/><path d="M9.6 9.6l4.8 4.8"/><path d="M9.6 9.6L2.8 15l6.2 6.2 5.4-6.8"/><path d="M6.3 12.2l4.8 4.8M4.6 13.6l4.8 4.8"/>'],
+  taken: ['Doen', '<rect x="4.5" y="4.5" width="15" height="17" rx="2.5"/><rect x="8.5" y="2.5" width="7" height="4" rx="1.5"/><path d="M8 12.2l2 2 4.5-4.5"/><path d="M8.5 17.5h7"/>'],
   geld:  ['Geld', '<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10.5h18"/><circle cx="16.5" cy="14.8" r="1.3"/>'],
   lijst: ['Boodschappen', '<path d="M4 9h16l-1.6 10.2a1 1 0 0 1-1 .8H6.6a1 1 0 0 1-1-.8z"/><path d="M8.5 9L12 3.5 15.5 9"/>'],
   agenda:['Agenda', '<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>']
@@ -885,7 +885,7 @@ function render(){
     $('#view').innerHTML = renderGate(); return;
   }
   setStatus(syncStatus, syncError);
-  $('#title').textContent = tab === 'taken' ? (S.ui.taskView === 'jobs' ? 'Klussen' : S.ui.taskView === 'lists' ? (openListId && listById(openListId) ? listById(openListId).name : 'Lijstjes') : 'Taken') : tab === 'lijst' ? (S.ui.listView === 'meals' ? 'Weekmenu' : 'Boodschappen') : TABS[tab][0];
+  $('#title').textContent = tab === 'taken' ? (S.ui.taskView === 'jobs' ? 'Klussen' : S.ui.taskView === 'lists' ? (openListId && listById(openListId) ? listById(openListId).name : 'Lijstjes') : 'Huishouden') : tab === 'lijst' ? (S.ui.listView === 'meals' ? 'Weekmenu' : 'Boodschappen') : TABS[tab][0];
   $('#todayLine').textContent = tab === 'home' ? today().toLocaleDateString('nl-NL', {weekday:'long', day:'numeric', month:'long'}) : '';
   $('#todayLine').hidden = tab !== 'home';
   $('#addBtn').hidden = true; $('#fab').hidden = false;
