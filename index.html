@@ -732,6 +732,11 @@ input[type=month]{min-height:44px}
 .lnk{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--sunk);color:var(--accent);text-decoration:none;font-weight:700}
 .disc{color:#6E9184;font-weight:700}
 .sub s{color:var(--muted)}
+
+/* ===== v42: inkomen met extra's ===== */
+.avgline{display:flex;justify-content:space-between;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
+.avgline b{color:var(--ink);font-variant-numeric:tabular-nums}
+.extra-hint{margin:10px 0 0;font-size:14px;background:color-mix(in srgb,#6E9184 14%,var(--surface));border-radius:10px;padding:8px 10px}
 </style>
 </head>
 <body>
@@ -756,7 +761,7 @@ input[type=month]{min-height:44px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-const APP_VERSION = '41';
+const APP_VERSION = '42';
 if (/[?&](v|check)=/.test(location.search)) try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){}
 /* ---------- opslag ---------- */
 const KEY = 'huishouden.v1';
@@ -955,7 +960,7 @@ const HOME = {
   money: () => {
     const m = iso(today()).slice(0,7), c = monthCalc(m);
     return `<section><h2>Geld deze maand</h2>` + (c.inc || c.fix || c.spent
-      ? `<button class="group plain purse" style="width:100%;display:block" data-action="tab" data-tab="geld"><div class="label">Vrij te besteden in ${monthName(m).split(' ')[0]}</div><div class="big${c.left < 0 ? ' neg' : ''}">${euro(c.left)}</div>${moneyBar(c)}</button>`
+      ? `<button class="group plain purse" style="width:100%;display:block" data-action="tab" data-tab="geld"><div class="label">Vrij te besteden in ${monthName(m).split(' ')[0]}</div><div class="big${c.left < 0 ? ' neg' : ''}">${euro(c.left)}</div>${moneyBar(c)}${Math.abs(c.incAvg - c.inc) > .5 ? `<div class="avgline"><span>Gemiddeld per maand, op jaarbasis</span><b>${euro(c.leftAvg)}</b></div>` : ''}</button>`
       : `<div class="empty"><p>Vul je inkomsten en vaste lasten in om te zien wat je elke maand overhoudt.</p><button class="btn" data-action="tab" data-tab="geld">Naar geld</button></div>`) + `</section>`;
   },
   groceries: () => {
@@ -1203,8 +1208,15 @@ function taskToJob(t){
 const SAMPLE = [['Stofzuigen',1,'w',30],['Badkamer schoonmaken',1,'w',45],['Afval buiten zetten',1,'w',5],['Beddengoed verschonen',2,'w',20],['Planten water geven',4,'d',5],['Koelkast schoonmaken',1,'m',30],['Ramen lappen',2,'m',60]];
 
 /* ---------- geld ---------- */
+const MONTHS = ['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+const incExtras = x => (x.extras || []).filter(e => num(e.amount) && +e.month >= 1 && +e.month <= 12);
+// Inkomen in een bepaalde maand: vast netto bedrag plus extra's die in die maand vallen (vakantiegeld, 13e maand).
+const incomeIn = mo => S.income.reduce((a, x) => a + num(x.amount) + incExtras(x).filter(e => +e.month === mo).reduce((b, e) => b + num(e.amount), 0), 0);
+const incomeAvg = () => S.income.reduce((a, x) => a + num(x.amount) + incExtras(x).reduce((b, e) => b + num(e.amount), 0) / 12, 0);
+const extrasIn = mo => S.income.flatMap(x => incExtras(x).filter(e => +e.month === mo).map(e => ({...e, of: x.name})));
 function monthCalc(m){
-  const inc = S.income.reduce((a,x) => a + num(x.amount), 0);
+  const mo = +String(m).slice(5, 7);
+  const inc = incomeIn(mo), incAvg = incomeAvg();
   const fix = S.fixed.reduce((a,x) => a + num(x.amount) / (+x.freq || 1), 0);
   const sp = S.spend.filter(x => String(x.date).startsWith(m));
   const spent = sp.reduce((a,x) => a + num(x.amount), 0);
@@ -1216,7 +1228,7 @@ function monthCalc(m){
   pots.forEach(p => { const r = potMonthly(p), s0 = byCat[p.cat] || 0; pot += r; over += Math.max(0, s0 - r); });
   Object.entries(byCat).forEach(([k, v]) => { if (!pots.some(p => p.cat === k)) outside += v; });
   const extra = over + outside;
-  return {inc, fix, spent, pot, extra, left: inc - fix - pot - extra, sp, byCat};
+  return {inc, incAvg, fix, spent, pot, extra, left: inc - fix - pot - extra, leftAvg: incAvg - fix - pot - extra, extras: extrasIn(mo), sp, byCat};
 }
 const potMonthly = p => p.per === 'y' ? num(p.amount) / 12 : num(p.amount);
 function moneyBar(c){
@@ -1289,7 +1301,9 @@ function renderMoney(){
   const c = monthCalc(ym);
   let html = `<section style="margin-top:12px"><div class="group purse">
     <div class="monthnav"><button data-action="month" data-d="-1" aria-label="Vorige maand">‹</button><b>${monthName(ym)}</b><button data-action="month" data-d="1" aria-label="Volgende maand">›</button></div>
-    <div class="label">Vrij te besteden</div><div class="big${c.left < 0 ? ' neg' : ''}">${euro(c.left)}</div>${moneyBar(c)}</div></section>`;
+    <div class="label">Vrij te besteden deze maand</div><div class="big${c.left < 0 ? ' neg' : ''}">${euro(c.left)}</div>${moneyBar(c)}
+    ${Math.abs(c.incAvg - c.inc) > .5 ? `<div class="avgline"><span>Gemiddeld per maand, op jaarbasis</span><b>${euro(c.leftAvg)}</b></div>` : ''}
+    ${c.extras.length ? `<p class="extra-hint">💰 Deze maand komt er extra binnen: ${joinNames(c.extras.map(e => `${esc(e.label)} ${euro(num(e.amount))}`))}. Zet een deel in een potje als je het voor later wilt bewaren.</p>` : ''}</div></section>`;
 
   html += budgetCard(c);
   html += jobsMoneyCard();
@@ -1322,7 +1336,9 @@ function renderMoney(){
     <button class="row addrow" data-action="add" data-what="fixed">${PLUS}Vaste last toevoegen</button></div>
     ${!S.fixed.length ? `<button class="btn ghost wide" data-action="stdFixed" style="margin-top:10px">Kies uit veelvoorkomende vaste lasten</button>` : ''}</section>`;
 
-  html += `<section><h2>Inkomsten per maand</h2><div class="group">${S.income.map(x => `<div class="row" data-sw="income:${x.id}"><button class="main plain" data-action="editIncome" data-id="${x.id}"><div class="title">${esc(x.name)}</div></button><span class="amt">${euro(num(x.amount))}</span></div>`).join('')}
+  const yearTot = S.income.reduce((a, x) => a + num(x.amount) * 12 + incExtras(x).reduce((b, e) => b + num(e.amount), 0), 0);
+  html += `<section><div class="h2row"><h2>Inkomsten</h2>${yearTot ? `<span class="sub">${euro(yearTot)} per jaar</span>` : ''}</div><div class="group">${S.income.map(x => { const ex = incExtras(x);
+    return `<div class="row" data-sw="income:${x.id}"><button class="main plain" data-action="editIncome" data-id="${x.id}"><div class="title">${esc(x.name)}</div><div class="sub">netto per maand${ex.length ? ', plus ' + joinNames(ex.map(e => `${esc(e.label.toLowerCase())} ${euro(num(e.amount))} in ${MONTHS[+e.month - 1]}`)) : ''}</div>${ex.length ? `<div class="sub">Gemiddeld ${euro(num(x.amount) + ex.reduce((b, e) => b + num(e.amount), 0) / 12)} per maand</div>` : ''}</button><span class="amt">${euro(num(x.amount))}</span></div>`; }).join('')}
     <button class="row addrow" data-action="add" data-what="income">${PLUS}Inkomen toevoegen</button></div></section>`;
   return html;
 }
@@ -1417,10 +1433,30 @@ function stdFixedSheet(){
   if (!dlg.open) dlg.showModal();
 }
 function incomeForm(x){
-  openForm({title: x ? 'Inkomen' : 'Nieuw inkomen', values: x || {},
-    fields: [{key:'name', label:'Omschrijving', type:'text', required:true, placeholder:'Bijv. salaris, toeslag'},
-      {key:'amount', label:'Netto bedrag per maand', type:'money', required:true, placeholder:'0,00'}],
-    onSave: v => x ? Object.assign(x, v) : S.income.push({id: uid(), ...v}),
+  const ex = (x && x.extras) || [];
+  const get = (kind, k, d) => { const e = ex.find(e => e.kind === kind); return e ? e[k] : d; };
+  const mOpts = MONTHS.map((n, i) => [String(i + 1), n[0].toUpperCase() + n.slice(1)]);
+  const vals = x ? {...x, vg: get('vg', 'amount', ''), vgM: String(get('vg', 'month', 5)), m13: get('m13', 'amount', ''), m13M: String(get('m13', 'month', 12)), oth: get('oth', 'amount', ''), othM: String(get('oth', 'month', 12)), othL: get('oth', 'label', '')}
+    : {vgM: '5', m13M: '12', othM: '12'};
+  openForm({title: x ? 'Inkomen' : 'Nieuw inkomen', values: vals,
+    note: 'Vul netto bedragen in, zoals ze op je loonstrook staan. Over vakantiegeld en een 13e maand wordt vaak meer belasting ingehouden dan over je gewone salaris.',
+    fields: [{key:'name', label:'Omschrijving', type:'text', required:true, placeholder:'Bijv. salaris Sam, toeslag'},
+      {key:'amount', label:'Netto per maand', type:'money', required:true, placeholder:'0,00'},
+      {key:'vg', label:'Vakantiegeld netto (optioneel)', type:'money', half:true, placeholder:'0,00'},
+      {key:'vgM', label:'In de maand', type:'select', half:true, options: mOpts},
+      {key:'m13', label:'13e maand netto (optioneel)', type:'money', half:true, placeholder:'0,00'},
+      {key:'m13M', label:'In de maand', type:'select', half:true, options: mOpts},
+      {key:'othL', label:'Andere extra (optioneel)', type:'text', placeholder:'Bijv. bonus, eindejaarsuitkering'},
+      {key:'oth', label:'Bedrag netto', type:'money', half:true, placeholder:'0,00', showIf: v => (v.othL || '').trim()},
+      {key:'othM', label:'In de maand', type:'select', half:true, options: mOpts, showIf: v => (v.othL || '').trim()}],
+    onSave: v => {
+      const extras = [];
+      if (num(v.vg)) extras.push({kind: 'vg', label: 'Vakantiegeld', amount: num(v.vg), month: +v.vgM});
+      if (num(v.m13)) extras.push({kind: 'm13', label: '13e maand', amount: num(v.m13), month: +v.m13M});
+      if (num(v.oth) && (v.othL || '').trim()) extras.push({kind: 'oth', label: v.othL.trim(), amount: num(v.oth), month: +v.othM});
+      const rec = {name: v.name, amount: v.amount, extras};
+      x ? Object.assign(x, rec) : S.income.push({id: uid(), ...rec});
+    },
     onDelete: x && (() => S.income = S.income.filter(y => y !== x))});
 }
 
