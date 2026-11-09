@@ -723,6 +723,15 @@ input[type=month]{min-height:44px}
 .bper{width:62px;flex:none;padding:8px 6px;font-size:14px;background-position:calc(100% - 10px) 50%,calc(100% - 5px) 50%;padding-right:18px}
 .elink .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:15px;background:var(--sunk);flex:none}
 .elink .title{color:var(--accent);font-size:14.5px}
+
+/* ===== v40: lijstjes ===== */
+.seg3{grid-template-columns:repeat(3,1fr)}
+.seg3 button{font-size:13px;padding:7px 4px;white-space:nowrap}
+.lic{width:36px;height:36px;border-radius:11px;background:var(--sunk);display:grid;place-items:center;font-size:19px;flex:none}
+.row + .lcard::before{left:62px}
+.lnk{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--sunk);color:var(--accent);text-decoration:none;font-weight:700}
+.disc{color:#6E9184;font-weight:700}
+.sub s{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -747,13 +756,13 @@ input[type=month]{min-height:44px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-const APP_VERSION = '39';
+const APP_VERSION = '40';
 if (/[?&](v|check)=/.test(location.search)) try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){}
 /* ---------- opslag ---------- */
 const KEY = 'huishouden.v1';
 const AISLES = [['groente','Groente & fruit'],['brood','Brood & bakkerij'],['vlees','Vlees, vis & vega'],['vleeswaren','Kaas & vleeswaren'],['zuivel','Zuivel & eieren'],['ontbijt','Ontbijt & beleg'],['houdbaar','Pasta, rijst & houdbaar'],['diepvries','Diepvries'],['snacks','Snacks & snoep'],['dranken','Dranken'],['drogist','Drogisterij'],['huishouden','Huishouden'],['bouwmarkt','Bouwmarkt'],['overig','Overig']];
 const defaultSettings = () => ({v:0, people:[{id:'p1', name:'', email:''},{id:'p2', name:'', email:''}], aisles: AISLES.map(([id,name]) => ({id, name}))});
-const empty = () => ({tasks:[], income:[], fixed:[], spend:[], groceries:[], history:{}, events:[], jobs:[], meter:[], meals:[], ui:{}, settings: defaultSettings()});
+const empty = () => ({tasks:[], income:[], fixed:[], spend:[], groceries:[], history:{}, events:[], jobs:[], meter:[], meals:[], lists:[], litems:[], ui:{}, settings: defaultSettings()});
 let memory = null;
 function load(){
   try { const raw = localStorage.getItem(KEY); if (raw) return Object.assign(empty(), JSON.parse(raw)); } catch(e){}
@@ -876,7 +885,7 @@ function render(){
     $('#view').innerHTML = renderGate(); return;
   }
   setStatus(syncStatus, syncError);
-  $('#title').textContent = tab === 'taken' ? (S.ui.taskView === 'jobs' ? 'Klussen' : 'Taken') : tab === 'lijst' ? (S.ui.listView === 'meals' ? 'Weekmenu' : 'Boodschappen') : TABS[tab][0];
+  $('#title').textContent = tab === 'taken' ? (S.ui.taskView === 'jobs' ? 'Klussen' : S.ui.taskView === 'lists' ? (openListId && listById(openListId) ? listById(openListId).name : 'Lijstjes') : 'Taken') : tab === 'lijst' ? (S.ui.listView === 'meals' ? 'Weekmenu' : 'Boodschappen') : TABS[tab][0];
   $('#todayLine').textContent = tab === 'home' ? today().toLocaleDateString('nl-NL', {weekday:'long', day:'numeric', month:'long'}) : '';
   $('#todayLine').hidden = tab !== 'home';
   $('#addBtn').hidden = true; $('#fab').hidden = false;
@@ -1012,6 +1021,7 @@ function searchAll(q){
       .map(e => ({r:`event:${e.id}`, title:e.title, sub:`${fmtDate(parse(e.date))}${e.repeat ? ', ' + repeatLabel(e.repeat).toLowerCase() : ''}, ${KINDS[kindOf(e)].label.toLowerCase()}${e.where ? ', ' + e.where : ''}`}))],
     ['Klussen', '🔧', (S.jobs || []).filter(j => hit(j.title, j.who === 'uit' ? j.pro : '', j.note, areaOf(j)[1], (j.mats || []).map(m => m.name).join(' ')))
       .map(j => { const mats = (j.mats || []).filter(m => hit(m.name)).map(m => m.name); return {r:`job:${j.id}`, title:j.title, sub:`${areaOf(j)[1]}, ${statusLabel(j).toLowerCase()}${mats.length && !hit(j.title) ? `, nodig: ${mats.join(', ')}` : ''}`}; })],
+    ['Lijstjes', '📝', (S.litems || []).filter(it => hit(it.name, it.note, (listById(it.list) || {}).name)).map(it => ({r:`litem:${it.id}`, title: it.name, sub: `${(listById(it.list) || {}).name || 'Lijstje'}${num(it.price) ? ', ' + euro(num(it.price)) : ''}${it.done ? ', gekocht' : ''}`}))],
     ['Weekmenu', '🍽️', (S.meals || []).filter(m => m.dish && hit(m.dish, m.ingredients, m.note)).sort((a, b) => b.date.localeCompare(a.date)).map(m => ({r:`meal:${m.date}`, title: m.dish, sub: fmtDate(parse(m.date)) + (m.cook ? `, ${cookName(m)} kookt` : '')}))],
     ['Boodschappen', '🛒', S.groceries.filter(g => hit(g.name)).map(g => ({r:`grocery:${g.id}`, title:`${(g.qty || 1) > 1 ? g.qty + '× ' : ''}${g.name}`, sub: g.done ? 'In het mandje' : 'Nog halen'}))],
     ['Uitgaven', '💶', S.spend.filter(x => hit(x.name, x.cat, euro(num(x.amount)))).sort((a, b) => b.date.localeCompare(a.date)).map(x => ({r:`spend:${x.id}`, title:x.name, sub:`${fmtDate(parse(x.date))}, ${x.cat}, ${euro(num(x.amount))}`}))],
@@ -1045,6 +1055,7 @@ function searchSheet(){
     else if (type === 'fixed') fixedForm(find('fixed', id));
     else if (type === 'income') incomeForm(find('income', id));
     else if (type === 'meal') mealForm(id);
+    else if (type === 'litem'){ const it = find('litems', id); if (it){ dlg.close(); openListId = it.list; S.ui.taskView = 'lists'; tab = 'taken'; render(); litemForm(it); } }
   };
   drawResults(lastQuery);
   if (!dlg.open) dlg.showModal();
@@ -1115,8 +1126,10 @@ function whoText(t){
 function renderTasks(){
   const nDue = activeTasks().filter(t => nextDue(t) <= today()).length;
   const nJobs = (S.jobs || []).filter(j => j.status !== 'klaar').length;
-  const seg = `<div class="seg" style="margin:8px 0 0"><button data-action="taskView" data-v="tasks" aria-pressed="${S.ui.taskView !== 'jobs'}">🧹 Huishouden${nDue ? ` <span class="segn">${nDue}</span>` : ''}</button><button data-action="taskView" data-v="jobs" aria-pressed="${S.ui.taskView === 'jobs'}">🔧 Klussen${nJobs ? ` <span class="segn">${nJobs}</span>` : ''}</button></div>`;
-  return seg + (S.ui.taskView === 'jobs' ? renderJobs() : renderHouseTasks());
+  const v = S.ui.taskView || 'tasks';
+  const seg = `<div class="seg seg3" style="margin:8px 0 0"><button data-action="taskView" data-v="tasks" aria-pressed="${v === 'tasks'}">🧹 Huishouden${nDue ? ` <span class="segn">${nDue}</span>` : ''}</button><button data-action="taskView" data-v="jobs" aria-pressed="${v === 'jobs'}">🔧 Klussen${nJobs ? ` <span class="segn">${nJobs}</span>` : ''}</button><button data-action="taskView" data-v="lists" aria-pressed="${v === 'lists'}">📝 Lijstjes</button></div>`;
+  if (v === 'lists') return (openListId ? '' : seg) + renderLists();
+  return seg + (v === 'jobs' ? renderJobs() : renderHouseTasks());
 }
 function renderHouseTasks(){
   const tasks = activeTasks().map(t => ({t, due: nextDue(t)})).sort((a,b) => a.due - b.due);
@@ -2389,7 +2402,7 @@ function analysisSheet(){
 /* ---------- snel toevoegen ---------- */
 function quickAdd(){
   const dlg = $('#sheet');
-  const tiles = [['task','Taak','🧹','#6E9184'],['event','Agenda','📅','#B0727A'],['eten','Ergens eten','🍽️','#C08A62'],['job','Klus','🔧','#8A7064'],['spend','Uitgave','💶','#6B7C98'],['shop','Winkelmodus','🛒','#8C7BA0']];
+  const tiles = [['task','Taak','🧹','#6E9184'],['event','Agenda','📅','#B0727A'],['eten','Ergens eten','🍽️','#C08A62'],['job','Klus','🔧','#8A7064'],['spend','Uitgave','💶','#6B7C98'],['list','Lijstje','📝','#9A9EA8'],['shop','Winkelmodus','🛒','#8C7BA0']];
   dlg.onclick = null; dlg.oninput = null; dlg.onsubmit = null;
   dlg.innerHTML = `<div class="sheet"><div class="sheet-head"><span style="min-width:84px"></span><h3>Toevoegen</h3><button type="button" class="link strong" data-close>Klaar</button></div>
     <h4 style="margin-top:0">Op de boodschappenlijst</h4>
@@ -2401,7 +2414,7 @@ function quickAdd(){
     if ('close' in b.dataset){ dlg.close(); return; }
     const k = b.dataset.qa; if (!k) return;
     if (k === 'task') taskForm(); else if (k === 'event') eventForm(); else if (k === 'eten') eventForm(null, null, {kind:'eten'});
-    else if (k === 'job') jobForm(); else if (k === 'spend') spendForm();
+    else if (k === 'job') jobForm(); else if (k === 'spend') spendForm(); else if (k === 'list') listForm();
     else if (k === 'shop'){ dlg.close(); shopMode = true; keepAwake(true); render(); }
   };
   dlg.onsubmit = e => {
@@ -2431,6 +2444,72 @@ function rollOver(announce){
 let lastDay = iso(today());
 setInterval(() => { const d = iso(today()); if (d !== lastDay){ lastDay = d; if (cfg && cfg.mode === 'sync') refresh(); else { rollOver(true); render(); } } }, 60000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && cfg && cfg.mode !== 'sync' && !gate) rollOver(true); });
+
+/* ---------- lijstjes ---------- */
+let openListId = null;
+const listById = id => (S.lists || []).find(l => l.id === id);
+const LIST_ICONS = ['🛍️','🎁','🧳','📚','🎬','💡','🏠','📝','🎄','⭐'];
+const LIST_TEMPLATES = [['Black Friday','🛍️'],['Cadeau-ideeën','🎁'],['Paklijst vakantie','🧳'],['Wensenlijst','⭐'],['Films en series','🎬'],['Boeken','📚']];
+const itemsOf2 = lid => (S.litems || []).filter(it => it.list === lid);
+function renderLists(){
+  if (openListId && listById(openListId)) return renderListDetail(listById(openListId));
+  openListId = null;
+  const lists = (S.lists || []).slice().sort((a, b) => (b.created || '').localeCompare(a.created || ''));
+  const cards = lists.map(l => { const its = itemsOf2(l.id), open = its.filter(x => !x.done), tot = open.reduce((a, x) => a + num(x.price), 0);
+    return `<button class="row plain lcard" data-action="openList" data-id="${l.id}" style="width:100%"><span class="lic" aria-hidden="true">${l.ic || '📝'}</span><div class="main"><div class="title">${esc(l.name)}</div><div class="sub">${its.length ? `${open.length} open${its.length - open.length ? `, ${its.length - open.length} afgevinkt` : ''}` : 'Nog leeg'}${tot ? `, samen ${euro(tot)}` : ''}</div></div><span class="chev">›</span></button>`; }).join('');
+  return `<section style="margin-top:12px">${lists.length ? `<div class="group">${cards}<button class="row addrow" data-action="newList">${PLUS}Nieuw lijstje</button></div>`
+    : `<div class="empty"><p>Maak lijstjes voor van alles: dingen die je met Black Friday wilt kopen, cadeau-ideeën, een paklijst of films die jullie nog willen zien.</p><button class="btn" data-action="newList">Nieuw lijstje</button></div>`}</section>`;
+}
+function renderListDetail(l){
+  const its = itemsOf2(l.id), open = its.filter(x => !x.done).sort((a, b) => (a.created || '').localeCompare(b.created || '')), done = its.filter(x => x.done);
+  const tot = open.reduce((a, x) => a + num(x.price), 0), save0 = open.reduce((a, x) => a + Math.max(0, num(x.was) - num(x.price)), 0);
+  const row = it => { const p = num(it.price), w = num(it.was), pct = p && w > p ? Math.round((w - p) / w * 100) : 0;
+    const sub = [p ? `<b>${euro(p)}</b>` : '', w > p && p ? `<s>${euro(w)}</s> <span class="disc">−${pct}%</span>` : '', it.note ? esc(it.note) : ''].filter(Boolean).join(' ');
+    return `<div class="row${it.done ? ' isdone' : ''}" data-sw="litem:${it.id}"><button class="check${it.done ? ' on' : ''}" data-action="litemToggle" data-id="${it.id}" aria-label="${esc(it.name)} ${it.done ? 'terugzetten' : 'afvinken'}">${it.done ? CHECK : ''}</button>
+      <button class="main plain" data-action="litemEdit" data-id="${it.id}"><div class="title">${esc(it.name)}</div>${sub ? `<div class="sub">${sub}</div>` : ''}</button>
+      ${it.link ? `<a class="lnk" href="${esc(it.link)}" target="_blank" rel="noopener noreferrer" aria-label="Open de link van ${esc(it.name)}">↗</a>` : ''}${it.by ? badge(it.by) : ''}</div>`; };
+  return `<section style="margin-top:8px"><div class="h2row"><button class="linkbtn" data-action="closeList" style="padding:4px 0">‹ Alle lijstjes</button><span style="display:flex;gap:14px"><button class="linkbtn" data-action="shareList" style="padding:4px 0">Delen</button><button class="linkbtn" data-action="editList" style="padding:4px 0">Bewerken</button></span></div>
+    <form class="quick" data-form="litem" style="margin-top:8px"><input name="li" placeholder="Wat wil je toevoegen?" autocomplete="off" enterkeyhint="done" aria-label="Toevoegen aan ${esc(l.name)}"><button class="btn">Toevoegen</button></form>
+    <p class="sub" style="margin:6px 4px 0">Meerdere tegelijk? Scheid ze met een komma. Tik op een item voor prijs, link of notitie.</p></section>
+    ${tot ? `<section><div class="group purse" style="padding:12px 14px"><div class="label">Nog te kopen</div><div class="big" style="font-size:26px;margin:2px 0 0">${euro(tot)}</div>${save0 ? `<div class="sub">Je bespaart ${euro(save0)} ten opzichte van de normale prijs</div>` : ''}</div></section>` : ''}
+    ${open.length ? `<section><div class="group">${open.map(row).join('')}</div></section>` : `<section><div class="empty"><p>Dit lijstje is nog leeg.</p></div></section>`}
+    ${done.length ? `<section><details><summary>Gekocht of afgevinkt (${done.length})</summary><div class="group">${done.map(row).join('')}</div><button class="btn ghost wide" style="margin-top:10px" data-action="clearListDone">Afgevinkte weghalen</button></details></section>` : ''}`;
+}
+function listForm(l){
+  const dlg = $('#sheet');
+  openForm({title: l ? 'Lijstje bewerken' : 'Nieuw lijstje', values: l || {ic: '📝'},
+    note: l ? '' : `Snel kiezen: ${LIST_TEMPLATES.map(([n, ic]) => `${ic} ${n}`).join(', ')}. Of verzin zelf een naam.`,
+    fields: [{key:'name', label:'Naam', type:'text', required:true, placeholder:'Bijv. Black Friday', list: LIST_TEMPLATES.map(t => t[0])},
+      {key:'ic', label:'Icoon', type:'select', options: LIST_ICONS.map(i => [i, i])}],
+    onSave: v => {
+      if (!l){ const tpl = LIST_TEMPLATES.find(t => t[0].toLowerCase() === v.name.toLowerCase()); if (tpl && v.ic === '📝') v.ic = tpl[1]; }
+      if (l) Object.assign(l, v); else { const nl = {id: uid(), created: new Date().toISOString(), ...v}; (S.lists = S.lists || []).push(nl); openListId = nl.id; S.ui.taskView = 'lists'; tab = 'taken'; S.ui.tab = 'taken'; }
+    },
+    onDelete: l && (() => { S.lists = S.lists.filter(x => x !== l); S.litems = (S.litems || []).filter(x => x.list !== l.id); openListId = null; }), deleteLabel: 'Lijstje verwijderen'});
+}
+function litemForm(it){
+  openForm({title: 'Item', values: {...it},
+    fields: [{key:'name', label:'Wat', type:'text', required:true},
+      {key:'price', label:'Prijs (optioneel)', type:'money', half:true, placeholder:'0,00'},
+      {key:'was', label:'Normale prijs (optioneel)', type:'money', half:true, placeholder:'0,00'},
+      {key:'link', label:'Link naar de winkel (optioneel)', type:'url', placeholder:'https://…'},
+      {key:'note', label:'Notitie (optioneel)', type:'textarea', placeholder:'Bijv. maat M, kleur blauw, alleen als het onder de € 100 is'}],
+    onSave: v => { if (!num(v.price)) v.price = ''; if (!num(v.was)) v.was = ''; if (v.link && !/^https?:\/\//i.test(v.link)) v.link = 'https://' + v.link; Object.assign(it, v); },
+    onDelete: () => S.litems = S.litems.filter(x => x !== it)});
+}
+function addListItems(raw){
+  const l = listById(openListId); if (!l) return 0;
+  const names = raw.split(',').map(x => x.trim()).filter(Boolean);
+  names.forEach(name => (S.litems = S.litems || []).push({id: uid(), list: l.id, name, done: false, price: '', was: '', link: '', note: '', by: (me() && me().id) || '', created: new Date().toISOString()}));
+  return names.length;
+}
+async function shareList(lid){
+  const l = listById(lid); if (!l) return;
+  const open = itemsOf2(lid).filter(x => !x.done);
+  const text = `${l.ic || ''} ${l.name}\n` + open.map(x => `• ${x.name}${num(x.price) ? ` (${euro(num(x.price))})` : ''}${x.link ? `\n  ${x.link}` : ''}`).join('\n');
+  try { if (navigator.share){ await navigator.share({title: l.name, text}); return; } } catch(e){ if (e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(text); toast('Lijstje gekopieerd'); } catch(e){ toast('Delen lukt hier niet'); }
+}
 
 /* ---------- weekmenu: thuis eten ---------- */
 let mealWeek = 0;
@@ -2574,7 +2653,7 @@ const unseen = () => (S.ui.changes || []).filter(c => c.t > (S.ui.seenAt || 0));
 const partnerId = () => { const m = me(); return m ? other(m.id).id : ''; };
 const nameOf = pid => (pid && person(pid) && person(pid).name) || (partnerId() && person(partnerId()).name) || 'Je partner';
 function noteChange(kind, b, a){
-  if (!['groceries','tasks','events','jobs','spend','fixed','income','meter','meals'].includes(kind)) return;
+  if (!['groceries','tasks','events','jobs','spend','fixed','income','meter','meals','lists','litems'].includes(kind)) return;
   if (canon(b) === canon(a)) return;
   actBuf.push({kind, b, a}); clearTimeout(actTimer); actTimer = setTimeout(flushActivity, 1200);
 }
@@ -2590,6 +2669,9 @@ function flushActivity(){
   if (gAdd.length) add(gAdd[0].a.by, `zette ${joinNames(gAdd.map(x => x.a.name))} op de boodschappenlijst`, '🛒');
   const gDone = buf.filter(x => x.kind === 'groceries' && x.b && x.a && !x.b.done && x.a.done);
   if (gDone.length) add(pid, gDone.length > 4 ? `haalde ${gDone.length} boodschappen` : `haalde ${joinNames(gDone.map(x => x.a.name))}`, '🧺');
+  const liAdd = buf.filter(x => x.kind === 'litems' && !x.b && x.a);
+  if (liAdd.length){ const byL = {}; liAdd.forEach(x => (byL[x.a.list] = byL[x.a.list] || []).push(x.a.name)); Object.entries(byL).forEach(([lid, names]) => add(liAdd[0].a.by, `zette ${joinNames(names)} op ${(listById(lid) || {}).name || 'een lijstje'}`, '📝')); }
+  buf.filter(x => x.kind === 'lists' && !x.b && x.a).forEach(x => add(pid, `maakte het lijstje ${x.a.name}`, '📝'));
   for (const x of buf.filter(x => x.kind === 'meals' && x.a)){
     const m = x.a, b = x.b || {}, dag = parse(m.date).toLocaleDateString('nl-NL', {weekday:'long'});
     if (m.dish && m.dish !== b.dish) add(pid, `zette ${m.dish} op het weekmenu voor ${dag}`, '🍽️');
@@ -2659,6 +2741,7 @@ function swipeDef(el){
   if (type === 'job'){ const j = (S.jobs || []).find(x => x.id === id); if (!j) return {};
     const nx = NEXT_STATUS[j.status || 'idee']; return {right: nx ? [`→ ${(STATUS.find(x => x[0] === nx) || [, nx])[1]}`, nx === 'klaar' ? '#6E9184' : 'var(--accent)'] : null, left: del}; }
   if (type === 'spend' || type === 'fixed' || type === 'income') return {left: del};
+  if (type === 'litem'){ const it = find('litems', id); return it ? {right: it.done ? ['↩ Terugzetten', 'var(--muted)'] : ['✓ Gekocht', '#6E9184'], left: del} : {}; }
   return {};
 }
 function swipeAction(el, dir){
@@ -2666,6 +2749,7 @@ function swipeAction(el, dir){
   const at = centerOf(el);
   const clickIn = sel => { const b = el.querySelector(sel); if (b) b.click(); };
   if (dir === 'right'){
+    if (type === 'litem'){ const it = find('litems', id); if (it){ it.done = !it.done; save(); render(); } return; }
     if (type === 'task' || type === 'taskitem') clickIn('[data-action=done]');
     else if (type === 'grocery') toggleGrocery(id);
     else if (type === 'event') clickIn('[data-action=toggleEv]');
@@ -2679,6 +2763,7 @@ function swipeAction(el, dir){
     if (e.repeat){ e.skip = (e.skip || []).concat(date); save(); render(); toast(`${name} op ${fmtDate(parse(date))} overgeslagen`, undo); return; }
     S.events = S.events.filter(x => x.id !== id); }
   else if (type === 'job'){ const j = S.jobs.find(x => x.id === id); name = j.title; S.jobs = S.jobs.filter(x => x.id !== id); }
+  else if (type === 'litem'){ const it = find('litems', id); name = it.name; S.litems = S.litems.filter(x => x.id !== id); }
   else if (['spend','fixed','income'].includes(type)){ const x = find(type, id); name = x.name; S[type] = S[type].filter(y => y.id !== id); }
   save(); render(); toast(`${name} verwijderd`, undo);
 }
@@ -2812,7 +2897,15 @@ document.addEventListener('click', e => {
   const {action, id} = b.dataset;
   switch (action){
     case 'tab': tab = b.dataset.tab; if (tab === 'klussen'){ tab = 'taken'; S.ui.taskView = 'jobs'; } else if (tab === 'taken' && !b.classList.contains('tab')) S.ui.taskView = 'tasks'; S.ui.tab = tab; save(); render(); scrollTo(0,0); break;
-    case 'taskView': S.ui.taskView = b.dataset.v; saveLocal(); render(); scrollTo(0,0); break;
+    case 'taskView': S.ui.taskView = b.dataset.v; openListId = null; saveLocal(); render(); scrollTo(0,0); break;
+    case 'openList': S.ui.taskView = 'lists'; tab = 'taken'; S.ui.tab = 'taken'; openListId = id; saveLocal(); render(); scrollTo(0,0); break;
+    case 'closeList': openListId = null; render(); scrollTo(0,0); break;
+    case 'newList': listForm(); break;
+    case 'editList': listForm(listById(openListId)); break;
+    case 'litemToggle': { const it = find('litems', id); if (it){ it.done = !it.done; save(); render(); } break; }
+    case 'litemEdit': litemForm(find('litems', id)); break;
+    case 'clearListDone': { const undo = snapshot(); S.litems = S.litems.filter(x => !(x.list === openListId && x.done)); save(); render(); toast('Afgevinkte weggehaald', undo); break; }
+    case 'shareList': shareList(openListId); break;
     case 'headerAdd': ({taken:() => taskForm(), klussen:() => jobForm(), geld:() => spendForm(), agenda:() => eventForm()})[tab]?.(); break;
     case 'add': ({task:() => taskForm(), spend:() => spendForm(), fixed:() => fixedForm(), income:() => incomeForm(), event:() => eventForm(), job:() => jobForm()})[b.dataset.what](); break;
     case 'done': doneTask(id, centerOf(b)); break;
@@ -2887,6 +2980,7 @@ document.addEventListener('click', e => {
   }
 });
 document.addEventListener('submit', e => {
+  if (e.target.dataset.form === 'litem'){ e.preventDefault(); const inp = e.target.querySelector('input[name=li]'); if (addListItems(inp.value)){ save(); render(); const again = $('#view input[name=li]'); if (again) again.focus(); } return; }
   if (e.target.dataset.form !== 'grocery') return;
   e.preventDefault();
   const input = e.target.querySelector('input[name=item]');
@@ -2900,7 +2994,7 @@ document.addEventListener('visibilitychange', () => {
 
 /* ---------- synchronisatie (Supabase) ---------- */
 const CFG_KEY = 'huishouden.cfg', SYNC_KEY = 'huishouden.sync';
-const COLL = ['tasks','income','fixed','spend','groceries','events','jobs','meter','meals'];
+const COLL = ['tasks','income','fixed','spend','groceries','events','jobs','meter','meals','lists','litems'];
 const readJSON = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch(e){ return d; } };
 const writeJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
 let cfg = readJSON(CFG_KEY, null);            // {mode:'local'} of {mode:'sync', url, key}
