@@ -739,6 +739,7 @@ input[type=month]{min-height:44px}
 .extra-hint{margin:10px 0 0;font-size:14px;background:color-mix(in srgb,#6E9184 14%,var(--surface));border-radius:10px;padding:8px 10px}
 .ic.owner{background:none}
 .ic.owner .who{width:28px;height:28px;font-size:12px}
+.haptic{position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none}
 </style>
 </head>
 <body>
@@ -763,7 +764,7 @@ input[type=month]{min-height:44px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-const APP_VERSION = '44';
+const APP_VERSION = '45';
 if (/[?&](v|check)=/.test(location.search)) try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){}
 /* ---------- opslag ---------- */
 const KEY = 'huishouden.v1';
@@ -1850,6 +1851,7 @@ function openSettings(){
       ${setRow('homeEdit', '🏠', 'Startpagina', 'Kies onderdelen en volgorde')}
       <div class="row setrow themerow"><span class="ic" aria-hidden="true">🌓</span><div class="main"><div class="title">Weergave</div></div>
         <div class="seg themeseg" role="radiogroup" aria-label="Weergave">${[['auto','Auto'],['light','Licht'],['dark','Donker']].map(([k, l]) => `<button type="button" role="radio" data-action="setTheme" data-t="${k}" aria-checked="${(S.ui.theme || 'auto') === k}" aria-pressed="${(S.ui.theme || 'auto') === k}">${k === 'light' ? '☀︎ ' : k === 'dark' ? '☾ ' : ''}${l}</button>`).join('')}</div></div>
+      ${setRow('toggleHaptic', '📳', 'Trillen bij tikken', 'Op iPhone vanaf iOS 18', `<span class="switch" role="switch" aria-checked="${!S.ui.noHaptic}" aria-pressed="${!S.ui.noHaptic}"></span>`)}
       ${setRow('toggleConfetti', '🎉', 'Confetti bij afvinken', '', `<span class="switch" role="switch" aria-checked="${!S.ui.noConfetti}" aria-pressed="${!S.ui.noConfetti}"></span>`)}
       ${setRow('checkUpdate', '🔄', 'Op updates controleren', `Je hebt versie ${APP_VERSION}`)}
     </div>
@@ -2799,6 +2801,27 @@ function activitySheet(){
   if (!dlg.open) dlg.showModal();
 }
 
+/* ---------- trillen bij tikken ---------- */
+// Android kent navigator.vibrate. Safari op de iPhone niet; daar geeft een verborgen schakelaar (iOS 18 en nieuwer)
+// bij het omzetten een korte tik van de trilmotor. Op oudere iPhones gebeurt er gewoon niets.
+let hapticEl = null;
+function haptic(){
+  if (S.ui.noHaptic) return;
+  try {
+    if (navigator.vibrate){ navigator.vibrate(8); return; }
+    if (!hapticEl){
+      const l = document.createElement('label'); l.setAttribute('aria-hidden', 'true'); l.className = 'haptic';
+      const i = document.createElement('input'); i.type = 'checkbox'; i.setAttribute('switch', ''); i.tabIndex = -1;
+      l.appendChild(i); document.body.appendChild(l); hapticEl = l;
+    }
+    hapticEl.click();
+  } catch(e){}
+}
+document.addEventListener('click', e => {
+  if (e.target.closest('.haptic')) return;
+  if (e.target.closest('button, a, summary, label.filebtn, .tab, select')) haptic();
+}, true);
+
 /* ---------- vegen en naar beneden trekken ---------- */
 const NEXT_STATUS = {idee:'gepland', gepland:'bezig', bezig:'klaar'};
 function swipeDef(el){
@@ -2861,7 +2884,7 @@ function swipeAction(el, dir){
         if (x < 0 && !sw.def.left) x = Math.max(x, -24) * .3;
         sw.dx = x; sw.el.style.transform = `translateX(${x}px)`;
         sw.under.dataset.side = x > 0 ? 'right' : 'left';
-        sw.under.classList.toggle('armed', Math.abs(x) > TH);
+        const arm = Math.abs(x) > TH; if (arm !== sw.under.classList.contains('armed')){ sw.under.classList.toggle('armed', arm); if (arm) haptic(); }
         return;
       }
     }
@@ -2869,7 +2892,7 @@ function swipeAction(el, dir){
       const d = t.clientY - ptr.y0;
       if (d > 0 && window.scrollY <= 0){ ptr.d = d; const p = Math.min(1, d / 140);
         ptrEl.style.opacity = p; ptrEl.style.transform = `translate(-50%, ${Math.min(d * .45, 70)}px) rotate(${d * 2}deg)`;
-        ptrEl.classList.toggle('armed', d > 120); }
+        const arm = d > 120; if (arm !== ptrEl.classList.contains('armed')){ ptrEl.classList.toggle('armed', arm); if (arm) haptic(); } }
     }
   }, {passive: false});
   document.addEventListener('touchend', () => {
@@ -3026,6 +3049,7 @@ document.addEventListener('click', e => {
     case 'checkUpdate': checkUpdate(true); break;
     case 'toggleConfetti': { S.ui.noConfetti = !S.ui.noConfetti; saveLocal(); const sw = b.querySelector('.switch'); if (sw){ sw.setAttribute('aria-pressed', !S.ui.noConfetti); sw.setAttribute('aria-checked', !S.ui.noConfetti); } if (!S.ui.noConfetti) confetti(...centerOf(b)); break; }
     case 'analysis': analysisSheet(); break;
+    case 'toggleHaptic': { S.ui.noHaptic = !S.ui.noHaptic; saveLocal(); const sw = b.querySelector('.switch'); if (sw){ sw.setAttribute('aria-pressed', !S.ui.noHaptic); sw.setAttribute('aria-checked', !S.ui.noHaptic); } if (!S.ui.noHaptic) haptic(); break; }
     case 'stdFixed': stdFixedSheet(); break;
     case 'budgetStd': ST().budgets = [...personalPots(), ...STD_BUDGETS.map(([cat, ic, per]) => ({cat, ic, per, amount: 0}))]; ST().v = Date.now(); save(); budgetSheet(); break;
     case 'budgetPersonal': { const b0 = budgets() || []; ST().budgets = [...missingPersonal(b0), ...b0]; ST().v = Date.now(); save(); budgetSheet(); break; }
