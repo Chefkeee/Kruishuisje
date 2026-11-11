@@ -737,6 +737,8 @@ input[type=month]{min-height:44px}
 .avgline{display:flex;justify-content:space-between;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
 .avgline b{color:var(--ink);font-variant-numeric:tabular-nums}
 .extra-hint{margin:10px 0 0;font-size:14px;background:color-mix(in srgb,#6E9184 14%,var(--surface));border-radius:10px;padding:8px 10px}
+.ic.owner{background:none}
+.ic.owner .who{width:28px;height:28px;font-size:12px}
 </style>
 </head>
 <body>
@@ -761,7 +763,7 @@ input[type=month]{min-height:44px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-const APP_VERSION = '42';
+const APP_VERSION = '44';
 if (/[?&](v|check)=/.test(location.search)) try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){}
 /* ---------- opslag ---------- */
 const KEY = 'huishouden.v1';
@@ -1230,6 +1232,9 @@ function monthCalc(m){
   const extra = over + outside;
   return {inc, incAvg, fix, spent, pot, extra, left: inc - fix - pot - extra, leftAvg: incAvg - fix - pot - extra, extras: extrasIn(mo), sp, byCat};
 }
+// Persoonlijk budget: per persoon een eigen potje voor persoonlijke uitgaven.
+const personalPots = () => named() ? people().map(p => ({cat: `Persoonlijk budget ${p.name}`, ic: '👤', per: 'm', amount: 0, owner: p.id})) : [{cat: 'Persoonlijk budget', ic: '👤', per: 'm', amount: 0, owner: ''}];
+const missingPersonal = list => personalPots().filter(p => !list.some(x => (p.owner && x.owner === p.owner) || x.cat === p.cat));
 const potMonthly = p => p.per === 'y' ? num(p.amount) / 12 : num(p.amount);
 function moneyBar(c){
   const total = Math.max(c.inc, c.fix + c.pot + c.extra) || 1;
@@ -1252,12 +1257,13 @@ function budgetCard(c){
   const rows = b.map(x => {
     const r = potMonthly(x), noted = c.byCat[x.cat] || 0;
     const sub = !num(x.amount) ? '<span class="due">Bedrag instellen</span>' : x.per === 'y' ? `${euro(num(x.amount))} per jaar` : 'per maand';
-    return `<button class="row plain brow" data-action="budgetEdit" style="width:100%"><span class="ic" aria-hidden="true">${x.ic || '💶'}</span><div class="main"><div class="brow-top"><span class="title">${esc(x.cat)}</span><span class="amt">${num(x.amount) ? euro(r) : ''}${num(x.amount) ? '<small> p/m</small>' : ''}</span></div>
+    return `<button class="row plain brow" data-action="budgetEdit" style="width:100%">${x.owner && badge(x.owner) ? `<span class="ic owner">${badge(x.owner)}</span>` : `<span class="ic" aria-hidden="true">${x.ic || '💶'}</span>`}<div class="main"><div class="brow-top"><span class="title">${esc(x.cat)}</span><span class="amt">${num(x.amount) ? euro(r) : ''}${num(x.amount) ? '<small> p/m</small>' : ''}</span></div>
       <div class="sub">${sub}${noted ? `, deze maand ${euro(noted)} genoteerd${noted > r && r ? ` <span class="late">(${euro(noted - r)} meer dan het potje)</span>` : ''}` : ''}</div></div></button>`;
   }).join('');
   return `<section><div class="h2row"><h2>Potjes</h2><button class="linkbtn" data-action="budgetEdit">Aanpassen</button></div>
     <p class="sub" style="margin:0 4px 8px">Samen <b>${euro(tot)}</b> per maand gereserveerd${open ? `, bij ${open} ${open === 1 ? 'potje' : 'potjes'} moet het bedrag nog worden ingevuld` : ''}.</p>
-    <div class="group">${rows}</div></section>`;
+    <div class="group">${rows}</div>
+    ${missingPersonal(b).length ? `<button class="linkbtn" data-action="budgetPersonal" style="margin-left:4px">👤 Eigen budget per persoon toevoegen</button>` : ''}</section>`;
 }
 function budgetSheet(){
   const dlg = $('#sheet');
@@ -1268,7 +1274,7 @@ function budgetSheet(){
       <p class="sub" style="margin:0 2px 10px">Een geschat bedrag per maand of per jaar. Per jaar rekent de app om naar een bedrag per maand. Laat leeg als je het nog niet weet.</p>
       <div class="group">${list.map((x, i) => `<div class="row"><span class="ic bic" aria-hidden="true">${x.ic || '💶'}</span><input class="aisle-in" data-i="${i}" data-f="cat" value="${esc(x.cat)}" aria-label="Naam van het potje"><input class="bamt" data-i="${i}" data-f="amount" inputmode="decimal" placeholder="€" value="${num(x.amount) ? String(num(x.amount)).replace('.', ',') : ''}" aria-label="Bedrag voor ${esc(x.cat)}"><select class="bper" data-i="${i}" data-f="per" aria-label="Per maand of per jaar"><option value="m"${x.per !== 'y' ? ' selected' : ''}>p/m</option><option value="y"${x.per === 'y' ? ' selected' : ''}>p/j</option></select><button type="button" class="x" data-rm="${i}" aria-label="${esc(x.cat)} verwijderen">×</button></div>`).join('')}
         <button type="button" class="row addrow" data-add>${PLUS}Eigen potje toevoegen</button></div>
-      ${missing.length ? `<h4>Standaard toevoegen</h4><div class="chips">${missing.map(([c, ic]) => `<button type="button" class="chip" data-std="${esc(c)}">${ic} ${esc(c)}</button>`).join('')}</div>` : ''}</div>`;
+      ${missing.length || missingPersonal(list).length ? `<h4>Standaard toevoegen</h4><div class="chips">${missingPersonal(list).length ? `<button type="button" class="chip" data-personal>👤 Eigen budget per persoon</button>` : ''}${missing.map(([c, ic]) => `<button type="button" class="chip" data-std="${esc(c)}">${ic} ${esc(c)}</button>`).join('')}</div>` : ''}</div>`;
   };
   dlg.onsubmit = null;
   dlg.oninput = dlg.onchange = e => { const i = e.target.dataset.i, f = e.target.dataset.f; if (i !== undefined && f) list[+i][f] = e.target.value; };
@@ -1276,12 +1282,13 @@ function budgetSheet(){
     const b = e.target.closest('button'); if (!b) return; const d = b.dataset;
     if ('close' in d){ dlg.close(); return; }
     if ('save' in d){
-      const clean = list.map(x => ({cat: (x.cat || '').trim(), ic: x.ic || '💶', amount: num(x.amount), per: x.per === 'y' ? 'y' : 'm'})).filter(x => x.cat);
+      const clean = list.map(x => ({cat: (x.cat || '').trim(), ic: x.ic || '💶', amount: num(x.amount), per: x.per === 'y' ? 'y' : 'm', ...(x.owner ? {owner: x.owner} : {})})).filter(x => x.cat);
       ST().budgets = clean; ST().v = Date.now(); dlg.close(); save(); render(); toast('Potjes bewaard'); return;
     }
     if (d.rm !== undefined) list.splice(+d.rm, 1);
     else if ('add' in d) list.push({cat: 'Nieuw potje', ic: '💶', amount: 0, per: 'm'});
     else if (d.std){ const s0 = STD_BUDGETS.find(([c]) => c === d.std); list.push({cat: s0[0], ic: s0[1], amount: 0, per: s0[2]}); }
+    else if ('personal' in d) list.unshift(...missingPersonal(list));
     else return;
     const top = dlg.scrollTop; draw(); dlg.scrollTop = top;
     if ('add' in d){ const ins = dlg.querySelectorAll('.aisle-in'); const inp = ins[ins.length - 1]; if (inp){ inp.focus(); inp.select(); } }
@@ -1738,7 +1745,7 @@ function renderAgenda(){
     return html + `<section><h2>${esc(longDate(d))}</h2><div class="group">${list.map(itemRow).join('')}<button class="row addrow" data-action="add" data-what="event">${PLUS}Iets toevoegen op deze dag</button></div>
       <button class="linkbtn" data-action="pickDay" data-d="" style="margin-left:4px">Alles tonen</button></section>`;
   }
-  if (!S.events.length && !activeTasks().length && !S.fixed.some(f => f.end) && !(S.jobs || []).some(j => j.date && j.status !== 'klaar')) return html + `<section><div class="empty"><p>Zet hier alles neer wat jullie plannen: afspraken, ergens eten en bij wie, dingen die jullie samen gaan doen of met anderen, en deadlines. Ook je taken verschijnen hier. Tik op een dag in de kalender om meteen iets op die dag te zetten.</p><button class="btn" data-action="add" data-what="event">Iets toevoegen</button></div></section>`;
+  if (!S.events.length && !activeTasks().length && !S.fixed.some(f => f.end) && !(S.jobs || []).some(j => j.date && j.status !== 'klaar') && !(S.meals || []).some(m => m.dish)) return html + `<section><div class="empty"><p>Zet hier alles neer wat jullie plannen: afspraken, ergens eten en bij wie, dingen die jullie samen gaan doen of met anderen, en deadlines. Ook je taken verschijnen hier. Tik op een dag in de kalender om meteen iets op die dag te zetten.</p><button class="btn" data-action="add" data-what="event">Iets toevoegen</button></div></section>`;
   const taskDays = agFilter === 'taak' ? 31 : 7;
   const late = lateDeadlines().filter(evMatch);
   const up = agendaItems(t0, addDays(t0, 90)).filter(evMatch).filter(it => { const days = daysBetween(t0, parse(it.date)); return !it.done && (it.type === 'ev' ? !it.e.repeat || days < 31 : it.type === 'task' ? days < taskDays : true); });
@@ -2078,7 +2085,7 @@ function weekSheet(next){
   items.filter(i => i.type === 'task').forEach(i => { const a = assignee(i.t) || ''; mins[a] += +i.t.mins || 0; cnt[a]++; });
   const nTask = items.filter(i => i.type === 'task').length, evs = items.filter(i => i.type === 'ev');
   const nEat = evs.filter(i => i.kind === 'eten').length, nDl = evs.filter(i => i.kind === 'deadline').length, nJob = items.filter(i => i.type === 'job').length;
-  const title = it => it.type === 'meal' ? `🍽️ ${esc(it.m.dish)}${it.m.cook ? ` <small>${esc(cookName(it.m))} kookt</small>` : ''}` : it.type === 'mealshop' ? `🛒 Boodschappen voor ${esc(it.m.dish)}` : it.type === 'contract' ? `${it.which === 'remind' ? 'Over een maand loopt af' : 'Loopt vandaag af'}: ${esc(it.f.name)}${it.f.company ? ` <small>${esc(it.f.company)}</small>` : ''}`
+  const title = it => it.type === 'meal' ? `${it.m.mode === 'order' ? '🛵' : it.m.mode === 'ready' ? '🥡' : '🍽️'} ${esc(it.m.dish)}${it.m.cook ? ` <small>${esc(cookName(it.m))} kookt</small>` : ''}` : it.type === 'mealshop' ? `🛒 Boodschappen voor ${esc(it.m.dish)}` : it.type === 'contract' ? `${it.which === 'remind' ? 'Over een maand loopt af' : 'Loopt vandaag af'}: ${esc(it.f.name)}${it.f.company ? ` <small>${esc(it.f.company)}</small>` : ''}`
     : it.type === 'task' ? `${esc(it.t.name)}${it.t.mins ? ` <small>${fmtMins(it.t.mins)}</small>` : ''}`
     : it.type === 'job' ? `${esc(it.j.title)} <small>klus</small>`
     : `${esc(it.e.title)}${it.e.where && it.kind !== 'eten' ? ` <small>${esc(it.e.where)}</small>` : ''}${it.e.with ? ` <small>met ${esc(it.e.with)}</small>` : ''}`;
@@ -2560,7 +2567,7 @@ function markMealsShopped(){
 }
 function mealStatus(m){
   const t0 = iso(today()), out = [];
-  if (!m || !m.dish) return out;
+  if (!m || !m.dish || (m.mode && m.mode !== 'cook')) return out;
   if (!m.shopDone){ if (m.shopOn && m.shopOn < t0) out.push(['late', 'Boodschappen nog niet gedaan']); else if (m.shopOn === t0) out.push(['due', 'Vandaag boodschappen doen']); }
   return out;
 }
@@ -2579,33 +2586,60 @@ function renderMeals(){
       continue;
     }
     const st = mealStatus(m);
-    const sub = [m.time, m.cook ? `${cookName(m)} kookt` : '', !m.shopDone && m.shopOn ? `boodschappen ${m.shopOn === k ? 'dezelfde dag' : fmtDate(parse(m.shopOn)).toLowerCase()}` : ''].filter(Boolean).join(', ');
+    const sub = mealSub(m);
     rows += `<div class="meal${past ? ' past' : ''}">${dayBox}<button class="meal-main plain" data-action="mealEdit" data-date="${k}"><div class="title">${esc(m.dish)}</div><div class="sub">${esc(sub)}</div>${st.map(([c, t]) => `<div class="sub"><span class="${c}">${t}</span></div>`).join('')}</button>
-      <div class="meal-checks"><button class="mchk${m.shopDone ? ' on' : ''}" data-action="mealCheck" data-k="shopDone" data-date="${k}" aria-pressed="${!!m.shopDone}" aria-label="Boodschappen gedaan">🛒</button><button class="mchk${m.cooked ? ' on' : ''}" data-action="mealCheck" data-k="cooked" data-date="${k}" aria-pressed="${!!m.cooked}" aria-label="Gekookt">🍳</button></div></div>`;
+      <div class="meal-checks">${mealChecks(m, k)}</div></div>`;
   }
   const planned = (S.meals || []).filter(m => m.dish && m.date >= iso(mon) && m.date <= iso(sun));
   const label = mealWeek === 0 ? 'Komende 7 dagen' : `${fmtDate(mon)} t/m ${fmtDate(sun)}`;
   return `<section style="margin-top:12px"><div class="monthnav"><button data-action="mealWeek" data-d="-1" aria-label="Vorige week">‹</button><b>${label}</b><button data-action="mealWeek" data-d="1" aria-label="Volgende week">›</button></div>
     <div class="group meals">${rows}</div>
-    <p class="sub" style="margin:8px 4px 0">🛒 = boodschappen gedaan, 🍳 = gekookt. ${planned.length} van 7 dagen gepland. Dagen dat jullie ergens anders eten komen uit de agenda.</p></section>`;
+    <p class="sub" style="margin:8px 4px 0">🛒 = boodschappen gedaan, 🍳 = gekookt, 🛵 = besteld. ${planned.length} van 7 dagen gepland. Dagen dat jullie ergens anders eten komen uit de agenda.</p></section>`;
+}
+const MEAL_MODES = [['cook','Zelf koken','🍳'],['ready','Al klaar (restjes of uit de vriezer)','🥡'],['order','Eten bestellen','🛵']];
+const ORDER_FROM = ['Thuisbezorgd','Uber Eats','Deliveroo','Pizzeria','Chinees-Indisch','Sushi','Snackbar','Thais','Turks'];
+const mealModeIc = m => (MEAL_MODES.find(x => x[0] === (m.mode || 'cook')) || MEAL_MODES[0])[2];
+function mealSub(m){
+  const mode = m.mode || 'cook';
+  if (mode === 'order') return [`🛵 Bestellen${m.orderFrom ? ` bij ${m.orderFrom}` : ''}`, m.time, (m.orderBy === 'p1' || m.orderBy === 'p2') && named() ? `${person(m.orderBy).name} bestelt` : ''].filter(Boolean).join(', ');
+  if (mode === 'ready') return ['🥡 Al klaar, alleen opwarmen', m.time].filter(Boolean).join(', ');
+  return [m.time, m.cook ? `${cookName(m)} kookt` : '', m.haveAll === 'yes' ? 'alles in huis' : !m.shopDone && m.shopOn ? `boodschappen ${m.shopOn === m.date ? 'dezelfde dag' : fmtDate(parse(m.shopOn)).toLowerCase()}` : ''].filter(Boolean).join(', ');
+}
+function mealChecks(m, date, big){
+  const mode = m.mode || 'cook';
+  if (mode === 'ready') return '';
+  const btn = (k, ic, label) => big ? `<button class="tcheck${m[k] ? ' on' : ''}" data-action="mealCheck" data-k="${k}" data-date="${date}" aria-pressed="${!!m[k]}">${m[k] ? CHECK : ''} ${label}</button>` : `<button class="mchk${m[k] ? ' on' : ''}" data-action="mealCheck" data-k="${k}" data-date="${date}" aria-pressed="${!!m[k]}" aria-label="${label}">${ic}</button>`;
+  if (mode === 'order') return btn('ordered', '🛵', 'Besteld');
+  return btn('shopDone', '🛒', 'Boodschappen gedaan') + btn('cooked', '🍳', 'Gekookt');
 }
 function mealForm(date){
   const m0 = mealOn(date);
   const dishes = [...new Set((S.meals || []).map(m => m.dish).filter(Boolean))];
   const ppl = named() ? [['', 'Samen'], ['p1', person('p1').name], ['p2', person('p2').name]] : [['', 'Samen']];
-  openForm({title: fmtDate(parse(date)), values: m0 ? {...m0, toList: ''} : {time:'18:00', cook:'', shopOn: date, shopBy:'', toList:''},
-    note: 'Plan wat jullie eten, wie kookt en wanneer de boodschappen worden gedaan.',
+  const cook = v => (v.mode || 'cook') === 'cook';
+  openForm({title: fmtDate(parse(date)), values: m0 ? {mode: 'cook', ...m0, haveAll: m0.haveAll === 'yes' ? 'yes' : '', cooked: m0.cooked ? 'yes' : '', toList: ''} : {mode: 'cook', time:'18:00', cook:'', shopOn: date, shopBy:'', toList:'', haveAll:''},
+    note: 'Plan wat jullie eten en hoe: zelf koken, iets wat al klaar is, of eten bestellen.',
     fields: [
-      {key:'dish', label:'Wat eten we', type:'text', required:true, placeholder:'Bijv. pasta pesto', list: dishes},
+      {key:'mode', label:'Hoe', type:'select', options: MEAL_MODES.map(([k, l, ic]) => [k, `${ic} ${l}`])},
+      {key:'dish', label:'Wat eten we', type:'text', required:true, placeholder:'Bijv. pasta pesto, pizza, restjes stoofpot', list: dishes},
       {key:'time', label:'Hoe laat eten', type:'time', half:true},
-      {key:'cook', label:'Wie kookt', type:'select', half:true, options: ppl},
-      {key:'shopOn', label:'Boodschappen doen op', type:'date', half:true},
-      {key:'shopBy', label:'Wie doet ze', type:'select', half:true, options: ppl},
-      {key:'ingredients', label:'Wat moet er gehaald worden (optioneel)', type:'textarea', placeholder:'Bijv. pasta, pesto, pijnboompitten, rucola'},
-      {key:'toList', label:'Op de boodschappenlijst zetten', type:'select', options:[['', 'Ja'], ['no', 'Nee']], showIf: v => (v.ingredients || '').trim()},
+      {key:'cook', label:'Wie kookt', type:'select', half:true, options: ppl, showIf: cook},
+      {key:'orderBy', label:'Wie bestelt', type:'select', half:true, options: ppl, showIf: v => v.mode === 'order'},
+      {key:'orderFrom', label:'Waar bestellen we (optioneel)', type:'text', placeholder:'Bijv. pizzeria om de hoek', list: ORDER_FROM, showIf: v => v.mode === 'order'},
+      {key:'haveAll', label:'Boodschappen', type:'select', options:[['', 'Moeten nog gehaald worden'], ['yes', 'Alles is al in huis']], showIf: cook},
+      {key:'shopOn', label:'Boodschappen doen op', type:'date', half:true, showIf: v => cook(v) && v.haveAll !== 'yes'},
+      {key:'shopBy', label:'Wie doet ze', type:'select', half:true, options: ppl, showIf: v => cook(v) && v.haveAll !== 'yes'},
+      {key:'ingredients', label:'Wat moet er gehaald worden (optioneel)', type:'textarea', placeholder:'Bijv. pasta, pesto, pijnboompitten, rucola', showIf: v => cook(v) && v.haveAll !== 'yes'},
+      {key:'toList', label:'Op de boodschappenlijst zetten', type:'select', options:[['', 'Ja'], ['no', 'Nee']], showIf: v => cook(v) && v.haveAll !== 'yes' && (v.ingredients || '').trim()},
+      {key:'cooked', label:'Is het al gekookt?', type:'select', options:[['', 'Nog niet'], ['yes', 'Ja, al gekookt']], showIf: cook},
       {key:'note', label:'Notitie (optioneel)', type:'textarea'}],
     onSave: v => {
       const m = mealOn(date) || newMeal(date);
+      v.cooked = v.cooked === 'yes' || v.mode === 'ready';
+      if (v.cooked) v.shopDone = true;
+      if (v.mode !== 'cook'){ v.shopDone = true; v.haveAll = ''; v.ingredients = v.mode === 'cook' ? v.ingredients : ''; v.toList = 'no'; }
+      else if (v.haveAll === 'yes'){ v.shopDone = true; v.toList = 'no'; }
+      else if (m.haveAll === 'yes') v.shopDone = false;
       const toList = v.toList !== 'no'; delete v.toList;
       const newIng = (v.ingredients || '').split(/[,\n]/).map(x => x.trim()).filter(Boolean);
       const oldIng = (m.listedIng || []);
@@ -2620,17 +2654,17 @@ function mealItemRow(it){
     <div class="sub"><span class="${diff < 0 ? 'late' : diff === 0 ? 'due' : ''}">${diff < 0 ? 'Nog niet gedaan' : relDay(diff, d)}</span>${m.shopBy === 'p1' || m.shopBy === 'p2' ? `, ${esc(person(m.shopBy).name)}` : ''}</div><div class="sub"><span class="kind" style="--k:${KINDS.thuis.c}">Voor ${esc(fmtDate(parse(m.date)).toLowerCase())}</span></div></button>
     <button class="check${m.shopDone ? ' on' : ''}" data-action="mealCheck" data-k="shopDone" data-date="${m.date}" aria-label="Boodschappen gedaan">${m.shopDone ? CHECK : ''}</button></div>`;
   return `<div class="row">${dateBox(d, KINDS.thuis.c)}<button class="main plain" data-action="mealEdit" data-date="${m.date}"><div class="title">${esc(m.dish)}</div>
-    <div class="sub"><span class="${diff === 0 ? 'due' : ''}">${relDay(diff, d)}</span>${m.time ? ', ' + esc(m.time) : ''}${m.cook ? `, ${esc(cookName(m))} kookt` : ''}</div><div class="sub"><span class="kind" style="--k:${KINDS.thuis.c}">Thuis eten${m.shopDone ? ', boodschappen gedaan' : ''}</span></div></button>
-    <button class="check${m.cooked ? ' on' : ''}" data-action="mealCheck" data-k="cooked" data-date="${m.date}" aria-label="Gekookt">${m.cooked ? CHECK : ''}</button></div>`;
+    <div class="sub"><span class="${diff === 0 ? 'due' : ''}">${relDay(diff, d)}</span>, ${esc(mealSub(m))}</div><div class="sub"><span class="kind" style="--k:${KINDS.thuis.c}">${(m.mode || 'cook') === 'order' ? 'Eten bestellen' : 'Thuis eten'}</span></div></button>
+    ${(m.mode || 'cook') === 'ready' ? '' : (m.mode === 'order' ? `<button class="check${m.ordered ? ' on' : ''}" data-action="mealCheck" data-k="ordered" data-date="${m.date}" aria-label="Besteld">${m.ordered ? CHECK : ''}</button>` : `<button class="check${m.cooked ? ' on' : ''}" data-action="mealCheck" data-k="cooked" data-date="${m.date}" aria-label="Gekookt">${m.cooked ? CHECK : ''}</button>`)}</div>`;
 }
 function tonightCard(){
   const t0 = iso(today()), m = mealOn(t0), tm = iso(addDays(today(), 1)), mt = mealOn(tm);
   const tomorrowShop = mt && mt.dish && !mt.shopDone && mt.shopOn && mt.shopOn <= t0 ? `<p class="sub" style="margin:8px 0 0"><span class="due">Vandaag boodschappen doen voor morgen: ${esc(mt.dish)}</span></p>` : '';
   if (!m || !m.dish) return `<section><h2>Vanavond</h2><div class="group news"><div class="news-head"><b>Wat eten we vanavond?</b><button class="linkbtn" data-action="mealEdit" data-date="${t0}">Plannen</button></div><p class="sub" style="margin:0">Nog niets gepland.${tomorrowShop ? '' : ' Plan meteen ook de rest van de week in het weekmenu.'}</p>${tomorrowShop}</div></section>`;
   const st = mealStatus(m);
-  return `<section><h2>Vanavond</h2><div class="group news"><div class="news-head"><b>🍽️ ${esc(m.dish)}</b><button class="linkbtn" data-action="mealEdit" data-date="${t0}">Wijzigen</button></div>
-    <p class="sub" style="margin:0 0 8px">${[m.time ? `Om ${esc(m.time)}` : '', m.cook ? `${esc(cookName(m))} kookt` : ''].filter(Boolean).join(', ')}</p>
-    <div class="tchecks"><button class="tcheck${m.shopDone ? ' on' : ''}" data-action="mealCheck" data-k="shopDone" data-date="${t0}" aria-pressed="${!!m.shopDone}">${m.shopDone ? CHECK : ''} Boodschappen gedaan</button><button class="tcheck${m.cooked ? ' on' : ''}" data-action="mealCheck" data-k="cooked" data-date="${t0}" aria-pressed="${!!m.cooked}">${m.cooked ? CHECK : ''} Gekookt</button></div>
+  return `<section><h2>Vanavond</h2><div class="group news"><div class="news-head"><b>${mealModeIc(m) === '🍳' ? '🍽️' : mealModeIc(m)} ${esc(m.dish)}</b><button class="linkbtn" data-action="mealEdit" data-date="${t0}">Wijzigen</button></div>
+    <p class="sub" style="margin:0 0 8px">${esc(mealSub(m)) || ''}</p>
+    ${mealChecks(m, t0, true) ? `<div class="tchecks">${mealChecks(m, t0, true)}</div>` : ''}
     ${st.map(([c, t]) => `<p class="sub" style="margin:8px 0 0"><span class="${c}">${t}</span></p>`).join('')}${tomorrowShop}</div></section>`;
 }
 
@@ -2711,7 +2745,8 @@ function flushActivity(){
   for (const x of buf.filter(x => x.kind === 'meals' && x.a)){
     const m = x.a, b = x.b || {}, dag = parse(m.date).toLocaleDateString('nl-NL', {weekday:'long'});
     if (m.dish && m.dish !== b.dish) add(pid, `zette ${m.dish} op het weekmenu voor ${dag}`, '🍽️');
-    else if (m.cooked && !b.cooked) add(pid, `heeft ${m.dish} gekookt`, '🍳');
+    else if (m.cooked && !b.cooked && (m.mode || 'cook') === 'cook') add(pid, `heeft ${m.dish} gekookt`, '🍳');
+    else if (m.ordered && !b.ordered) add(pid, `heeft het eten besteld: ${m.dish}`, '🛵');
     else if (m.shopDone && !b.shopDone) add(pid, `deed de boodschappen voor ${m.dish}`, '🛒');
   }
   const mAdd = buf.filter(x => x.kind === 'meter' && !x.b && x.a);
@@ -2992,14 +3027,15 @@ document.addEventListener('click', e => {
     case 'toggleConfetti': { S.ui.noConfetti = !S.ui.noConfetti; saveLocal(); const sw = b.querySelector('.switch'); if (sw){ sw.setAttribute('aria-pressed', !S.ui.noConfetti); sw.setAttribute('aria-checked', !S.ui.noConfetti); } if (!S.ui.noConfetti) confetti(...centerOf(b)); break; }
     case 'analysis': analysisSheet(); break;
     case 'stdFixed': stdFixedSheet(); break;
-    case 'budgetStd': ST().budgets = STD_BUDGETS.map(([cat, ic, per]) => ({cat, ic, per, amount: 0})); ST().v = Date.now(); save(); budgetSheet(); break;
+    case 'budgetStd': ST().budgets = [...personalPots(), ...STD_BUDGETS.map(([cat, ic, per]) => ({cat, ic, per, amount: 0}))]; ST().v = Date.now(); save(); budgetSheet(); break;
+    case 'budgetPersonal': { const b0 = budgets() || []; ST().budgets = [...missingPersonal(b0), ...b0]; ST().v = Date.now(); save(); budgetSheet(); break; }
     case 'budgetEdit': budgetSheet(); break;
     case 'budgetSpend': spendForm(null, {cat: b.dataset.cat}); break;
     case 'toggleRoll': { ST().noRoll = !ST().noRoll; ST().v = Date.now(); save(); const sw = b.querySelector('.switch'); if (sw){ sw.setAttribute('aria-pressed', !ST().noRoll); sw.setAttribute('aria-checked', !ST().noRoll); } if (!ST().noRoll) rollOver(true); render(); break; }
     case 'listView': S.ui.listView = b.dataset.v; saveLocal(); render(); break;
     case 'mealWeek': mealWeek += +b.dataset.d; render(); break;
     case 'mealEdit': mealForm(b.dataset.date); break;
-    case 'mealCheck': { const m = mealOn(b.dataset.date); if (!m) break; const k = b.dataset.k; m[k] = !m[k]; save(); render(); if (m[k]) confetti(...centerOf(b)); break; }
+    case 'mealCheck': { const m = mealOn(b.dataset.date); if (!m) break; const k = b.dataset.k; m[k] = !m[k]; if (k === 'cooked' && m.cooked) m.shopDone = true; save(); render(); if (m[k]) confetti(...centerOf(b)); break; }
     case 'mealHome': { const m = mealOn(b.dataset.date) || newMeal(b.dataset.date); m.home = !m.home; save(); render(); break; }
     case 'energy': energySheet(); break;
     case 'meterAdd': meterForm(); break;
