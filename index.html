@@ -764,7 +764,7 @@ input[type=month]{min-height:44px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-const APP_VERSION = '45';
+const APP_VERSION = '46';
 if (/[?&](v|check)=/.test(location.search)) try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){}
 /* ---------- opslag ---------- */
 const KEY = 'huishouden.v1';
@@ -1851,6 +1851,7 @@ function openSettings(){
       ${setRow('homeEdit', '🏠', 'Startpagina', 'Kies onderdelen en volgorde')}
       <div class="row setrow themerow"><span class="ic" aria-hidden="true">🌓</span><div class="main"><div class="title">Weergave</div></div>
         <div class="seg themeseg" role="radiogroup" aria-label="Weergave">${[['auto','Auto'],['light','Licht'],['dark','Donker']].map(([k, l]) => `<button type="button" role="radio" data-action="setTheme" data-t="${k}" aria-checked="${(S.ui.theme || 'auto') === k}" aria-pressed="${(S.ui.theme || 'auto') === k}">${k === 'light' ? '☀︎ ' : k === 'dark' ? '☾ ' : ''}${l}</button>`).join('')}</div></div>
+      ${setRow('testHaptic', '🧪', 'Trilling testen', `Jouw toestel: ${esc(iosVersion())}`)}
       ${setRow('toggleHaptic', '📳', 'Trillen bij tikken', 'Op iPhone vanaf iOS 18', `<span class="switch" role="switch" aria-checked="${!S.ui.noHaptic}" aria-pressed="${!S.ui.noHaptic}"></span>`)}
       ${setRow('toggleConfetti', '🎉', 'Confetti bij afvinken', '', `<span class="switch" role="switch" aria-checked="${!S.ui.noConfetti}" aria-pressed="${!S.ui.noConfetti}"></span>`)}
       ${setRow('checkUpdate', '🔄', 'Op updates controleren', `Je hebt versie ${APP_VERSION}`)}
@@ -2805,16 +2806,15 @@ function activitySheet(){
 // Android kent navigator.vibrate. Safari op de iPhone niet; daar geeft een verborgen schakelaar (iOS 18 en nieuwer)
 // bij het omzetten een korte tik van de trilmotor. Op oudere iPhones gebeurt er gewoon niets.
 let hapticEl = null;
+function iosVersion(){ const m = navigator.userAgent.match(/OS (\d+)[_.](\d+)/); return /iPhone|iPad/.test(navigator.userAgent) && m ? `iOS ${m[1]}.${m[2]}` : 'geen iPhone herkend'; }
 function haptic(){
   if (S.ui.noHaptic) return;
   try {
     if (navigator.vibrate){ navigator.vibrate(8); return; }
-    if (!hapticEl){
-      const l = document.createElement('label'); l.setAttribute('aria-hidden', 'true'); l.className = 'haptic';
-      const i = document.createElement('input'); i.type = 'checkbox'; i.setAttribute('switch', ''); i.tabIndex = -1;
-      l.appendChild(i); document.body.appendChild(l); hapticEl = l;
-    }
-    hapticEl.click();
+    // Telkens een nieuwe, onzichtbare schakelaar: dat is de manier die op iOS 18 het betrouwbaarst een tik geeft.
+    const l = document.createElement('label'); l.setAttribute('aria-hidden', 'true'); l.className = 'haptic'; l.style.display = 'none';
+    const i = document.createElement('input'); i.type = 'checkbox'; i.setAttribute('switch', '');
+    l.appendChild(i); document.head.appendChild(l); l.click(); document.head.removeChild(l);
   } catch(e){}
 }
 document.addEventListener('click', e => {
@@ -3049,6 +3049,7 @@ document.addEventListener('click', e => {
     case 'checkUpdate': checkUpdate(true); break;
     case 'toggleConfetti': { S.ui.noConfetti = !S.ui.noConfetti; saveLocal(); const sw = b.querySelector('.switch'); if (sw){ sw.setAttribute('aria-pressed', !S.ui.noConfetti); sw.setAttribute('aria-checked', !S.ui.noConfetti); } if (!S.ui.noConfetti) confetti(...centerOf(b)); break; }
     case 'analysis': analysisSheet(); break;
+    case 'testHaptic': { const was = S.ui.noHaptic; S.ui.noHaptic = false; haptic(); setTimeout(haptic, 180); setTimeout(haptic, 360); S.ui.noHaptic = was; toast('Drie korte tikken verstuurd. Voelde je ze?'); break; }
     case 'toggleHaptic': { S.ui.noHaptic = !S.ui.noHaptic; saveLocal(); const sw = b.querySelector('.switch'); if (sw){ sw.setAttribute('aria-pressed', !S.ui.noHaptic); sw.setAttribute('aria-checked', !S.ui.noHaptic); } if (!S.ui.noHaptic) haptic(); break; }
     case 'stdFixed': stdFixedSheet(); break;
     case 'budgetStd': ST().budgets = [...personalPots(), ...STD_BUDGETS.map(([cat, ic, per]) => ({cat, ic, per, amount: 0}))]; ST().v = Date.now(); save(); budgetSheet(); break;
