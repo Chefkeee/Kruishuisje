@@ -740,6 +740,16 @@ input[type=month]{min-height:44px}
 .ic.owner{background:none}
 .ic.owner .who{width:28px;height:28px;font-size:12px}
 .haptic{position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none}
+
+/* ===== v47: trilschakelaars ===== */
+label.hl{cursor:pointer;-webkit-user-select:none;user-select:none}
+label.hl:not(.fab){position:relative}
+label.hl[hidden]{display:none !important}
+label.hl.chip{display:inline-block}
+label.hl.x{display:inline-grid;place-items:center}
+label.hl.tchip{display:inline-block}
+label.hl.iconbtn,label.hl.logo-btn{display:grid;place-items:center}
+.hsw{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;z-index:2;-webkit-appearance:none;appearance:none;border:0;background:none}
 </style>
 </head>
 <body>
@@ -764,7 +774,7 @@ input[type=month]{min-height:44px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-const APP_VERSION = '46';
+const APP_VERSION = '47';
 if (/[?&](v|check)=/.test(location.search)) try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){}
 /* ---------- opslag ---------- */
 const KEY = 'huishouden.v1';
@@ -2818,9 +2828,31 @@ function haptic(){
   } catch(e){}
 }
 document.addEventListener('click', e => {
-  if (e.target.closest('.haptic')) return;
+  if (e.target.closest('.haptic') || e.target.closest('.hl')) return;   // .hl trilt zelf al via een echte schakelaar
   if (e.target.closest('button, a, summary, label.filebtn, .tab, select')) haptic();
 }, true);
+
+// Echte tik op een iPhone-schakelaar geeft betrouwbaar een trilling. Daarom krijgen de knoppen die je het meest
+// gebruikt een onzichtbare schakelaar: je tikt dan echt op die schakelaar, en de knop doet daarna gewoon zijn werk.
+const HAPTIC_SEL = '[data-action].check, [data-action].tab, [data-action].fab, [data-action].mchk, [data-action].tcheck, [data-action].shop-item, [data-action].chip, [data-action].day, [data-action].x, [data-action].tchip, [data-action].iconbtn, [data-action].logo-btn';
+function hapticize(root){
+  if (S.ui.noHaptic || !/iPhone|iPad/.test(navigator.userAgent)) return;
+  const list = root.matches && root.matches(HAPTIC_SEL) ? [root] : [];
+  root.querySelectorAll && list.push(...root.querySelectorAll(HAPTIC_SEL));
+  for (const el of list){
+    if (el.tagName !== 'BUTTON' || el.disabled || el.getAttribute('type') === 'submit' || el.closest('form')) continue;
+    const l = document.createElement('label');
+    for (const a of el.attributes) l.setAttribute(a.name, a.value);
+    l.classList.add('hl'); l.setAttribute('role', 'button'); l.tabIndex = 0;
+    while (el.firstChild) l.appendChild(el.firstChild);
+    const i = document.createElement('input'); i.type = 'checkbox'; i.setAttribute('switch', ''); i.className = 'hsw'; i.tabIndex = -1; i.setAttribute('aria-hidden', 'true');
+    l.appendChild(i);
+    el.replaceWith(l);
+  }
+}
+new MutationObserver(ms => { for (const m of ms) for (const n of m.addedNodes) if (n.nodeType === 1) hapticize(n); }).observe(document.body, {childList: true, subtree: true});
+hapticize(document.body);
+document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('hl')){ e.preventDefault(); const i = e.target.querySelector('.hsw'); (i || e.target).click(); } });
 
 /* ---------- vegen en naar beneden trekken ---------- */
 const NEXT_STATUS = {idee:'gepland', gepland:'bezig', bezig:'klaar'};
